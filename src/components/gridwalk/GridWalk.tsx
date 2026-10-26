@@ -68,6 +68,14 @@ type SectionDef = {
   snapshots: { name: SnapshotName; active: boolean }[];
   // Live rendering, capture mode only.
   render: (data: GridWalkData) => React.ReactNode;
+  // A card that stacks two titled graphics (e.g. a driver and a team
+  // chart) bakes ITS OWN title into the captured content, alongside the
+  // second graphic's subsection title, instead of using the card's usual
+  // external header. Both titles then go through the same content-fit
+  // scale as one unit, so they always render at the same size — the
+  // external header scales independently and would otherwise drift out of
+  // sync with a title baked further down inside the snapshot.
+  bakedTitle?: boolean;
 };
 
 type View = { k: number; tx: number; ty: number };
@@ -253,9 +261,12 @@ export default function GridWalk({ season, live, sizes, initialVariant }: GridWa
       id: "evolution",
       title: "Driver Points Evolution",
       subtitle: "Cumulative points scored by each driver across the season.",
+      navLabel: "Points Evolution",
+      bakedTitle: true,
       snapshots: [{ name: "evolution", active: true }],
       render: ({ pointsGrid, constructorGrid }) => (
         <>
+          <CardHeader title="Driver Points Evolution" subtitle="Cumulative points scored by each driver across the season." />
           <DriverPointsEvolutionChart grid={pointsGrid} />
           <CardHeader subsection title="Constructor Points Evolution" subtitle="Cumulative points scored by each team across the season." />
           <ConstructorPointsEvolutionChart grid={constructorGrid} />
@@ -276,6 +287,7 @@ export default function GridWalk({ season, live, sizes, initialVariant }: GridWa
         freqView === "finish"
           ? "How often each driver has finished in each position."
           : "How often each driver has qualified in each grid position.",
+      navLabel: "Position Frequency",
       headerActions: () => (
         <CardToggle
           name="freq"
@@ -774,7 +786,9 @@ export default function GridWalk({ season, live, sizes, initialVariant }: GridWa
               }}
             >
               <div className="gw-card-inner">
-                <CardHeader title={section.title} subtitle={section.subtitle} actions={section.headerActions?.()} />
+                {!section.bakedTitle && (
+                  <CardHeader title={section.title} subtitle={section.subtitle} actions={section.headerActions?.()} />
+                )}
                 <div className="gw-frame">
                   <div className="gw-fit gw-snap-target" data-section={section.id}>
                     {renderCardBody(section)}
