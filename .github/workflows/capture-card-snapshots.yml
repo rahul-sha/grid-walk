@@ -7,6 +7,10 @@ name: Capture Grid Walk card snapshots
 # once, by hand ("all" or a year). Visitors only ever see these images —
 # see scripts/capture-card-snapshots.mjs and the "grid-walk-blur-gpu-cost"
 # project memory for why.
+#
+# Two scheduled runs each Monday, each 30 minutes after snapshot-season.yml's
+# own two runs (10:00/18:00 UTC), so the catch-up run also recaptures images
+# if the morning run's data was still missing that week's results.
 on:
   workflow_dispatch:
     inputs:
@@ -16,6 +20,7 @@ on:
         type: string
   schedule:
     - cron: "30 10 * * 1"
+    - cron: "30 18 * * 1"
 
 permissions:
   contents: write
