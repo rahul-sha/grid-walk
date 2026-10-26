@@ -4,7 +4,13 @@ name: Snapshot season data
 # so completed race weekends get committed to the repo automatically — a
 # resilience net in case the community-run Jolpica API has downtime, not
 # just a one-off for past seasons). Re-running it just refreshes that
-# season's file.
+# season's file, so a second run on the same day that finds nothing new
+# is a harmless no-op commit-wise (git-auto-commit-action only commits
+# when the file actually changed).
+#
+# Two scheduled runs each Monday: 10:00 UTC and a catch-up at 18:00 UTC,
+# in case the source API hasn't published a race weekend's results yet
+# by the morning run.
 on:
   workflow_dispatch:
     inputs:
@@ -14,6 +20,7 @@ on:
         type: string
   schedule:
     - cron: "0 10 * * 1"
+    - cron: "0 18 * * 1"
 
 permissions:
   contents: write
