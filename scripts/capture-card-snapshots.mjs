@@ -111,7 +111,7 @@ async function captureSeason(browser, season) {
         await focusTab(page, tabIndex);
         for (const [n, view] of views.entries()) {
           if (n > 0) {
-            await page.click(`.gw-freq-toggle[data-toggle="${id}"]`);
+            await page.click(`.ui-card-toggle[data-toggle="${id}"]`);
             await page.waitForTimeout(300);
           }
           const el = await page.$(`.gw-snap-target[data-section="${id}"]`);
