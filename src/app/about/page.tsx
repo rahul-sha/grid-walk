@@ -63,11 +63,23 @@ export default function AboutPage() {
             loading="lazy"
           />
           <p className="timeline-count">
-            70 rounds shipped since launch &mdash; most recent first. Minor polish-only rounds are
+            71 rounds shipped since launch &mdash; most recent first. Minor polish-only rounds are
             folded into the ones around them rather than listed separately.
           </p>
-          <div className="timeline-inset">
+          <div className="timeline-inset" tabIndex={0} role="region" aria-label="Project timeline, scrollable">
             <ul className="timeline">
+              <li>
+                <span className="seq">71</span>
+                <b>Accessibility pass from a site audit</b>
+                <span>
+                  A performance and WCAG 2.1 AA audit found a few real issues: card subtitles were too
+                  low-contrast to read comfortably, the homepage had no heading, there was no
+                  skip-to-content link, and this timeline couldn&rsquo;t be scrolled with a keyboard.
+                  All fixed. A couple of deeper findings (the card toggle&rsquo;s tap target, and how
+                  it&rsquo;s nested inside the card) need a design call before changing, so they&rsquo;re
+                  tracked rather than patched in a hurry.
+                </span>
+              </li>
               <li>
                 <span className="seq">70</span>
                 <b>Repository renamed to Grid Walk</b>

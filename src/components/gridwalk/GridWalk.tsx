@@ -740,6 +740,7 @@ export default function GridWalk({ season, live, sizes, initialVariant }: GridWa
 
   return (
     <div className="gw-wrap" ref={wrapRef}>
+      <h1 className="sr-only">Grid Walk — Formula 1 results explorer</h1>
       <div className="gw-pulse-a" />
       <div className="gw-pulse-b" />
       <canvas className="gw-grid" ref={gridRef} aria-hidden="true" />

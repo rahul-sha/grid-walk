@@ -53,9 +53,14 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full">
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
         <RegisterServiceWorker />
         <div className="page-shell flex min-h-screen flex-col gap-6 p-4">
-          <main className="min-w-0 flex-1 logo-clearance">{children}</main>
+          <main id="main-content" className="min-w-0 flex-1 logo-clearance">
+            {children}
+          </main>
         </div>
       </body>
     </html>
