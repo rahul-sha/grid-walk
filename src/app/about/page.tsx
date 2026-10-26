@@ -70,7 +70,7 @@ export default function AboutPage() {
             <ul className="timeline">
               <li>
                 <span className="seq">72</span>
-                <b>Points Evolution titles, nav labels</b>
+                <b>Points Evolution titles, nav labels, leader lines</b>
                 <span>
                   The Driver and Constructor Points Evolution titles used to drift apart in size:
                   the Driver one is a live heading, the Constructor one is baked into the
@@ -78,7 +78,10 @@ export default function AboutPage() {
                   live heading never got. Both titles now bake into the image together, so they
                   always match. The top nav now reads &ldquo;Points Evolution&rdquo; and
                   &ldquo;Position Frequency&rdquo; instead of repeating the card&rsquo;s full,
-                  toggle-dependent title.
+                  toggle-dependent title. The dashed lines tying each chart line to its ranked
+                  name now match that line&rsquo;s colour and always draw, instead of a flat grey
+                  dash that only appeared for names whose legend row had shifted &mdash; a bunched
+                  midfield used to be an untraceable grey blur.
                 </span>
               </li>
               <li>
