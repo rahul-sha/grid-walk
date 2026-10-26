@@ -63,11 +63,27 @@ export default function AboutPage() {
             loading="lazy"
           />
           <p className="timeline-count">
-            71 rounds shipped since launch &mdash; most recent first. Minor polish-only rounds are
+            72 rounds shipped since launch &mdash; most recent first. Minor polish-only rounds are
             folded into the ones around them rather than listed separately.
           </p>
           <div className="timeline-inset" tabIndex={0} role="region" aria-label="Project timeline, scrollable">
             <ul className="timeline">
+              <li>
+                <span className="seq">72</span>
+                <b>Points Evolution titles, nav labels, leader lines</b>
+                <span>
+                  The Driver and Constructor Points Evolution titles used to drift apart in size:
+                  the Driver one is a live heading, the Constructor one is baked into the
+                  pre-captured chart image, which was picking up an extra scale-to-fit factor the
+                  live heading never got. Both titles now bake into the image together, so they
+                  always match. The top nav now reads &ldquo;Points Evolution&rdquo; and
+                  &ldquo;Position Frequency&rdquo; instead of repeating the card&rsquo;s full,
+                  toggle-dependent title. The dashed lines tying each chart line to its ranked
+                  name now match that line&rsquo;s colour and always draw, instead of a flat grey
+                  dash that only appeared for names whose legend row had shifted &mdash; a bunched
+                  midfield used to be an untraceable grey blur.
+                </span>
+              </li>
               <li>
                 <span className="seq">71</span>
                 <b>Accessibility pass from a site audit</b>
