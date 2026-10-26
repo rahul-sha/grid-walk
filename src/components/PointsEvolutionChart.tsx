@@ -293,22 +293,28 @@ export default function PointsEvolutionChart({
           </div>
         </div>
 
-        <svg width={BUBBLE_COL_WIDTH} height={chartHeight} className="shrink-0">
+        <svg width={BUBBLE_COL_WIDTH} height={chartHeight} className="shrink-0" style={{ overflow: "visible" }}>
           {bubbles.map((b) => {
-            const nudged = Math.abs(b.bubbleY - b.lineY) > 0.5;
             return (
               <g key={b.id}>
-                {nudged && (
-                  <line
-                    x1={2}
-                    y1={b.lineY}
-                    x2={10}
-                    y2={b.bubbleY}
-                    stroke="var(--text-muted)"
-                    strokeWidth={1}
-                    strokeDasharray="1.5 2"
-                  />
-                )}
+                {/* Every bubble gets a leader line back to its own colour, not
+                    just the ones whose rank order nudges them off their line's
+                    actual value — a line that happens to land exactly on its
+                    row's y still reads as "connected to this bubble" rather
+                    than stopping dead at the plot's edge. Drawn in the
+                    series' own colour (was a flat muted grey) so a bunched
+                    field of close values stays traceable to the right name
+                    instead of blurring into one grey smudge. */}
+                <line
+                  x1={-8}
+                  y1={b.lineY}
+                  x2={10}
+                  y2={b.bubbleY}
+                  stroke={b.color}
+                  strokeWidth={1.25}
+                  strokeOpacity={0.6}
+                  strokeDasharray="1.5 2.5"
+                />
                 <rect
                   x={10}
                   y={b.bubbleY - BUBBLE_HEIGHT / 2}
