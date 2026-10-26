@@ -147,7 +147,7 @@
   margin: 0;
   font-size: 14px;
   line-height: 1.25rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 /* Card header that carries a control (a card toggle): title and subtitle
@@ -170,7 +170,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px 6px 10px;
+  min-height: 36px;
+  padding: 8px 14px 8px 12px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-hairline);
   background: var(--accent-container);
