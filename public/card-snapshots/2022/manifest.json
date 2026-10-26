@@ -1,25 +1,25 @@
 {
   "season": 2022,
-  "capturedAt": "2026-10-23T12:57:54.692Z",
+  "capturedAt": "2026-10-26T09:49:21.110Z",
   "sizes": {
     "evolution": {
       "w": 900,
-      "h": 1069
+      "h": 1120
     },
     "positions": {
-      "w": 1350,
+      "w": 1389,
       "h": 892
     },
     "podiumsD": {
       "w": 658,
-      "h": 632
+      "h": 630
     },
     "results-drivers": {
-      "w": 1350,
+      "w": 1389,
       "h": 892
     },
     "results-teams": {
-      "w": 1350,
+      "w": 1389,
       "h": 892
     },
     "freq-finish": {
