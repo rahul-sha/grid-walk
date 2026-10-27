@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { LastRaceRecap, RecapData, RecapRow, RecapSession, RaceSummary } from "@/lib/recap";
 import { getRaceRecap } from "@/app/actions/recap";
 
@@ -129,6 +129,15 @@ function RacePicker({
   now: number;
   onSelect: (round: number) => void;
 }) {
+  const activeChipRef = useRef<HTMLButtonElement | null>(null);
+
+  // Scroll the strip to the active chip once on mount, so it opens showing
+  // the latest race (usually off the right edge of the narrow strip)
+  // instead of defaulting to round 1.
+  useEffect(() => {
+    activeChipRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, []);
+
   return (
     <div className="recap-picker">
       <div className="recap-picker-label">
@@ -150,6 +159,7 @@ function RacePicker({
         {raceList.map((race) => (
           <button
             key={race.round}
+            ref={race.round === activeRound ? activeChipRef : undefined}
             type="button"
             className={"recap-chip-pick" + (race.round === activeRound ? " active" : "") + (race.raceStart > now ? " future" : "")}
             title={`${race.name} (Round ${race.round})`}
