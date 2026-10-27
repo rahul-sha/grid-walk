@@ -560,11 +560,15 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
 
     // The bars, arrows and their controls sit inside the wrap, but presses,
     // drags and wheel scrolls on them must never move or zoom the cards.
-    // The recap card's classification table scrolls itself too — without
-    // this a touch or drag on it always panned the carousel first, so it
-    // only actually scrolled if you landed exactly on its scrollbar.
+    // The recap card's classification table and race-picker strip scroll
+    // themselves too — without this a touch or drag on either always panned
+    // the carousel first, so they only actually scrolled if you landed
+    // exactly on their scrollbar.
     function onChrome(e: Event) {
-      return e.target instanceof Element && !!e.target.closest(".gw-topbar, .gw-jumpbar, .gw-arrow, .recap-table");
+      return (
+        e.target instanceof Element &&
+        !!e.target.closest(".gw-topbar, .gw-jumpbar, .gw-arrow, .recap-table, .recap-picker-strip")
+      );
     }
 
     function onPointerDown(e: PointerEvent) {
@@ -646,10 +650,11 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
     // pinch arrives as ctrl+wheel with small deltas, hence its higher rate.
     function onWheel(e: WheelEvent) {
       if (onChrome(e)) {
-        // The season menu and the recap card's classification table are
-        // the things on/over the carousel that scroll themselves; the
-        // browser must keep that wheel rather than have it zoom the card.
-        if (e.target instanceof Element && e.target.closest(".ui-menu, .recap-table")) return;
+        // The season menu, the recap card's classification table and its
+        // race-picker strip are the things on/over the carousel that scroll
+        // themselves; the browser must keep that wheel rather than have it
+        // zoom the card.
+        if (e.target instanceof Element && e.target.closest(".ui-menu, .recap-table, .recap-picker-strip")) return;
         e.preventDefault();
         return;
       }
@@ -887,12 +892,6 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
           <path d="M9 18l6-6-6-6" />
         </svg>
       </button>
-
-      <div className="gw-dots" aria-hidden="true">
-        {sections.map((section, i) => (
-          <span key={section.id} className={i === focus ? "on" : ""} />
-        ))}
-      </div>
 
       <div className="gw-jumpbar">
         <Island className="gw-jumpbar-island">

@@ -11,9 +11,13 @@ language.
 
 **Home / Grid Walk** (`/`) is the site's entry point and now its only page
 for race data. The first card, **Latest Race**, is current-season only: a
-recap of the most recently completed race (podium, pole, fastest lap, full
-classification and qualifying order) and the next race's session schedule
-converted into the visitor's own time zone. The remaining five graphics
+recap of a race (podium, pole, fastest lap, full classification and
+qualifying order) plus that race's own session schedule, converted into the
+visitor's own time zone. A flag strip lets visitors browse any race of the
+season, not just the latest; only the latest race's recap loads with the
+page, and every other one is fetched on demand when picked. A race that
+hasn't happened yet shows a plain "race yet to be held" message instead. The
+remaining five graphics
 follow it on the same horizontal carousel strip, in the same order as the
 "Jump to" bar below it: Driver/Constructor Points Evolution,
 Driver/Constructor Podiums, Drivers/Team Results, Finish and Qualifying
@@ -37,7 +41,9 @@ Latest Race is the deliberate exception: it's built fresh on every request
 visitor's own time zone can't be baked into a shared image. It only shows
 anything for the current season — an older season gets a short note
 instead, so switching seasons never changes how many cards are on the
-strip.
+strip. Picking a different race from its flag strip calls a server action
+(`src/app/actions/recap.ts`) rather than shipping every race's results with
+the page.
 
 Browse by dragging, swiping, the side arrows, the ← → keys or the jump-bar
 tabs. Scroll or pinch to zoom around the pointer, then drag to pan; a
@@ -153,5 +159,9 @@ via `env:` variables rather than interpolating them into `run:` script
 text, which avoids a class of GitHub Actions script-injection
 vulnerability. `next.config.ts` sets standard browser security headers
 (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`,
-`Permissions-Policy`). The app has no auth, forms or API routes, and no
-secrets are committed to the repo.
+`Permissions-Policy`). The app has no auth or forms, and no secrets are
+committed to the repo. Its one server action (fetching a single race's
+recap for the Latest Race card's flag strip) takes a season and round
+number and reads from the same local, public season-snapshot data every
+page already renders from — no user input reaches a file path, a query, or
+an external request.

@@ -44,10 +44,26 @@ export interface NextRaceSchedule {
   sessions: RecapSession[];
 }
 
+// A lightweight entry per race of the season, for the race-picker strip —
+// cheap because it comes straight off the schedule fetch Grid Walk already
+// makes, with no per-race results/qualifying fetch. `sessions` lets the
+// card show timing for a race nobody has clicked into yet, and `raceStart`
+// lets the client decide "already run" vs "yet to be held" without a
+// second round-trip.
+export interface RaceSummary {
+  round: number;
+  name: string;
+  flagIso: string | null;
+  dateLabel: string;
+  raceStart: number;
+  sessions: RecapSession[];
+}
+
 export interface RecapData {
   season: number;
   lastRace: LastRaceRecap | null;
   nextRace: NextRaceSchedule | null;
+  raceList: RaceSummary[];
 }
 
 const DATE_LABEL_FORMAT = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
@@ -123,11 +139,45 @@ function qualifyingRow(result: {
   };
 }
 
-// Builds the live data for Grid Walk's recap + up-next card: the most
-// recently completed race's classification, and the next race's session
+function raceStartMs(race: Race): number {
+  return new Date(sessionIso(race.date, race.time ?? "00:00:00Z") ?? race.date).getTime();
+}
+
+// Builds one race's classification/qualifying/podium — the data behind both
+// the initial "most recent race" recap and a race picked from the strip.
+// Returns null only when there's genuinely no results data for the round
+// yet (e.g. picked moments before results are published).
+async function buildRaceRecap(season: number, race: Race): Promise<LastRaceRecap | null> {
+  const round = Number(race.round);
+  const [results, qualifying] = await Promise.all([
+    getRaceResults(season, round),
+    getQualifyingResults(season, round),
+  ]);
+  if (results.length === 0) return null;
+
+  const classification = results.map((r) => raceRow(r, season)).sort((a, b) => a.pos - b.pos);
+  const qualRows = qualifying.map((q) => qualifyingRow(q, season)).sort((a, b) => a.pos - b.pos);
+  const poleRow = qualRows.find((q) => q.pos === 1);
+  const fastestResult = results.find((r) => r.FastestLap?.rank === "1");
+  return {
+    round,
+    name: race.raceName.replace(/\s+Grand Prix$/i, " GP"),
+    flagIso: raceFlagIso(race),
+    dateLabel: DATE_LABEL_FORMAT.format(new Date(`${race.date}T00:00:00Z`)),
+    podium: classification.filter((r) => r.pos >= 1 && r.pos <= 3),
+    pole: poleRow?.code ?? null,
+    fastest: fastestResult?.Driver.code ?? null,
+    classification,
+    qualifying: qualRows,
+  };
+}
+
+// Builds the live data for Grid Walk's recap + race-picker card: the most
+// recently completed race's classification, the next race's session
 // schedule (raw UTC ISO timestamps — the client converts to the visitor's
-// own time zone). Only meaningful for the current season; an older season
-// or one with no races yet returns nulls rather than guessing.
+// own time zone), and a lightweight summary of every race in the season for
+// the picker strip. Only meaningful for the current season; an older season
+// or one with no races yet returns nulls/an empty list rather than guessing.
 export async function buildRecapData(season: number): Promise<RecapData> {
   const schedule = await getSeasonSchedule(season);
   const now = Date.now();
@@ -136,39 +186,11 @@ export async function buildRecapData(season: number): Promise<RecapData> {
   // started — a schedule entry's bare `date` is midnight local, which can
   // be hours before the real race time depending on time zone, so this
   // combines date+time exactly like the sessions below do.
-  const withTime = schedule.map((race) => ({
-    race,
-    raceStart: new Date(sessionIso(race.date, race.time ?? "00:00:00Z") ?? race.date).getTime(),
-  }));
+  const withTime = schedule.map((race) => ({ race, raceStart: raceStartMs(race) }));
   const completed = withTime.filter((r) => r.raceStart <= now);
   const upcoming = withTime.filter((r) => r.raceStart > now);
 
-  let lastRace: LastRaceRecap | null = null;
-  if (completed.length > 0) {
-    const { race } = completed[completed.length - 1];
-    const round = Number(race.round);
-    const [results, qualifying] = await Promise.all([
-      getRaceResults(season, round),
-      getQualifyingResults(season, round),
-    ]);
-    if (results.length > 0) {
-      const classification = results.map((r) => raceRow(r, season)).sort((a, b) => a.pos - b.pos);
-      const qualRows = qualifying.map((q) => qualifyingRow(q, season)).sort((a, b) => a.pos - b.pos);
-      const poleRow = qualRows.find((q) => q.pos === 1);
-      const fastestResult = results.find((r) => r.FastestLap?.rank === "1");
-      lastRace = {
-        round,
-        name: race.raceName.replace(/\s+Grand Prix$/i, " GP"),
-        flagIso: raceFlagIso(race),
-        dateLabel: DATE_LABEL_FORMAT.format(new Date(`${race.date}T00:00:00Z`)),
-        podium: classification.filter((r) => r.pos >= 1 && r.pos <= 3),
-        pole: poleRow?.code ?? null,
-        fastest: fastestResult?.Driver.code ?? null,
-        classification,
-        qualifying: qualRows,
-      };
-    }
-  }
+  const lastRace = completed.length > 0 ? await buildRaceRecap(season, completed[completed.length - 1].race) : null;
 
   let nextRace: NextRaceSchedule | null = null;
   if (upcoming.length > 0) {
@@ -185,5 +207,26 @@ export async function buildRecapData(season: number): Promise<RecapData> {
     };
   }
 
-  return { season, lastRace, nextRace };
+  const raceList: RaceSummary[] = withTime.map(({ race, raceStart }) => ({
+    round: Number(race.round),
+    name: race.raceName.replace(/\s+Grand Prix$/i, " GP"),
+    flagIso: raceFlagIso(race),
+    dateLabel: DATE_LABEL_FORMAT.format(new Date(`${race.date}T00:00:00Z`)),
+    raceStart,
+    sessions: buildSessions(race),
+  }));
+
+  return { season, lastRace, nextRace, raceList };
+}
+
+// Lazily fetches one race's recap when picked from the strip — the only
+// part of a non-latest race that isn't already in `raceList` (its schedule
+// is), since results/qualifying are too heavy to build for all 23 rounds on
+// every page load. Returns null for a season/round Grid Walk doesn't know,
+// or one with no results yet (picked right before the race, say).
+export async function fetchRaceRecap(season: number, round: number): Promise<LastRaceRecap | null> {
+  const schedule = await getSeasonSchedule(season);
+  const race = schedule.find((r) => Number(r.round) === round);
+  if (!race) return null;
+  return buildRaceRecap(season, race);
 }

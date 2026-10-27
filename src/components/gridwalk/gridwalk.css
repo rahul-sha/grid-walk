@@ -279,31 +279,6 @@
   pointer-events: none;
 }
 
-.gw-dots {
-  position: fixed;
-  left: 50%;
-  bottom: calc(62px + env(safe-area-inset-bottom, 0px));
-  z-index: 4;
-  display: flex;
-  gap: 6px;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-
-.gw-dots span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--text-muted) 45%, transparent);
-  transition: width 0.25s ease, background 0.25s ease;
-}
-
-.gw-dots span.on {
-  width: 18px;
-  border-radius: 3px;
-  background: var(--accent);
-}
-
 .gw-topbar {
   position: fixed;
   top: 0;
@@ -401,9 +376,6 @@
     -webkit-mask-image: linear-gradient(to right, #000 80%, transparent);
     mask-image: linear-gradient(to right, #000 80%, transparent);
   }
-  .gw-dots {
-    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
-  }
   .gw-arrow,
   .gw-zoom-level,
   .gw-zoom-icon,
@@ -483,9 +455,6 @@
   .gw-jumpbar-pills {
     display: none;
   }
-  .gw-dots {
-    bottom: calc(30px + env(safe-area-inset-bottom, 0px));
-  }
   .gw-hint {
     top: auto;
     bottom: calc(48px + env(safe-area-inset-bottom, 0px));
@@ -498,11 +467,12 @@
   }
 }
 
-/* ---- Recap + Up Next card (see "grid-walk-recap-schedule-card" memory) -
-   The only card that is never a snapshot image: its schedule half has to
-   convert session times into each visitor's own time zone, which can't be
-   baked into a picture. Classes are scoped with a "recap-"/"sched-" prefix
-   to stay clear of the podium-* classes PodiumBars already owns. */
+/* ---- Recap + race-picker card (see "grid-walk-recap-schedule-card" and
+   "grid-walk-race-picker" memories) - the only card that is never a
+   snapshot image: its schedule half has to convert session times into each
+   visitor's own time zone, which can't be baked into a picture. Classes are
+   scoped with a "recap-"/"sched-" prefix to stay clear of the podium-*
+   classes PodiumBars already owns. */
 .recap-empty {
   color: var(--text-secondary);
   font-size: 14px;
@@ -513,6 +483,193 @@
   height: 1px;
   background: var(--border-hairline);
   margin: 1.1rem 0;
+}
+
+/* Fixed height so picking a different race never changes this card's
+   natural size — GridWalk's layout() only re-measures on season/view
+   changes, not on this card's own internal state, so a size change here
+   would leave the card's scale stale (stretched or clipped). 580px is a
+   full banner + toggle row + a maxed-out (max-height: 320px, scrolling)
+   classification table — the tallest a loaded race ever gets, since the
+   table's own max-height caps it regardless of how many drivers finished. */
+.recap-content {
+  min-height: 580px;
+}
+
+.recap-picker {
+  margin-bottom: 14px;
+}
+.recap-picker-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  /* Fixed so the row's height doesn't change when the "Back to latest"
+     button appears/disappears (it's taller than the plain label text) —
+     without this, everything below the label jumps a few pixels on
+     every pick. */
+  min-height: 25px;
+}
+.recap-picker-label span:first-child {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.recap-jump-latest {
+  border: 0;
+  background: var(--surface-3);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.recap-jump-latest:hover {
+  background: var(--accent-container);
+  color: var(--on-accent-container);
+}
+.recap-picker-strip {
+  display: flex;
+  gap: 6px;
+  width: 387px;
+  overflow-x: auto;
+  padding: 2px 2px 6px;
+  pointer-events: auto;
+}
+.recap-chip-pick {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 7px 7px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text-secondary);
+  pointer-events: auto;
+}
+.recap-chip-pick:hover {
+  background: var(--surface-3);
+}
+.recap-chip-pick .fi {
+  width: 20px;
+  height: 14px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--border-hairline);
+}
+.recap-chip-pick-noflag {
+  width: 20px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--surface-3);
+}
+.recap-chip-pick-rd {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.recap-chip-pick.future {
+  opacity: 0.45;
+}
+.recap-chip-pick.active {
+  background: var(--accent-container);
+}
+.recap-chip-pick.active .recap-chip-pick-rd {
+  color: var(--on-accent-container);
+}
+
+.recap-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-table-card);
+  background: var(--surface-2);
+  min-height: 580px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 16px;
+}
+.recap-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text-primary) 8%, transparent), transparent);
+  animation: recap-shimmer 1.1s infinite;
+}
+@keyframes recap-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+.recap-skeleton-note {
+  position: relative;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .recap-skeleton::after {
+    animation: none;
+  }
+}
+
+.recap-not-held {
+  min-height: 580px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  border-radius: var(--radius-table-card);
+  background: var(--surface-2);
+  padding: 24px 20px;
+}
+.recap-not-held-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--text-muted);
+  position: relative;
+}
+.recap-not-held-icon::before,
+.recap-not-held-icon::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: var(--text-muted);
+  transform-origin: 0 0;
+}
+.recap-not-held-icon::before {
+  width: 1.5px;
+  height: 9px;
+  transform: translate(-50%, -100%) rotate(20deg);
+}
+.recap-not-held-icon::after {
+  width: 1.5px;
+  height: 6px;
+  transform: translate(-50%, -100%) rotate(100deg);
+}
+.recap-not-held-msg {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.recap-not-held-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  max-width: 420px;
 }
 
 .recap-banner {
@@ -687,7 +844,8 @@
   font-size: 11px;
 }
 
-/* ---- Up Next schedule — the genuinely live part of this card ---- */
+/* ---- Session Times — the selected race's schedule, the genuinely live
+   part of this card; see RecapCard's SessionTimes component ---- */
 .sched-head {
   display: flex;
   justify-content: space-between;

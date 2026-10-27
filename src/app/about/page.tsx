@@ -63,11 +63,37 @@ export default function AboutPage() {
             loading="lazy"
           />
           <p className="timeline-count">
-            73 rounds shipped since launch &mdash; most recent first. Minor polish-only rounds are
+            74 rounds shipped since launch &mdash; most recent first. Minor polish-only rounds are
             folded into the ones around them rather than listed separately.
           </p>
           <div className="timeline-inset" tabIndex={0} role="region" aria-label="Project timeline, scrollable">
             <ul className="timeline">
+              <li>
+                <span className="seq">74</span>
+                <b>Browse any race of the season from the first card</b>
+                <span>
+                  The Latest Race card&rsquo;s round-by-round gap from the previous entry is closed:
+                  a flag strip now lets you jump to any race of the current season, not just the most
+                  recent one. Only the latest race&rsquo;s recap ships with the page; picking another
+                  one fetches it on the spot rather than building all twenty-three up front, which is
+                  what kept this out of the first live version. A race that hasn&rsquo;t been run yet
+                  shows a plain &ldquo;race yet to be held&rdquo; message instead of a blank or
+                  invented result. The schedule panel at the bottom, previously always the next race,
+                  now shows whichever race is selected &mdash; still converted into your own time
+                  zone, whether that race is behind you or still to come. The card&rsquo;s own height
+                  never changes between a loaded race, a loading one and one not yet run, which
+                  matters here specifically: the carousel only re-measures a card&rsquo;s size on a
+                  season or view change, not on this card&rsquo;s own clicks, so letting its height
+                  drift would have left it scaled wrong after the first pick. A few rounds of
+                  polish followed: the card had grown wider than intended and was narrowed twice,
+                  picking a race used to nudge the strip and everything below it by a few pixels
+                  when the &ldquo;Back to latest&rdquo; button showed or hid (fixed by pinning that
+                  row&rsquo;s height), the strip now opens scrolled to whichever race is selected
+                  rather than always starting at round one, and the small dot row under the
+                  carousel was removed as redundant once the jump bar above it already shows your
+                  position.
+                </span>
+              </li>
               <li>
                 <span className="seq">73</span>
                 <b>A live first card: the latest race and what&rsquo;s next</b>
@@ -80,15 +106,14 @@ export default function AboutPage() {
                   looking at it own time zone can&rsquo;t be baked into a picture. It started as a
                   mock-up Rahul iterated on through sixteen rounds of feedback before asking for the
                   real version. Scoped down from that mock-up for this first live pass: no
-                  round-by-round race picker yet (that needs the same data multiplied by every round
-                  rather than just the latest one), no position-change graph or pit stop detail
-                  (pit stop and lap-by-lap data aren&rsquo;t in this project&rsquo;s data at all yet,
-                  and this session&rsquo;s network access couldn&rsquo;t reach the live API to check
-                  what 2026 has), and the schedule&rsquo;s &ldquo;other&rdquo; time zone option shows
-                  UTC rather than each circuit&rsquo;s own local time, since there&rsquo;s no
-                  circuit-to-time-zone lookup here yet. Like every other card originally, this one
-                  may move to the pre-captured-image pattern later if it turns out to cost real
-                  performance &mdash; it ships live first on purpose.
+                  round-by-round race picker yet (added next round), no position-change graph or pit
+                  stop detail (pit stop and lap-by-lap data aren&rsquo;t in this project&rsquo;s data
+                  at all yet, and this session&rsquo;s network access couldn&rsquo;t reach the live
+                  API to check what 2026 has), and the schedule&rsquo;s &ldquo;other&rdquo; time zone
+                  option shows UTC rather than each circuit&rsquo;s own local time, since
+                  there&rsquo;s no circuit-to-time-zone lookup here yet. Like every other card
+                  originally, this one may move to the pre-captured-image pattern later if it turns
+                  out to cost real performance &mdash; it ships live first on purpose.
                 </span>
               </li>
               <li>
