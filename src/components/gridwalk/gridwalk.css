@@ -355,55 +355,6 @@
   color: var(--text-muted);
 }
 
-/* The disclaimer "i" button: its own small island (same shape as the
-   zoom island), a sibling of the logo/nav-pill/zoom islands rather than
-   folded into any of them. Rendered twice — once in the top bar, once in
-   the jump bar beside Fit — and each instance is shown or hidden by
-   breakpoint, the same way GridWalk already swaps its two tab strips.
-   On phones the top-bar one shows, at the row's right edge; on desktop
-   the jump-bar one shows instead, left of the zoom island. */
-.gw-disclaimer-anchor {
-  flex-shrink: 0;
-}
-.gw-disclaimer-anchor--bottom {
-  display: none;
-}
-.gw-disclaimer-island {
-  display: flex;
-  align-items: center;
-  padding: 0 6px;
-}
-@media (min-width: 641px) {
-  .gw-disclaimer-anchor--top {
-    display: none;
-  }
-  .gw-disclaimer-anchor--bottom {
-    display: flex;
-    align-items: center;
-  }
-}
-
-/* The disclaimer "i" button's popover: a wider, padded take on the
-   season menu's .ui-menu card, sized for a paragraph rather than a list
-   of options. The jump-bar instance sits at the bottom of the viewport,
-   so its popover opens upward instead of the default downward drop. */
-.gw-disclaimer-menu {
-  width: 260px;
-  max-height: none;
-  overflow-y: visible;
-  padding: 14px 16px;
-}
-.gw-disclaimer-menu p {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--text-secondary);
-}
-.gw-disclaimer-anchor--bottom .gw-disclaimer-menu {
-  top: auto;
-  bottom: calc(100% + 8px);
-}
-
 /* ---- Phone bottom bar -------------------------------------------------
    The island spans the width: the tab strip, a divider, then Fit. Swiping
    the strip browses (see settleStrip). The zoom buttons and level hide. */
@@ -1014,4 +965,54 @@
 .recap-placeholder {
   width: 560px;
   min-height: 360px;
+}
+
+/* ---- About card (see "grid-walk-about-card" memory) — the last card on
+   the strip, and, like the recap card, never a snapshot image: it's plain
+   text and links, which a baked image would break. A fixed width, since
+   it has no image of its own to size itself from (.gw-card is
+   width: max-content). Reuses the .credit-grid/.credit classes the old
+   /about route's credits section used — they're generic, not page-scoped. */
+.about-card {
+  width: 820px;
+}
+.about-card-intro {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+}
+.about-card-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+.about-card-col h2 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+@media (max-width: 640px) {
+  .about-card {
+    width: min(420px, 86vw);
+  }
+  .about-card-cols {
+    grid-template-columns: 1fr;
+  }
+}
+.about-card-disclaimer {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+}
+.about-card-disclaimer p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-muted);
 }

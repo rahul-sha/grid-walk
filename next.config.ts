@@ -1,12 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // The old Results and Positions pages were folded into Grid Walk's
-  // cards; send any saved links to the home page instead of a 404.
+  // The old Results, Positions and About pages were folded into Grid
+  // Walk's cards; send any saved links to the home page instead of a 404.
   async redirects() {
     return [
       { source: "/results", destination: "/", permanent: true },
       { source: "/positions", destination: "/", permanent: true },
+      { source: "/about", destination: "/", permanent: true },
     ];
   },
   async headers() {
