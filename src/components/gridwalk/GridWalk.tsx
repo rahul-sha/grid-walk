@@ -349,9 +349,11 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
       id: "podiumsD",
       title: "Driver Podiums",
       subtitle: "1st/2nd/3rd place finishes per driver.",
+      bakedTitle: true,
       snapshots: [{ name: "podiumsD", active: true }],
       render: ({ finishSummary }) => (
         <>
+          <CardHeader title="Driver Podiums" subtitle="1st/2nd/3rd place finishes per driver." />
           <PodiumBars
             drivers={finishSummary.driverPodiums.map((d) => ({
               label: d.code,
