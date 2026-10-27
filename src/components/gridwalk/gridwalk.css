@@ -778,9 +778,6 @@
   .recap-podium {
     gap: 5px;
   }
-  .recap-chip-team {
-    display: none;
-  }
 }
 
 /* The "wrong season" placeholder has far less content than a real recap,
