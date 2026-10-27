@@ -562,6 +562,7 @@
 .recap-picker-strip {
   display: flex;
   gap: 6px;
+  width: 680px;
   overflow-x: auto;
   padding: 2px 2px 6px;
   pointer-events: auto;
