@@ -669,7 +669,13 @@
 .recap-not-held-sub {
   font-size: 12px;
   color: var(--text-secondary);
-  max-width: 420px;
+  /* Must fit inside the narrowed card (see "grid-walk-race-picker-width-
+     tuning" memory) with room to spare: GridWalk never re-measures a
+     card's scale on its own internal state changes, so if this content's
+     natural width could ever exceed the picker strip's 387px, the card
+     would render at two different widths depending on which race is
+     selected, and the stale scale would clip one of them. */
+  max-width: 300px;
 }
 
 .recap-banner {
@@ -901,8 +907,12 @@
   color: var(--text-muted);
 }
 .sched-rows {
+  /* One column, not two: at the card's narrowed width (see
+     "grid-walk-race-picker-width-tuning" memory) two columns left each
+     session box too little room for its time, which doesn't wrap, so it
+     either overflowed its box or forced columns to uneven widths. */
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 6px;
 }
 .sched-row {
@@ -910,9 +920,11 @@
   border-radius: 8px;
   padding: 8px 10px;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+}
+.sess-name {
+  flex: 1;
 }
 .sess-name {
   font-size: 11px;
