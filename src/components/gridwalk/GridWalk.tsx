@@ -560,8 +560,11 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
 
     // The bars, arrows and their controls sit inside the wrap, but presses,
     // drags and wheel scrolls on them must never move or zoom the cards.
+    // The recap card's classification table scrolls itself too — without
+    // this a touch or drag on it always panned the carousel first, so it
+    // only actually scrolled if you landed exactly on its scrollbar.
     function onChrome(e: Event) {
-      return e.target instanceof Element && !!e.target.closest(".gw-topbar, .gw-jumpbar, .gw-arrow");
+      return e.target instanceof Element && !!e.target.closest(".gw-topbar, .gw-jumpbar, .gw-arrow, .recap-table");
     }
 
     function onPointerDown(e: PointerEvent) {
@@ -643,9 +646,10 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
     // pinch arrives as ctrl+wheel with small deltas, hence its higher rate.
     function onWheel(e: WheelEvent) {
       if (onChrome(e)) {
-        // The season menu is the one thing on the bars that scrolls
-        // itself; the browser must keep that wheel.
-        if (e.target instanceof Element && e.target.closest(".ui-menu")) return;
+        // The season menu and the recap card's classification table are
+        // the things on/over the carousel that scroll themselves; the
+        // browser must keep that wheel rather than have it zoom the card.
+        if (e.target instanceof Element && e.target.closest(".ui-menu, .recap-table")) return;
         e.preventDefault();
         return;
       }

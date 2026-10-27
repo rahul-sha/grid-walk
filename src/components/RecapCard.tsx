@@ -41,7 +41,9 @@ export default function RecapCard({ data }: { data: RecapData | null }) {
                     <span className="recap-chip-pos">P{row.pos}</span>
                     <span className="recap-chip-code">{row.code}</span>
                     <span className="recap-chip-team">{row.team}</span>
-                    {row.detail ? <span className="recap-chip-gap">{row.detail}</span> : null}
+                    <span className="recap-chip-gap" style={row.detail ? undefined : { visibility: "hidden" }}>
+                      {row.detail || "—"}
+                    </span>
                     <span className="recap-chip-swatch" style={{ background: row.color }} />
                   </div>
                 );
@@ -54,17 +56,26 @@ export default function RecapCard({ data }: { data: RecapData | null }) {
           </div>
 
           <div className="recap-toggle-row">
+            {/* stopPropagation: without it the click also reaches the card's
+                own onClick, which dives to full zoom since the toggle sits
+                on an already-focused, unzoomed card — see CardToggle. */}
             <button
               type="button"
               className={"recap-toggle" + (view === "race" ? " active" : "")}
-              onClick={() => setView("race")}
+              onClick={(e) => {
+                e.stopPropagation();
+                setView("race");
+              }}
             >
               Race
             </button>
             <button
               type="button"
               className={"recap-toggle" + (view === "qualifying" ? " active" : "")}
-              onClick={() => setView("qualifying")}
+              onClick={(e) => {
+                e.stopPropagation();
+                setView("qualifying");
+              }}
             >
               Qualifying
             </button>
@@ -98,18 +109,11 @@ function RecapTable({ rows }: { rows: RecapRow[] }) {
 }
 
 function UpNextSchedule({ race }: { race: NonNullable<RecapData["nextRace"]> }) {
-  // "Race-local" vs "your time zone" — default to the visitor's own, per
-  // Rahul's call on the mock-up. Resolved once on mount (server-rendered
-  // markup has no visitor time zone to go on) and never changes afterwards.
+  // Always the visitor's own time zone (Rahul's call) — no toggle. Resolved
+  // once on mount: the server-rendered markup has no visitor time zone to
+  // go on, so this only changes the client's output after hydration.
   const [visitorTz, setVisitorTz] = useState("UTC");
-  // The schedule's source times are UTC; there's no per-circuit local time
-  // zone lookup in this codebase yet, so the toggle's other option is UTC
-  // rather than a claimed "race local" time it can't actually show.
-  const [tzMode, setTzMode] = useState<"visitor" | "utc">("visitor");
   useEffect(() => {
-    // Resolving the visitor's time zone during render would run on the
-    // server too (where there's no "visitor"), mismatching the client's
-    // hydrated output — so this only ever runs once, after mount.
     try {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisitorTz(Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -118,22 +122,14 @@ function UpNextSchedule({ race }: { race: NonNullable<RecapData["nextRace"]> }) 
     }
   }, []);
 
-  const zone = tzMode === "visitor" ? visitorTz : "UTC";
-  const timeFmt = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", timeZone: zone });
-  const dayFmt = new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short", timeZone: zone });
+  const timeFmt = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", timeZone: visitorTz });
+  const dayFmt = new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short", timeZone: visitorTz });
 
   return (
     <div className="sched">
       <div className="sched-head">
         <h3>Up Next</h3>
-        <button
-          type="button"
-          className="sched-tz-toggle"
-          onClick={() => setTzMode((m) => (m === "visitor" ? "utc" : "visitor"))}
-          title="Toggle between your own time zone and UTC"
-        >
-          {tzMode === "visitor" ? "Your time" : "UTC"}
-        </button>
+        <span className="sched-tz-note">Your time</span>
       </div>
       <div className="sched-body">
         <div className="sched-track">

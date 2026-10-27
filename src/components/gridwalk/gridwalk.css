@@ -564,6 +564,10 @@
   flex-direction: column;
   gap: 2px;
   overflow: hidden;
+  /* Fixed, not intrinsic: the gap line is always rendered (hidden when
+     empty) so every chip has the same number of lines, but without this
+     the p1 chip's own +6px lift still left it visibly shorter than p2/p3. */
+  height: 112px;
 }
 .recap-chip.empty {
   visibility: hidden;
@@ -696,18 +700,14 @@
   font-weight: 700;
   color: var(--text-primary);
 }
-.sched-tz-toggle {
+.sched-tz-note {
   flex: none;
-  border: 0;
   border-radius: var(--radius-pill);
   padding: 4px 10px;
-  font: inherit;
   font-size: 11px;
   font-weight: 600;
   background: var(--surface-3);
   color: var(--text-secondary);
-  cursor: pointer;
-  pointer-events: auto;
 }
 .sched-body {
   display: grid;
