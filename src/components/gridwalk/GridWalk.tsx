@@ -864,9 +864,9 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
             <ThemeToggle />
             <AccentToggle />
             <SeasonSelector initialSeason={season} />
-            <DisclaimerButton />
           </div>
         </Island>
+        <DisclaimerButton />
       </div>
 
       <div className={"gw-hint" + (hintGone ? " gone" : "")} aria-hidden="true">

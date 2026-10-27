@@ -346,6 +346,25 @@
   color: var(--text-muted);
 }
 
+/* The disclaimer "i" button: its own small island (same shape as the
+   zoom island), a sibling of the logo and nav-pill islands rather than
+   folded into either — on desktop it falls into .gw-topbar's empty
+   third grid column; on phones it's the third item in the flex row,
+   pushed to the right edge same as the icon row used to be. */
+.gw-disclaimer-anchor {
+  flex-shrink: 0;
+}
+.gw-disclaimer-island {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+}
+@media (min-width: 641px) {
+  .gw-disclaimer-anchor {
+    justify-self: end;
+  }
+}
+
 /* The disclaimer "i" button's popover: a wider, padded take on the
    season menu's .ui-menu card, sized for a paragraph rather than a list
    of options. */
