@@ -503,10 +503,16 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
   }
 
   // Both tab strips (desktop top bar, phone bottom bar) show the same tabs
-  // and open the same card.
-  const navLabels = sections.map((section) => section.navLabel ?? section.title);
-  function jump(i: number) {
-    goTo(i);
+  // and open the same card. The About card is left out of them — it has
+  // its own dedicated pill beside the toggles, so a tab for it too would
+  // just be a second "About" control sitting right next to the first.
+  const navEntries = sections
+    .map((section, i) => ({ i, label: section.navLabel ?? section.title }))
+    .filter(({ i }) => sections[i].id !== "about");
+  const navLabels = navEntries.map((entry) => entry.label);
+  const navActive = navEntries.findIndex((entry) => entry.i === focus);
+  function jump(tabIndex: number) {
+    goTo(navEntries[tabIndex].i);
     dismissHint();
   }
 
@@ -867,11 +873,18 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
             tabs are hidden, and the controls sit on their own as before. */}
         <Island className="gw-navpill">
           <nav className="gw-toptabs" aria-label="Jump to">
-            <TabStrip className="gw-toptabs-track" items={navLabels} active={focus} onSelect={jump} />
+            <TabStrip className="gw-toptabs-track" items={navLabels} active={navActive} onSelect={jump} />
           </nav>
           <Divider className="gw-navpill-divider" />
           <div className="gw-topbar-right">
-            <Pill accent className="gw-about-link" onClick={() => jump(count - 1)}>
+            <Pill
+              accent
+              className="gw-about-link"
+              onClick={() => {
+                goTo(count - 1);
+                dismissHint();
+              }}
+            >
               About
             </Pill>
             <ThemeToggle />
@@ -919,7 +932,7 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
 
       <div className="gw-jumpbar">
         <Island className="gw-jumpbar-island">
-          <TabStrip className="gw-jumpbar-pills" items={navLabels} active={focus} onSelect={jump} />
+          <TabStrip className="gw-jumpbar-pills" items={navLabels} active={navActive} onSelect={jump} />
           <Divider className="gw-jumpbar-divider" />
           <div className="gw-zoomctl">
             <IconPill className="gw-zoom-icon" aria-label="Zoom out" onClick={() => zoomCentre(0.8)}>
