@@ -39,9 +39,9 @@ and the other colour combinations are prefetched once the browser is idle.
 Latest Race is the deliberate exception: it's built fresh on every request
 (`src/lib/recap.ts`), because converting each session time into the
 visitor's own time zone can't be baked into a shared image. It only shows
-anything for the current season — an older season gets a short note
-instead, so switching seasons never changes how many cards are on the
-strip. Picking a different race from its flag strip calls a server action
+anything for the current season, so it's left out of the strip entirely
+for any other one — switching seasons can change how many cards are on
+the strip. Picking a different race from its flag strip calls a server action
 (`src/app/actions/recap.ts`) rather than shipping every race's results with
 the page.
 
