@@ -25,6 +25,9 @@ Frequency, and Positions. The latter four are shared cards — a driver half
 and a team half either stacked with a divider or toggled in place with a
 pill button — and each card is the same real heatmap, chart, grid or podium
 bars that used to live on its own page, under the same title and subtitle.
+The last card, **About**, covers who built the site, how, the design and
+data credits, and the unofficial-fan-site disclaimer F1's brand guidelines
+ask every fan site to carry on its landing page.
 
 Every card but Latest Race is pre-rendered: for each season, every
 theme/palette combination is saved as a lossless WebP image under
@@ -43,7 +46,8 @@ anything for the current season, so it's left out of the strip entirely
 for any other one — switching seasons can change how many cards are on
 the strip. Picking a different race from its flag strip calls a server action
 (`src/app/actions/recap.ts`) rather than shipping every race's results with
-the page.
+the page. About is the other exception: it's plain text and links, so
+there's no snapshot to bake and no GPU cost to save by baking one.
 
 Browse by dragging, swiping, the side arrows, the ← → keys or the jump-bar
 tabs. Scroll or pinch to zoom around the pointer, then drag to pan; a
@@ -54,20 +58,15 @@ a bottom jump bar. A live grid drawn in the active theme's colours sits
 behind the cards, glowing around the cursor and rippling on each click or
 tap — all of it switches off under reduced-motion settings, and its redraw
 work stays limited to the area it actually lights up so dragging and
-scrolling stay smooth. The old standalone Results and Positions pages were
-retired once Grid Walk covered the same ground; their addresses redirect
-here. A small "i" button at the end of the top bar's icon row opens a
-disclaimer that this is an unofficial, fan-made site, not associated with
-Formula 1 — required by F1's brand guidelines for sites like this one.
-
-**About** (`/about`) covers who built this and how, credits, and a
-progress timeline.
+scrolling stay smooth. The old standalone Results, Positions and About
+pages were retired once Grid Walk covered the same ground; their addresses
+redirect here.
 
 Every page sits over a soft, slowly drifting gradient glow built from the
-active theme's own colours. The Grid Walk bars and logo, each page's
-title/subtitle card, and the About page use a plain translucent surface
-with no blur (a real device trace showed blur costing the GPU on every
-frame); table cards elsewhere are solid.
+active theme's own colours. The Grid Walk bars and logo, and each page's
+title/subtitle card, use a plain translucent surface with no blur (a real
+device trace showed blur costing the GPU on every frame); table cards
+elsewhere are solid.
 
 Pick a season from the selector in Grid Walk's top bar, shown as a
 calendar icon next to the year. The app defaults to the current calendar
@@ -75,9 +74,8 @@ year; only seasons from 2020 onwards are supported.
 
 ## Navigation
 
-Grid Walk's own top bar and jump bar are the navigation on the home page.
-The About page has no nav bar at all, just the Grid Walk logo as a
-translucent island that links back home.
+Grid Walk's own top bar and jump bar are the only navigation — the whole
+site is this one page now.
 
 ## Getting started
 

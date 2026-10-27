@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import "./gridwalk.css";
 import { createLiveGrid } from "./liveGrid";
 import SeasonSelector from "@/components/SeasonSelector";
 import ThemeToggle from "@/components/ThemeToggle";
 import AccentToggle from "@/components/AccentToggle";
-import DisclaimerButton from "./DisclaimerButton";
 import { Island, Pill, IconPill, Divider, TabStrip, Logo, CardHeader, CardToggle } from "@/components/ui";
 import type { PointsGrid } from "@/lib/points-grid";
 import type { ConstructorPointsGrid } from "@/lib/constructor-points-grid";
@@ -21,6 +19,7 @@ import FinishPositionsGrid from "@/components/FinishPositionsGrid";
 import QualifyingPositionsGrid from "@/components/QualifyingPositionsGrid";
 import PodiumBars from "@/components/PodiumBars";
 import RecapCard from "@/components/RecapCard";
+import AboutCard from "@/components/AboutCard";
 import type { RecapData } from "@/lib/recap";
 import {
   ACCENTS,
@@ -101,7 +100,6 @@ const DRAG_THRESHOLD = 6;
 // fitted to the space between the top bar and the jump bar, never
 // enlarged past its natural size. See "grid-walk-carousel-mockup" memory.
 export default function GridWalk({ season, live, sizes, initialVariant, recap }: GridWalkProps) {
-  const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLCanvasElement>(null);
@@ -220,9 +218,12 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
   }
 
   function renderCardBody(section: SectionDef) {
-    // The recap card is never a snapshot image — see its own file for why
-    // (the schedule half has to convert to each visitor's own time zone).
+    // The recap and about cards are never snapshot images — see their own
+    // files for why (the recap's schedule half has to convert to each
+    // visitor's own time zone; the about card is plain text and links,
+    // which a baked image would break).
     if (section.id === "recap") return <RecapCard data={recap} />;
+    if (section.id === "about") return <AboutCard />;
     if (live) return section.render(live);
     if (section.snapshots.length === 1) return renderSnapshot(section.snapshots[0].name);
     return (
@@ -371,6 +372,18 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
           />
         </>
       ),
+    },
+    {
+      id: "about",
+      title: "About this site",
+      subtitle: "Who built it, how, and what it runs on.",
+      // Continues the round numbering the old About-page timeline used to
+      // show (dropped in this same round — see "grid-walk-about-card"
+      // memory) — a build number without a new pipeline: bump it by hand
+      // each time a round ships.
+      headerActions: () => <span className="about-tag">Build 77</span>,
+      snapshots: [],
+      render: () => <AboutCard />,
     },
   ];
   const count = sections.length;
@@ -858,7 +871,7 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
           </nav>
           <Divider className="gw-navpill-divider" />
           <div className="gw-topbar-right">
-            <Pill accent className="gw-about-link" onClick={() => router.push("/about")}>
+            <Pill accent className="gw-about-link" onClick={() => jump(count - 1)}>
               About
             </Pill>
             <ThemeToggle />
@@ -866,7 +879,6 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
             <SeasonSelector initialSeason={season} />
           </div>
         </Island>
-        <DisclaimerButton className="gw-disclaimer-anchor--top" />
       </div>
 
       <div className={"gw-hint" + (hintGone ? " gone" : "")} aria-hidden="true">
@@ -906,7 +918,6 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
       </button>
 
       <div className="gw-jumpbar">
-        <DisclaimerButton className="gw-disclaimer-anchor--bottom" />
         <Island className="gw-jumpbar-island">
           <TabStrip className="gw-jumpbar-pills" items={navLabels} active={focus} onSelect={jump} />
           <Divider className="gw-jumpbar-divider" />
