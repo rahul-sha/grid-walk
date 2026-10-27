@@ -84,7 +84,14 @@ export default function AboutPage() {
                   never changes between a loaded race, a loading one and one not yet run, which
                   matters here specifically: the carousel only re-measures a card&rsquo;s size on a
                   season or view change, not on this card&rsquo;s own clicks, so letting its height
-                  drift would have left it scaled wrong after the first pick.
+                  drift would have left it scaled wrong after the first pick. A few rounds of
+                  polish followed: the card had grown wider than intended and was narrowed twice,
+                  picking a race used to nudge the strip and everything below it by a few pixels
+                  when the &ldquo;Back to latest&rdquo; button showed or hid (fixed by pinning that
+                  row&rsquo;s height), the strip now opens scrolled to whichever race is selected
+                  rather than always starting at round one, and the small dot row under the
+                  carousel was removed as redundant once the jump bar above it already shows your
+                  position.
                 </span>
               </li>
               <li>

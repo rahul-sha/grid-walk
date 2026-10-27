@@ -893,12 +893,6 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
         </svg>
       </button>
 
-      <div className="gw-dots" aria-hidden="true">
-        {sections.map((section, i) => (
-          <span key={section.id} className={i === focus ? "on" : ""} />
-        ))}
-      </div>
-
       <div className="gw-jumpbar">
         <Island className="gw-jumpbar-island">
           <TabStrip className="gw-jumpbar-pills" items={navLabels} active={focus} onSelect={jump} />

@@ -279,31 +279,6 @@
   pointer-events: none;
 }
 
-.gw-dots {
-  position: fixed;
-  left: 50%;
-  bottom: calc(62px + env(safe-area-inset-bottom, 0px));
-  z-index: 4;
-  display: flex;
-  gap: 6px;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-
-.gw-dots span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--text-muted) 45%, transparent);
-  transition: width 0.25s ease, background 0.25s ease;
-}
-
-.gw-dots span.on {
-  width: 18px;
-  border-radius: 3px;
-  background: var(--accent);
-}
-
 .gw-topbar {
   position: fixed;
   top: 0;
@@ -401,9 +376,6 @@
     -webkit-mask-image: linear-gradient(to right, #000 80%, transparent);
     mask-image: linear-gradient(to right, #000 80%, transparent);
   }
-  .gw-dots {
-    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
-  }
   .gw-arrow,
   .gw-zoom-level,
   .gw-zoom-icon,
@@ -482,9 +454,6 @@
   }
   .gw-jumpbar-pills {
     display: none;
-  }
-  .gw-dots {
-    bottom: calc(30px + env(safe-area-inset-bottom, 0px));
   }
   .gw-hint {
     top: auto;
