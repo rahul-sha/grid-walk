@@ -235,17 +235,27 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
     );
   }
 
+  // Latest Race only has anything to show for the current season (see
+  // "grid-walk-recap-schedule-card" memory) — rather than a placeholder
+  // card, it's left out of the strip entirely for any other season. This
+  // changes section count/order on a season switch, which is fine: that
+  // prop change already re-triggers layout()'s re-measure below, unlike
+  // the card's own internal clicks, which don't.
   const sections: SectionDef[] = [
-    {
-      id: "recap",
-      title: "Latest Race",
-      subtitle: recap?.lastRace
-        ? `Round ${recap.lastRace.round} · ${recap.lastRace.name}, ${recap.season}`
-        : "The most recent race, and the next one in your own time zone.",
-      navLabel: "Latest Race",
-      snapshots: [],
-      render: () => <RecapCard data={recap} />,
-    },
+    ...(recap
+      ? [
+          {
+            id: "recap",
+            title: "Latest Race",
+            subtitle: recap.lastRace
+              ? `Round ${recap.lastRace.round} · ${recap.lastRace.name}, ${recap.season}`
+              : "The most recent race, and the next one in your own time zone.",
+            navLabel: "Latest Race",
+            snapshots: [],
+            render: () => <RecapCard data={recap} />,
+          } satisfies SectionDef,
+        ]
+      : []),
     {
       id: "results",
       title: resultsView === "drivers" ? "Drivers Results" : "Team Results",

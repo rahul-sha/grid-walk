@@ -63,11 +63,24 @@ export default function AboutPage() {
             loading="lazy"
           />
           <p className="timeline-count">
-            74 rounds shipped since launch &mdash; most recent first. Minor polish-only rounds are
+            75 rounds shipped since launch &mdash; most recent first. Minor polish-only rounds are
             folded into the ones around them rather than listed separately.
           </p>
           <div className="timeline-inset" tabIndex={0} role="region" aria-label="Project timeline, scrollable">
             <ul className="timeline">
+              <li>
+                <span className="seq">75</span>
+                <b>Latest Race hides itself for past seasons</b>
+                <span>
+                  It used to stay in the strip for every season with a short note explaining it
+                  only covers the current one &mdash; now it&rsquo;s left out of the strip
+                  entirely once you switch away from the current season, rather than taking up a
+                  card with nothing to show. Switching seasons already re-measures the whole
+                  carousel, so changing how many cards are on the strip is safe here in a way
+                  that changing a single card&rsquo;s own size on its own clicks still
+                  isn&rsquo;t.
+                </span>
+              </li>
               <li>
                 <span className="seq">74</span>
                 <b>Browse any race of the season from the first card</b>
