@@ -535,6 +535,11 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  /* Fixed so the row's height doesn't change when the "Back to latest"
+     button appears/disappears (it's taller than the plain label text) —
+     without this, everything below the label jumps a few pixels on
+     every pick. */
+  min-height: 25px;
 }
 .recap-picker-label span:first-child {
   font-size: 11px;
@@ -562,7 +567,7 @@
 .recap-picker-strip {
   display: flex;
   gap: 6px;
-  width: 680px;
+  width: 387px;
   overflow-x: auto;
   padding: 2px 2px 6px;
   pointer-events: auto;
