@@ -8,7 +8,13 @@ import { Island, IconPill } from "@/components/ui";
 // Walk's homepage, so it lives behind this small "i" button instead — its
 // own small island (the same shape as the zoom island), not folded into
 // the nav pill alongside About/theme/palette/season.
-export default function DisclaimerButton() {
+//
+// Rendered twice (top bar and jump bar), each instance toggled by CSS per
+// breakpoint rather than by JS — the same pattern GridWalk already uses
+// for its two tab strips (.gw-toptabs / .gw-jumpbar-pills). Only one is
+// ever visible at a time, so the two instances' independent open state
+// never both show.
+export default function DisclaimerButton({ className }: { className: string }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -24,7 +30,10 @@ export default function DisclaimerButton() {
   }, [open]);
 
   return (
-    <div className={"ui-menu-anchor gw-disclaimer-anchor" + (open ? " open" : "")} ref={rootRef}>
+    <div
+      className={"ui-menu-anchor gw-disclaimer-anchor " + className + (open ? " open" : "")}
+      ref={rootRef}
+    >
       <Island className="gw-disclaimer-island">
         <IconPill
           aria-label="Unofficial fan site disclaimer"

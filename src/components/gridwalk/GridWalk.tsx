@@ -866,7 +866,7 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
             <SeasonSelector initialSeason={season} />
           </div>
         </Island>
-        <DisclaimerButton />
+        <DisclaimerButton className="gw-disclaimer-anchor--top" />
       </div>
 
       <div className={"gw-hint" + (hintGone ? " gone" : "")} aria-hidden="true">
@@ -906,6 +906,7 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
       </button>
 
       <div className="gw-jumpbar">
+        <DisclaimerButton className="gw-disclaimer-anchor--bottom" />
         <Island className="gw-jumpbar-island">
           <TabStrip className="gw-jumpbar-pills" items={navLabels} active={focus} onSelect={jump} />
           <Divider className="gw-jumpbar-divider" />
