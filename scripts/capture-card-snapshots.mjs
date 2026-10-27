@@ -40,15 +40,18 @@ const THEMES = ["light", "dark"];
 // Index within GridWalk's `sections` array (and so its top tab strip's
 // tabs) — each must be focused via its tab before its card is screenshot,
 // since an unfocused card sits dimmed and off-centre in the carousel.
+// Index 0 ("recap") is deliberately absent: it's never a snapshot — see
+// "grid-walk-recap-schedule-card" memory — so every other tabIndex below
+// is one higher than the card's own position used to be.
 const PLAIN_SECTIONS = [
-  { id: "evolution", tabIndex: 1 },
-  { id: "positions", tabIndex: 2 },
-  { id: "podiumsD", tabIndex: 4 },
+  { id: "evolution", tabIndex: 2 },
+  { id: "positions", tabIndex: 3 },
+  { id: "podiumsD", tabIndex: 5 },
 ];
 // Cards with an in-header toggle: both views captured, one image each.
 const TOGGLED_SECTIONS = [
-  { id: "results", tabIndex: 0, views: ["drivers", "teams"] },
-  { id: "freq", tabIndex: 3, views: ["finish", "quali"] },
+  { id: "results", tabIndex: 1, views: ["drivers", "teams"] },
+  { id: "freq", tabIndex: 4, views: ["finish", "quali"] },
 ];
 // .gw-slot's opacity transition (0.35s) plus the camera-pan/zoom-reset
 // animation goTo() triggers both need to fully settle before a screenshot.

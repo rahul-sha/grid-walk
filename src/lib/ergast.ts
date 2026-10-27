@@ -53,6 +53,11 @@ export interface Circuit {
   Location: { lat: string; long: string; locality: string; country: string };
 }
 
+export interface RaceSession {
+  date: string;
+  time?: string;
+}
+
 export interface Race {
   season: string;
   round: string;
@@ -60,7 +65,12 @@ export interface Race {
   Circuit: Circuit;
   date: string;
   time?: string;
-  Sprint?: { date: string; time?: string };
+  FirstPractice?: RaceSession;
+  SecondPractice?: RaceSession;
+  ThirdPractice?: RaceSession;
+  SprintQualifying?: RaceSession;
+  Sprint?: RaceSession;
+  Qualifying?: RaceSession;
 }
 
 export interface RaceResult {
@@ -73,7 +83,8 @@ export interface RaceResult {
   grid: string;
   laps: string;
   status: string;
-  FastestLap?: { rank: string };
+  Time?: { millis?: string; time: string };
+  FastestLap?: { rank: string; lap?: string; Time?: { time: string } };
 }
 
 export interface QualifyingResult {

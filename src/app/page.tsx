@@ -4,6 +4,7 @@ import { buildFinishPositionSummary } from "@/lib/finish-positions";
 import { buildQualifyingPositionSummary } from "@/lib/qualifying-positions";
 import { currentSeason, resolvePersistedSeason } from "@/lib/seasons";
 import { readSnapshotManifest, resolvePersistedVariant } from "@/lib/card-snapshots";
+import { buildRecapData } from "@/lib/recap";
 import GridWalk, { type GridWalkData } from "@/components/gridwalk/GridWalk";
 
 export default async function Home({
@@ -31,7 +32,19 @@ export default async function Home({
     live = { pointsGrid, constructorGrid, finishSummary, qualifyingSummary };
   }
 
-  const [manifest, variant] = await Promise.all([readSnapshotManifest(season), resolvePersistedVariant()]);
+  const [manifest, variant, recap] = await Promise.all([
+    readSnapshotManifest(season),
+    resolvePersistedVariant(),
+    season === currentSeason() ? buildRecapData(season) : Promise.resolve(null),
+  ]);
 
-  return <GridWalk season={season} live={live} sizes={manifest?.sizes ?? null} initialVariant={variant} />;
+  return (
+    <GridWalk
+      season={season}
+      live={live}
+      sizes={manifest?.sizes ?? null}
+      initialVariant={variant}
+      recap={recap}
+    />
+  );
 }
