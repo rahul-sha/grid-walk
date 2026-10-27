@@ -346,6 +346,22 @@
   color: var(--text-muted);
 }
 
+/* The disclaimer "i" button's popover: a wider, padded take on the
+   season menu's .ui-menu card, sized for a paragraph rather than a list
+   of options. */
+.gw-disclaimer-menu {
+  width: 260px;
+  max-height: none;
+  overflow-y: visible;
+  padding: 14px 16px;
+}
+.gw-disclaimer-menu p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
 /* ---- Phone bottom bar -------------------------------------------------
    The island spans the width: the tab strip, a divider, then Fit. Swiping
    the strip browses (see settleStrip). The zoom buttons and level hide. */

@@ -7,6 +7,7 @@ import { createLiveGrid } from "./liveGrid";
 import SeasonSelector from "@/components/SeasonSelector";
 import ThemeToggle from "@/components/ThemeToggle";
 import AccentToggle from "@/components/AccentToggle";
+import DisclaimerButton from "./DisclaimerButton";
 import { Island, Pill, IconPill, Divider, TabStrip, Logo, CardHeader, CardToggle } from "@/components/ui";
 import type { PointsGrid } from "@/lib/points-grid";
 import type { ConstructorPointsGrid } from "@/lib/constructor-points-grid";
@@ -863,6 +864,7 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
             <ThemeToggle />
             <AccentToggle />
             <SeasonSelector initialSeason={season} />
+            <DisclaimerButton />
           </div>
         </Island>
       </div>

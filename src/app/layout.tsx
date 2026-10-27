@@ -61,11 +61,6 @@ export default function RootLayout({
           <main id="main-content" className="min-w-0 flex-1 logo-clearance">
             {children}
           </main>
-          <footer className="site-disclaimer">
-            This website is unofficial and is not associated in any way with the Formula 1
-            companies. F1, FORMULA ONE, FORMULA 1, FIA FORMULA ONE WORLD CHAMPIONSHIP, GRAND PRIX
-            and related marks are trade marks of Formula One Licensing B.V.
-          </footer>
         </div>
       </body>
     </html>

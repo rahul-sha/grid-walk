@@ -472,24 +472,6 @@ body {
   }
 }
 
-/* Fan-site disclaimer required by F1's brand guidelines for unofficial
-   sites. Sits at the end of the document flow (not fixed) so it never
-   competes with Grid Walk's fixed nav/jump bars, and stays small and
-   muted since it's a legal notice, not page content. */
-.site-disclaimer {
-  flex-shrink: 0;
-  padding: 0 4px;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--text-secondary);
-  opacity: 0.6;
-  text-align: center;
-}
-@media (max-width: 640px) {
-  .site-disclaimer {
-    padding: 0 16px;
-  }
-}
 
 /* Table card: the whole table sits in one rounded tonal surface instead of
    a bordered grid, with row stripes (not gridlines) separating drivers. */
