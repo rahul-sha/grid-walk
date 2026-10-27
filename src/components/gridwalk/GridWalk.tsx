@@ -19,6 +19,8 @@ import ConstructorPointsEvolutionChart from "@/components/ConstructorPointsEvolu
 import FinishPositionsGrid from "@/components/FinishPositionsGrid";
 import QualifyingPositionsGrid from "@/components/QualifyingPositionsGrid";
 import PodiumBars from "@/components/PodiumBars";
+import RecapCard from "@/components/RecapCard";
+import type { RecapData } from "@/lib/recap";
 import {
   ACCENTS,
   THEMES,
@@ -49,6 +51,10 @@ export interface GridWalkProps {
   // The visitor's persisted theme/palette, read from cookies on the
   // server. Theme null = nothing chosen yet, follow the device.
   initialVariant: { accent: Accent; theme: Theme | null };
+  // The recap + up-next card's data, built fresh on every request (see
+  // "grid-walk-recap-schedule-card" memory) — null for any season but the
+  // current one, since there's no "latest race" or "up next" otherwise.
+  recap: RecapData | null;
 }
 
 type SectionDef = {
@@ -93,7 +99,7 @@ const DRAG_THRESHOLD = 6;
 // At k=1 the strip always settles with one card centred; each card is
 // fitted to the space between the top bar and the jump bar, never
 // enlarged past its natural size. See "grid-walk-carousel-mockup" memory.
-export default function GridWalk({ season, live, sizes, initialVariant }: GridWalkProps) {
+export default function GridWalk({ season, live, sizes, initialVariant, recap }: GridWalkProps) {
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
@@ -213,6 +219,9 @@ export default function GridWalk({ season, live, sizes, initialVariant }: GridWa
   }
 
   function renderCardBody(section: SectionDef) {
+    // The recap card is never a snapshot image — see its own file for why
+    // (the schedule half has to convert to each visitor's own time zone).
+    if (section.id === "recap") return <RecapCard data={recap} />;
     if (live) return section.render(live);
     if (section.snapshots.length === 1) return renderSnapshot(section.snapshots[0].name);
     return (
@@ -227,6 +236,16 @@ export default function GridWalk({ season, live, sizes, initialVariant }: GridWa
   }
 
   const sections: SectionDef[] = [
+    {
+      id: "recap",
+      title: "Latest Race",
+      subtitle: recap?.lastRace
+        ? `Round ${recap.lastRace.round} · ${recap.lastRace.name}, ${recap.season}`
+        : "The most recent race, and the next one in your own time zone.",
+      navLabel: "Latest Race",
+      snapshots: [],
+      render: () => <RecapCard data={recap} />,
+    },
     {
       id: "results",
       title: resultsView === "drivers" ? "Drivers Results" : "Team Results",

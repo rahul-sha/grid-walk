@@ -63,11 +63,34 @@ export default function AboutPage() {
             loading="lazy"
           />
           <p className="timeline-count">
-            72 rounds shipped since launch &mdash; most recent first. Minor polish-only rounds are
+            73 rounds shipped since launch &mdash; most recent first. Minor polish-only rounds are
             folded into the ones around them rather than listed separately.
           </p>
           <div className="timeline-inset" tabIndex={0} role="region" aria-label="Project timeline, scrollable">
             <ul className="timeline">
+              <li>
+                <span className="seq">73</span>
+                <b>A live first card: the latest race and what&rsquo;s next</b>
+                <span>
+                  A new card, first on the strip, for the current season only: a recap of the most
+                  recently completed race (podium, pole, fastest lap, full classification and
+                  qualifying order), and the next race&rsquo;s session schedule converted into your
+                  own time zone. Every other card on Grid Walk is a pre-captured image &mdash; this
+                  one is a deliberate exception, since converting each session time into whoever is
+                  looking at it own time zone can&rsquo;t be baked into a picture. It started as a
+                  mock-up Rahul iterated on through sixteen rounds of feedback before asking for the
+                  real version. Scoped down from that mock-up for this first live pass: no
+                  round-by-round race picker yet (that needs the same data multiplied by every round
+                  rather than just the latest one), no position-change graph or pit stop detail
+                  (pit stop and lap-by-lap data aren&rsquo;t in this project&rsquo;s data at all yet,
+                  and this session&rsquo;s network access couldn&rsquo;t reach the live API to check
+                  what 2026 has), and the schedule&rsquo;s &ldquo;other&rdquo; time zone option shows
+                  UTC rather than each circuit&rsquo;s own local time, since there&rsquo;s no
+                  circuit-to-time-zone lookup here yet. Like every other card originally, this one
+                  may move to the pre-captured-image pattern later if it turns out to cost real
+                  performance &mdash; it ships live first on purpose.
+                </span>
+              </li>
               <li>
                 <span className="seq">72</span>
                 <b>Points Evolution titles, nav labels, leader lines</b>

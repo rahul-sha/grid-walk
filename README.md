@@ -10,25 +10,34 @@ language.
 ## Pages
 
 **Home / Grid Walk** (`/`) is the site's entry point and now its only page
-for race data. The season's five graphics sit on one horizontal carousel
-strip, in the same order as the "Jump to" bar below it: Driver/Constructor
-Points Evolution, Driver/Constructor Podiums, Drivers/Team Results, Finish
-and Qualifying Frequency, and Positions. The first four are shared cards —
-a driver half and a team half either stacked with a divider or toggled
-in place with a pill button — and each card is the same real heatmap,
-chart, grid or podium bars that used to live on its own page, under the
-same title and subtitle.
+for race data. The first card, **Latest Race**, is current-season only: a
+recap of the most recently completed race (podium, pole, fastest lap, full
+classification and qualifying order) and the next race's session schedule
+converted into the visitor's own time zone. The remaining five graphics
+follow it on the same horizontal carousel strip, in the same order as the
+"Jump to" bar below it: Driver/Constructor Points Evolution,
+Driver/Constructor Podiums, Drivers/Team Results, Finish and Qualifying
+Frequency, and Positions. The latter four are shared cards — a driver half
+and a team half either stacked with a divider or toggled in place with a
+pill button — and each card is the same real heatmap, chart, grid or podium
+bars that used to live on its own page, under the same title and subtitle.
 
-Every card is pre-rendered: for each season, every theme/palette
-combination is saved as a lossless WebP image under
+Every card but Latest Race is pre-rendered: for each season, every
+theme/palette combination is saved as a lossless WebP image under
 `public/card-snapshots/<season>/<palette>-<theme>/`, with a `manifest.json`
 recording each image's natural size so the layout is known before anything
-loads. Visitors never render a card live. The images come from
+loads. Visitors never render those cards live. The images come from
 `scripts/capture-card-snapshots.mjs`, which the `capture-card-snapshots.yml`
 workflow runs every Monday for the current season (pass a year, or `all`,
 to capture finished seasons by hand). The visitor's theme and palette are
 read from cookies so the server can pick the right image on first paint,
 and the other colour combinations are prefetched once the browser is idle.
+Latest Race is the deliberate exception: it's built fresh on every request
+(`src/lib/recap.ts`), because converting each session time into the
+visitor's own time zone can't be baked into a shared image. It only shows
+anything for the current season — an older season gets a short note
+instead, so switching seasons never changes how many cards are on the
+strip.
 
 Browse by dragging, swiping, the side arrows, the ← → keys or the jump-bar
 tabs. Scroll or pinch to zoom around the pointer, then drag to pan; a
