@@ -322,6 +322,9 @@
   right: max(1.25rem, env(safe-area-inset-right, 0px));
   bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
   z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .gw-jumpbar-island {
@@ -329,6 +332,12 @@
   align-items: center;
   gap: 6px;
   padding: 0 6px;
+  /* On phones .gw-jumpbar has a definite width (left and right are both
+     set below), so this fills it exactly as it did before the bottom
+     disclaimer instance joined the row; on desktop the row has no such
+     constraint, so this has no visible effect there (flex-grow is inert
+     in a shrink-to-fit container) and the island stays content-sized. */
+  flex: 1;
 }
 
 .gw-zoomctl {
@@ -344,6 +353,55 @@
   font-variant-numeric: tabular-nums;
   text-align: center;
   color: var(--text-muted);
+}
+
+/* The disclaimer "i" button: its own small island (same shape as the
+   zoom island), a sibling of the logo/nav-pill/zoom islands rather than
+   folded into any of them. Rendered twice — once in the top bar, once in
+   the jump bar beside Fit — and each instance is shown or hidden by
+   breakpoint, the same way GridWalk already swaps its two tab strips.
+   On phones the top-bar one shows, at the row's right edge; on desktop
+   the jump-bar one shows instead, left of the zoom island. */
+.gw-disclaimer-anchor {
+  flex-shrink: 0;
+}
+.gw-disclaimer-anchor--bottom {
+  display: none;
+}
+.gw-disclaimer-island {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+}
+@media (min-width: 641px) {
+  .gw-disclaimer-anchor--top {
+    display: none;
+  }
+  .gw-disclaimer-anchor--bottom {
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* The disclaimer "i" button's popover: a wider, padded take on the
+   season menu's .ui-menu card, sized for a paragraph rather than a list
+   of options. The jump-bar instance sits at the bottom of the viewport,
+   so its popover opens upward instead of the default downward drop. */
+.gw-disclaimer-menu {
+  width: 260px;
+  max-height: none;
+  overflow-y: visible;
+  padding: 14px 16px;
+}
+.gw-disclaimer-menu p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.gw-disclaimer-anchor--bottom .gw-disclaimer-menu {
+  top: auto;
+  bottom: calc(100% + 8px);
 }
 
 /* ---- Phone bottom bar -------------------------------------------------

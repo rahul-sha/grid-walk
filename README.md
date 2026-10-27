@@ -56,7 +56,9 @@ tap — all of it switches off under reduced-motion settings, and its redraw
 work stays limited to the area it actually lights up so dragging and
 scrolling stay smooth. The old standalone Results and Positions pages were
 retired once Grid Walk covered the same ground; their addresses redirect
-here.
+here. A small "i" button at the end of the top bar's icon row opens a
+disclaimer that this is an unofficial, fan-made site, not associated with
+Formula 1 — required by F1's brand guidelines for sites like this one.
 
 **About** (`/about`) covers who built this and how, credits, and a
 progress timeline.

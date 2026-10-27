@@ -7,6 +7,7 @@ import { createLiveGrid } from "./liveGrid";
 import SeasonSelector from "@/components/SeasonSelector";
 import ThemeToggle from "@/components/ThemeToggle";
 import AccentToggle from "@/components/AccentToggle";
+import DisclaimerButton from "./DisclaimerButton";
 import { Island, Pill, IconPill, Divider, TabStrip, Logo, CardHeader, CardToggle } from "@/components/ui";
 import type { PointsGrid } from "@/lib/points-grid";
 import type { ConstructorPointsGrid } from "@/lib/constructor-points-grid";
@@ -865,6 +866,7 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
             <SeasonSelector initialSeason={season} />
           </div>
         </Island>
+        <DisclaimerButton className="gw-disclaimer-anchor--top" />
       </div>
 
       <div className={"gw-hint" + (hintGone ? " gone" : "")} aria-hidden="true">
@@ -904,6 +906,7 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
       </button>
 
       <div className="gw-jumpbar">
+        <DisclaimerButton className="gw-disclaimer-anchor--bottom" />
         <Island className="gw-jumpbar-island">
           <TabStrip className="gw-jumpbar-pills" items={navLabels} active={focus} onSelect={jump} />
           <Divider className="gw-jumpbar-divider" />

@@ -63,11 +63,22 @@ export default function AboutPage() {
             loading="lazy"
           />
           <p className="timeline-count">
-            75 rounds shipped since launch &mdash; most recent first. Minor polish-only rounds are
+            76 rounds shipped since launch &mdash; most recent first. Minor polish-only rounds are
             folded into the ones around them rather than listed separately.
           </p>
           <div className="timeline-inset" tabIndex={0} role="region" aria-label="Project timeline, scrollable">
             <ul className="timeline">
+              <li>
+                <span className="seq">76</span>
+                <b>A disclaimer button, clear of Fit</b>
+                <span>
+                  F1&rsquo;s brand guidelines ask unofficial fan sites to carry a disclaimer on the
+                  homepage. A permanent footer line read badly, so it now lives behind a small
+                  &ldquo;i&rdquo; button in the top-right icon row instead, opening the full
+                  wording in a popover &mdash; placed well clear of the zoom island&rsquo;s Fit
+                  controls in the opposite corner.
+                </span>
+              </li>
               <li>
                 <span className="seq">75</span>
                 <b>Latest Race hides itself for past seasons</b>
