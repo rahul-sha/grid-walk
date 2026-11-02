@@ -37,33 +37,32 @@ const SEASONS =
 
 const ACCENTS = ["monokai", "coffee", "ember", "dracula"];
 const THEMES = ["light", "dark"];
-// Index within GridWalk's `sections` array (and so its top tab strip's
-// tabs) — each must be focused via its tab before its card is screenshot,
-// since an unfocused card sits dimmed and off-centre in the carousel.
-// "recap" (Latest Race) is never a snapshot — see
-// "grid-walk-recap-schedule-card" memory — and, since round 74, isn't in
-// the strip at all for any season but the current one (see
-// "grid-walk-recap-schedule-card" memory's hide-for-past-seasons note), so
-// every other card's tab index shifts down by one for a past season. Base
-// indices below assume recap IS present; captureSeason() adjusts by -1
-// when capturing a season that isn't CURRENT_SEASON.
+// Each card must be focused via its "Jump to" tab before it is screenshot,
+// since an unfocused card sits dimmed and off-centre in the carousel. Tabs
+// are found by their label (GridWalk's `navLabel ?? title`) rather than by
+// position, so adding, removing or reordering cards — or the Latest Race
+// tab only existing for the current season — can't silently point a
+// capture at the wrong card. "recap" (Latest Race) and "about" are never
+// snapshots: plain text and links, nothing to bake.
 const PLAIN_SECTIONS = [
-  { id: "evolution", tabIndex: 2 },
-  { id: "positions", tabIndex: 3 },
-  { id: "podiumsD", tabIndex: 5 },
+  { id: "evolution", tab: "Points Evolution" },
+  { id: "positions", tab: "Positions" },
+  { id: "podiumsD", tab: "Driver Podiums" },
 ];
 // Cards with an in-header toggle: both views captured, one image each.
 const TOGGLED_SECTIONS = [
-  { id: "results", tabIndex: 1, views: ["drivers", "teams"] },
-  { id: "freq", tabIndex: 4, views: ["finish", "quali"] },
+  { id: "results", tab: "Points Finishes", views: ["drivers", "teams"] },
+  { id: "freq", tab: "Position Frequency", views: ["finish", "quali"] },
 ];
 // .gw-slot's opacity transition (0.35s) plus the camera-pan/zoom-reset
 // animation goTo() triggers both need to fully settle before a screenshot.
 const FOCUS_SETTLE_MS = 900;
 
-async function focusTab(page, tabIndex) {
-  const tabs = await page.$$(".gw-toptabs-track .ui-pill");
-  await tabs[tabIndex].click();
+async function focusTab(page, label) {
+  const exact = new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
+  const tab = page.locator(".gw-toptabs-track .ui-pill", { hasText: exact }).first();
+  if ((await tab.count()) === 0) throw new Error(`No "${label}" tab in the top strip`);
+  await tab.click();
   await page.waitForTimeout(FOCUS_SETTLE_MS);
 }
 
@@ -78,9 +77,6 @@ async function capture(el, file) {
 async function captureSeason(browser, season) {
   const outRoot = path.join(__dirname, "..", "public", "card-snapshots", String(season));
   const sizes = {};
-  // recap's tab only exists for the current season; every other tab's
-  // index shifts down by one when it's absent.
-  const tabOffset = season === CURRENT_SEASON ? 0 : -1;
 
   for (const accent of ACCENTS) {
     for (const theme of THEMES) {
@@ -106,8 +102,8 @@ async function captureSeason(browser, season) {
       await page.goto(`${BASE_URL}/?season=${season}&noSnapshot=1`, { waitUntil: "networkidle" });
       await page.waitForTimeout(600);
 
-      for (const { id, tabIndex } of PLAIN_SECTIONS) {
-        await focusTab(page, tabIndex + tabOffset);
+      for (const { id, tab } of PLAIN_SECTIONS) {
+        await focusTab(page, tab);
         const el = await page.$(`.gw-snap-target[data-section="${id}"]`);
         if (!el) {
           console.warn(`skip ${season}/${accent}-${theme}/${id}: not found on page`);
@@ -117,8 +113,8 @@ async function captureSeason(browser, season) {
         console.log(`${season}/${accent}-${theme}/${id}.webp`);
       }
 
-      for (const { id, tabIndex, views } of TOGGLED_SECTIONS) {
-        await focusTab(page, tabIndex + tabOffset);
+      for (const { id, tab, views } of TOGGLED_SECTIONS) {
+        await focusTab(page, tab);
         for (const [n, view] of views.entries()) {
           if (n > 0) {
             await page.click(`.ui-card-toggle[data-toggle="${id}"]`);

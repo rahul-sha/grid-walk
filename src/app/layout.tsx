@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
+import ThemedFavicon from "@/components/ThemedFavicon";
 
 export const metadata: Metadata = {
   title: "Grid Walk",
@@ -13,9 +14,9 @@ export const metadata: Metadata = {
   },
   icons: {
     // Two tab icons, switched by the browser itself to match the device's
-    // light/dark setting (not the in-app theme toggle, which JS can't
-    // reach a tab icon from). favicon.ico is the plain fallback for
-    // browsers that don't support `media` on icons.
+    // light/dark setting until the visitor picks a theme in-app, when
+    // ThemedFavicon repoints them at the chosen one. favicon.ico is the
+    // plain fallback for browsers that don't support `media` on icons.
     icon: [
       { url: "/favicon.ico" },
       { url: "/icons/favicon-light.png", media: "(prefers-color-scheme: light)", type: "image/png" },
@@ -57,6 +58,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <RegisterServiceWorker />
+        <ThemedFavicon />
         <div className="page-shell flex min-h-screen flex-col gap-6 p-4">
           <main id="main-content" className="min-w-0 flex-1 logo-clearance">
             {children}
