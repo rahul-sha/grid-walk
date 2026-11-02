@@ -20,6 +20,7 @@ import QualifyingPositionsGrid from "@/components/QualifyingPositionsGrid";
 import PodiumBars from "@/components/PodiumBars";
 import RecapCard from "@/components/RecapCard";
 import AboutCard from "@/components/AboutCard";
+import { buildId, buildDateLabel } from "@/lib/buildInfo";
 import type { RecapData } from "@/lib/recap";
 import {
   ACCENTS,
@@ -390,9 +391,15 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
       subtitle: "Who built it, how, and what it runs on.",
       // Continues the round numbering the old About-page timeline used to
       // show (dropped in this same round — see "grid-walk-about-card"
-      // memory) — a build number without a new pipeline: bump it by hand
-      // each time a round ships.
-      headerActions: () => <span className="about-tag">Build 77</span>,
+      // memory). Derived from the deployed commit (see next.config.ts /
+      // src/lib/buildInfo.ts) instead of being bumped by hand, since that
+      // kept going stale.
+      headerActions: () => (
+        <span className="about-tag">
+          Build {buildId}
+          {buildDateLabel ? ` · ${buildDateLabel}` : ""}
+        </span>
+      ),
       snapshots: [],
       render: () => <AboutCard />,
     },
