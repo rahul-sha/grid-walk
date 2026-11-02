@@ -249,9 +249,18 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
           {
             id: "recap",
             title: "Latest Race",
-            subtitle: recap.lastRace
-              ? `Round ${recap.lastRace.round} · ${recap.lastRace.name}, ${recap.season}`
-              : "The most recent race, and the next one in your own time zone.",
+            // Named from the schedule, not lastRace: lastRace is null while
+            // the latest round's results are still pending, and the longer
+            // generic line it used to fall back to then set the card's
+            // max-content width (this card's body scales down to ~320px, so
+            // the header is the widest thing in it), leaving a blank band
+            // down the card's right-hand side.
+            subtitle: (() => {
+              const latest = recap.raceList.find((r) => r.round === recap.latestRound);
+              return latest
+                ? `Round ${latest.round} · ${latest.name}, ${recap.season}`
+                : "The most recent race, in your own time zone.";
+            })(),
             navLabel: "Latest Race",
             snapshots: [],
             render: () => <RecapCard data={recap} />,
