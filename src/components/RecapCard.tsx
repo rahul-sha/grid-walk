@@ -14,7 +14,7 @@ import { getRaceRecap } from "@/app/actions/recap";
 // other one is fetched lazily when picked, never all 23 up front.
 export default function RecapCard({ data }: { data: RecapData | null }) {
   const [view, setView] = useState<"race" | "qualifying">("race");
-  const [activeRound, setActiveRound] = useState<number | null>(data?.lastRace?.round ?? null);
+  const [activeRound, setActiveRound] = useState<number | null>(data?.latestRound ?? null);
   const [cache, setCache] = useState<Record<number, LastRaceRecap | null>>(() =>
     data?.lastRace ? { [data.lastRace.round]: data.lastRace } : {},
   );
@@ -37,6 +37,14 @@ export default function RecapCard({ data }: { data: RecapData | null }) {
   const { season, raceList } = data;
   const activeMeta = raceList.find((r) => r.round === activeRound) ?? null;
   const notYetHeld = activeMeta ? activeMeta.raceStart > now : false;
+  // Different races have different session counts (a sprint weekend drops
+  // FP2/FP3 for Sprint Qualifying + Sprint). Session Times is the last thing
+  // in the card and GridWalk's fitContent() only measures this card's
+  // natural height once (see "grid-walk-race-picker" memory) — so without
+  // this, picking a race with more rows than whatever was active at mount
+  // grows the card past its cached scale, and .gw-frame's overflow: hidden
+  // clips the extra rows straight off the bottom.
+  const maxSessions = Math.max(0, ...raceList.map((r) => r.sessions.length));
 
   function selectRound(round: number) {
     if (round === activeRound) return;
@@ -64,7 +72,7 @@ export default function RecapCard({ data }: { data: RecapData | null }) {
   return (
     <>
       {raceList.length > 0 ? (
-        <RacePicker raceList={raceList} activeRound={activeRound} latestRound={data.lastRace?.round ?? null} now={now} onSelect={selectRound} />
+        <RacePicker raceList={raceList} activeRound={activeRound} latestRound={data.latestRound} now={now} onSelect={selectRound} />
       ) : null}
 
       {/* Fixed height so switching race keeps the card's natural size
@@ -111,7 +119,7 @@ export default function RecapCard({ data }: { data: RecapData | null }) {
       </div>
 
       <div className="card-divider" />
-      {activeMeta ? <SessionTimes meta={activeMeta} /> : <p className="recap-empty">No races scheduled this season.</p>}
+      {activeMeta ? <SessionTimes meta={activeMeta} padRowsTo={maxSessions} /> : <p className="recap-empty">No races scheduled this season.</p>}
     </>
   );
 }
@@ -249,7 +257,7 @@ function RecapTable({ rows }: { rows: RecapRow[] }) {
 // The selected race's own session schedule, always in the visitor's own
 // time zone — replaces the earlier fixed "Up Next" block (which only ever
 // showed the next real race) now that any race can be selected.
-function SessionTimes({ meta }: { meta: RaceSummary }) {
+function SessionTimes({ meta, padRowsTo }: { meta: RaceSummary; padRowsTo: number }) {
   const [visitorTz, setVisitorTz] = useState("UTC");
   useEffect(() => {
     try {
@@ -291,6 +299,12 @@ function SessionTimes({ meta }: { meta: RaceSummary }) {
               </div>
             );
           })}
+          {Array.from({ length: Math.max(0, padRowsTo - meta.sessions.length) }, (_, i) => (
+            <div className="sched-row" key={`pad-${i}`} style={{ visibility: "hidden" }} aria-hidden="true">
+              <span className="sess-name">&nbsp;</span>
+              <span className="sess-time">&nbsp;</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
