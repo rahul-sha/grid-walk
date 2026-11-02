@@ -1,0 +1,216 @@
+/* Canvas: the experimental "infinite grid" alternate presentation of Grid
+   Walk — every season's cards free-placed on a pannable/zoomable plane
+   instead of the one-card carousel. See "grid-walk-infinite-canvas-mockup"
+   memory and the approved mock-up it's built from. Not linked from the
+   main nav — a preview at /canvas. */
+
+.cv-wrap {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  background: var(--page-plane);
+}
+
+.cv-wrap.dragging {
+  cursor: grabbing;
+}
+
+.cv-wrap.zoomed {
+  cursor: default;
+}
+
+.cv-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.cv-tile {
+  position: absolute;
+  cursor: zoom-in;
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.cv-world.pending .cv-tile {
+  opacity: 0;
+  transition: none;
+}
+
+.cv-wrap.zoomed .cv-tile.is-zoomed {
+  cursor: zoom-out;
+}
+
+.cv-tile .gw-card-inner {
+  padding: 1rem 1.1rem 1.2rem;
+}
+
+.cv-tile.compact .gw-card-inner {
+  padding: 0.6rem 0.7rem 0.8rem;
+}
+
+.cv-tile.compact .ui-card-header h2 {
+  font-size: 13px;
+}
+
+.cv-tile.compact .ui-card-header p {
+  display: none;
+}
+
+.cv-tile.compact .gw-card {
+  opacity: 0.82;
+}
+
+.cv-zoom-note {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.cv-tile:hover .cv-zoom-note {
+  opacity: 1;
+}
+
+.cv-tile.is-zoomed .cv-zoom-note {
+  opacity: 0 !important;
+}
+
+.cv-cluster-label {
+  position: absolute;
+  pointer-events: none;
+  color: var(--text-muted);
+}
+
+.cv-timeline-tick {
+  width: 100%;
+  border-top: 1px solid var(--border-hairline);
+  margin-bottom: 8px;
+}
+
+.cv-cluster-label span {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.cv-topbar {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.cv-topbar > * {
+  pointer-events: auto;
+}
+
+.cv-navpill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  height: var(--island-h);
+}
+
+.cv-experimental-tag {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+.cv-hint {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  margin-top: calc(var(--island-h) + 10px);
+}
+
+.cv-hint.gone {
+  opacity: 0;
+}
+
+.cv-minimap {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 5;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: 10px;
+  padding: 24px 8px 8px;
+  box-shadow: var(--shadow-card);
+}
+
+.cv-minimap-label {
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cv-mm-tile {
+  position: absolute;
+  background: var(--surface-3);
+  border-radius: 2px;
+}
+
+.cv-mm-viewport {
+  position: absolute;
+  border: 1.5px solid var(--accent);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.cv-zoomctl {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: var(--shadow-card);
+}
+
+.cv-zoom-level {
+  font-size: 12px;
+  color: var(--text-secondary);
+  min-width: 32px;
+  text-align: center;
+}
