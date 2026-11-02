@@ -64,6 +64,11 @@ export interface RecapData {
   lastRace: LastRaceRecap | null;
   nextRace: NextRaceSchedule | null;
   raceList: RaceSummary[];
+  // The most recent race by schedule (has started), independent of whether
+  // its results have been published yet — unlike `lastRace`, which is null
+  // in that gap. The picker strip and session-times panel key off this, so
+  // they don't fall back to round 1 while results are still pending.
+  latestRound: number | null;
 }
 
 const DATE_LABEL_FORMAT = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
@@ -190,6 +195,7 @@ export async function buildRecapData(season: number): Promise<RecapData> {
   const completed = withTime.filter((r) => r.raceStart <= now);
   const upcoming = withTime.filter((r) => r.raceStart > now);
 
+  const latestRound = completed.length > 0 ? Number(completed[completed.length - 1].race.round) : null;
   const lastRace = completed.length > 0 ? await buildRaceRecap(season, completed[completed.length - 1].race) : null;
 
   let nextRace: NextRaceSchedule | null = null;
@@ -216,7 +222,7 @@ export async function buildRecapData(season: number): Promise<RecapData> {
     sessions: buildSessions(race),
   }));
 
-  return { season, lastRace, nextRace, raceList };
+  return { season, lastRace, nextRace, raceList, latestRound };
 }
 
 // Lazily fetches one race's recap when picked from the strip — the only
