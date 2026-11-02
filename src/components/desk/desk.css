@@ -1,0 +1,169 @@
+/* Desk: the experimental "papers on a desk" presentation of Grid Walk —
+   the season's cards as loose sheets you push around, over a zoomable,
+   pannable table. See the "grid-walk-pamphlet-stack-mockup" memory for
+   the approved mock-up it's built from. A preview at /desk, not linked
+   from the main nav. */
+
+.dk-wrap {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  background: var(--page-plane);
+}
+
+.dk-wrap.panning {
+  cursor: grabbing;
+}
+
+.dk-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.dk-world.pending .dk-sheet {
+  opacity: 0;
+  transition: none;
+}
+
+/* The table itself: a large, faintly outlined surface so zooming out shows
+   an edge, like a real desk. */
+.dk-table {
+  position: absolute;
+  border-radius: 28px;
+  box-shadow: inset 0 0 0 1px var(--border-hairline);
+  background: color-mix(in srgb, var(--surface-1) 55%, transparent);
+  pointer-events: none;
+}
+
+.dk-sheet {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 50% 50%;
+  cursor: grab;
+  opacity: 1;
+}
+
+.dk-sheet.settled {
+  transition: transform 0.55s cubic-bezier(0.16, 0.8, 0.3, 1);
+}
+
+.dk-sheet.lifted {
+  cursor: grabbing;
+}
+
+.dk-sheet .gw-card {
+  cursor: inherit;
+  transition: box-shadow 0.2s ease;
+}
+
+.dk-sheet.lifted .gw-card {
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.32), 0 0 0 1px var(--border-hairline);
+}
+
+/* GridWalk's cards block pointer events on their content (the carousel
+   owns every press); on the desk the Latest Race card's own controls must
+   keep working, so re-enable them. */
+.dk-sheet .gw-card-inner {
+  pointer-events: auto;
+}
+
+.dk-sheet .gw-card-inner {
+  padding: 1.2rem 1.3rem 1.4rem;
+}
+
+.dk-topbar {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.dk-topbar > * {
+  pointer-events: auto;
+}
+
+.dk-navpill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  height: var(--island-h);
+}
+
+.dk-experimental-tag {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+.dk-hint {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  margin-top: calc(var(--island-h) + 10px);
+  white-space: nowrap;
+}
+
+.dk-hint.gone {
+  opacity: 0;
+}
+
+.dk-ctl {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: var(--shadow-card);
+}
+
+.dk-zoom-level {
+  font-size: 12px;
+  color: var(--text-secondary);
+  min-width: 36px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .dk-experimental-tag {
+    display: none;
+  }
+  .dk-hint {
+    white-space: normal;
+    text-align: center;
+    max-width: calc(100vw - 32px);
+  }
+}
