@@ -29,8 +29,9 @@ The last card, **About**, covers who built the site, how, the design and
 data credits, and the unofficial-fan-site disclaimer F1's brand guidelines
 ask every fan site to carry on its landing page.
 
-On the Positions card every points finish (P1–P10) is shaded and anything
-outside the points is left plain, with the podium getting a shade each. The
+On the Positions card every points finish (P1–P10) gets its own shade,
+blended from the palette's heat colours, with bigger steps between P1, P2 and
+P3 so the podium stands out; anything outside the points is left plain. The
 column on the right is each driver's median finishing position (retirements
 left out).
 
