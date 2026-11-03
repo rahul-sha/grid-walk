@@ -109,6 +109,11 @@ season's snapshot. A live fetch from `https://api.jolpi.ca/ergast/f1` is
 used only as a fallback, when no snapshot exists yet for a season at all.
 No API key is required.
 
+Vercel skips a deployment when a commit changes only season data, and
+skips branch previews for commits that change only the baked card images
+(`scripts/vercel-ignore-build.sh`). Each deployment stores its own copy of
+the images, so this keeps deployment storage down.
+
 Grand Prix flags/abbreviations, constructor colours and team-name display
 overrides are mapped locally in `src/lib/circuits.ts`,
 `src/lib/team-colors.ts` and `src/lib/team-names.ts`.
