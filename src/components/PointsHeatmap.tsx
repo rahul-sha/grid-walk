@@ -166,6 +166,13 @@ type HeatmapMode = "points" | "position";
 
 const DNF_CODES = new Set(["R", "W", "D", "E", "N"]);
 
+// Heat shade per finishing position: index = position, 0 for P11+.
+const POSITION_BUCKETS = [0, 6, 5, 4, 3, 3, 3, 2, 2, 2, 2];
+
+function positionBucket(position: number): number {
+  return POSITION_BUCKETS[position] ?? 0;
+}
+
 function PointsCellContent({
   cell,
   max,
@@ -308,16 +315,11 @@ function PositionCellContent({
     );
   }
 
-  // Lower finishing position is a stronger result, so the ramp runs in
-  // reverse from the points heatmap: 1st place gets the deepest shade.
-  // A straight linear spread across the whole field (1..maxPosition)
-  // crowds 1st/2nd/3rd into the same top bucket once there are 20+ cars,
-  // since there are only 7 shades to go around — so the top finishers each
-  // get their own shade and everything from 8th back shares the lightest
-  // one, rather than every position getting an equal, and mostly invisible,
-  // slice of the ramp.
+  // Every points finish (P1–P10) is shaded and P11+ is not, so the points
+  // line is visible at a glance. The podium keeps a shade each; the rest of
+  // the top ten share the remaining shades in pairs/triples.
   const classified = cell.classifiedPosition ?? maxPosition;
-  const bucket = Math.max(0, Math.min(6, 7 - classified));
+  const bucket = positionBucket(classified);
   const style = {
     background: `var(--heat-${bucket})`,
     color: bucket >= 4 ? "var(--heat-fg-hi)" : "var(--heat-fg-lo)",
