@@ -166,11 +166,20 @@ type HeatmapMode = "points" | "position";
 
 const DNF_CODES = new Set(["R", "W", "D", "E", "N"]);
 
-// Heat shade per finishing position: index = position, 0 for P11+.
-const POSITION_BUCKETS = [0, 6, 5, 4, 3, 3, 3, 2, 2, 2, 2];
+const POINTS_POSITIONS = 10;
 
-function positionBucket(position: number): number {
-  return POSITION_BUCKETS[position] ?? 0;
+// One shade per points finish, blended in oklab from --heat-6 (P1) down to
+// halfway between --heat-1 and --heat-2 (P10), so every palette gets ten
+// evenly spaced steps without new tokens. P11+ gets the neutral --heat-0.
+function positionShade(position: number): { background: string; strong: boolean } {
+  if (position < 1 || position > POINTS_POSITIONS) {
+    return { background: "var(--heat-0)", strong: false };
+  }
+  const pct = Math.round(((POINTS_POSITIONS - position) / (POINTS_POSITIONS - 1)) * 100);
+  return {
+    background: `color-mix(in oklab, var(--heat-6) ${pct}%, color-mix(in oklab, var(--heat-2), var(--heat-1)))`,
+    strong: pct >= 50,
+  };
 }
 
 function PointsCellContent({
@@ -315,14 +324,11 @@ function PositionCellContent({
     );
   }
 
-  // Every points finish (P1–P10) is shaded and P11+ is not, so the points
-  // line is visible at a glance. The podium keeps a shade each; the rest of
-  // the top ten share the remaining shades in pairs/triples.
   const classified = cell.classifiedPosition ?? maxPosition;
-  const bucket = positionBucket(classified);
+  const shade = positionShade(classified);
   const style = {
-    background: `var(--heat-${bucket})`,
-    color: bucket >= 4 ? "var(--heat-fg-hi)" : "var(--heat-fg-lo)",
+    background: shade.background,
+    color: shade.strong ? "var(--heat-fg-hi)" : "var(--heat-fg-lo)",
   } as React.CSSProperties;
 
   return (
