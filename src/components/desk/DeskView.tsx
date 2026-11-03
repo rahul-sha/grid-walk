@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import "@/components/gridwalk/gridwalk.css";
 import "./desk.css";
 import { createLiveGrid } from "@/components/gridwalk/liveGrid";
@@ -50,6 +50,8 @@ const PAD = 72; // table padding around the content
 const K_MIN = 0.25;
 const K_MAX = 2.5;
 const DRAG_THRESHOLD = 4;
+const ENTER_STAGGER = 90; // ms between one sheet's arrival and the next
+const ENTER_DUR = 600; // ms a sheet takes to arrive (matches desk.css)
 
 // The season's cards, grouped by what they're about. Each group is one row
 // of the table, in this fixed order.
@@ -328,14 +330,12 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
 
   // Opening view: as wide as the table, starting at the top, so the first
   // rows are readable and the rest is a pan away.
-  function fitWidth() {
+  function openingView(): Cam {
     const wrap = wrapRef.current;
-    if (!wrap) return;
-    const vw = wrap.clientWidth;
+    const vw = wrap?.clientWidth ?? 1200;
     const { w } = bounds.current;
     const k = clampNum(Math.min((vw - 32) / w, 1), K_MIN, K_MAX);
-    cam.current = { k, tx: vw / 2 - (w / 2) * k, ty: 16 };
-    applyCam();
+    return { k, tx: vw / 2 - (w / 2) * k, ty: 16 };
   }
 
   function zoomAt(px: number, py: number, factor: number) {
@@ -346,19 +346,46 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     applyCam();
   }
 
+  function fitAllByUser() {
+    userMoved.current = true;
+    fitAll(true);
+  }
+
   function zoomCentre(factor: number) {
     const wrap = wrapRef.current;
     if (!wrap) return;
+    userMoved.current = true;
     target.current = null;
     zoomAt(wrap.clientWidth / 2, wrap.clientHeight / 2, factor);
   }
 
-  // Initial placement once the sheets have been measured.
+  // Set by any user input, so the opening glide never fights a visitor
+  // who has already started moving the table.
+  const userMoved = useRef(false);
+
+  // Initial placement once the sheets have been measured, then the
+  // start-up: the camera sits on the whole table while the sheets arrive
+  // one by one (CSS, see .dk-world.entered), and once the last has landed
+  // the camera glides in to the opening view.
   useEffect(() => {
     if (!laidOut) return;
     layout();
-    fitWidth();
+    const world = worldRef.current;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      cam.current = openingView();
+      applyCam();
+      requestAnimationFrame(() => settleAll(true));
+      return;
+    }
+    fitAll(false);
+    world?.classList.add("entered");
+    const arrival = allSheets.length * ENTER_STAGGER + ENTER_DUR;
+    const timer = window.setTimeout(() => {
+      if (!userMoved.current) animateTo(openingView(), 1100);
+    }, arrival + 150);
     requestAnimationFrame(() => settleAll(true));
+    return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [laidOut]);
 
@@ -465,6 +492,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     function onMinimapPoint(clientX: number, clientY: number) {
       const box = mmBoxRef.current;
       if (!box) return;
+      userMoved.current = true;
       const rect = box.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
       const { w, h } = bounds.current;
@@ -502,6 +530,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     function onPointerDown(e: PointerEvent) {
       if (e.target instanceof Element && e.target.closest(".dk-topbar, .dk-ctl, .dk-minimap")) return;
       if (e.button !== 0 && e.pointerType === "mouse") return;
+      userMoved.current = true;
       if (compact && open) {
         window.clearTimeout(closeTimer);
         setOpen(false);
@@ -563,6 +592,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     function onWheel(e: WheelEvent) {
       if (e.target instanceof Element && e.target.closest(".recap-table, .recap-picker-strip, .dk-topbar, .dk-ctl, .dk-minimap")) return;
       e.preventDefault();
+      userMoved.current = true;
       target.current = null;
       const rect = wrap!.getBoundingClientRect();
       const factor = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0016));
@@ -713,6 +743,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
           <div
             key={g.id}
             className="dk-group-label"
+            style={{ "--enter-i": allSheets.indexOf(g.sheets[0]) } as CSSProperties}
             ref={(el) => {
               labelRefs.current[g.id] = el;
             }}
@@ -730,7 +761,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
                 sheetRefs.current[def.id] = el;
               }}
               className="dk-sheet"
-              style={g ? { width: g.w, height: g.h } : undefined}
+              style={{ ...(g ? { width: g.w, height: g.h } : {}), "--enter-i": allSheets.indexOf(def) } as CSSProperties}
               aria-label={`${chrome.title}: ${chrome.subtitle}`}
             >
               <div
@@ -809,7 +840,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
           accent
           onClick={() => {
             setHintGone(true);
-            fitAll(true);
+            fitAllByUser();
           }}
         >
           Fit all
