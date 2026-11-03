@@ -17,6 +17,7 @@ import DriverPointsEvolutionChart from "@/components/DriverPointsEvolutionChart"
 import ConstructorPointsEvolutionChart from "@/components/ConstructorPointsEvolutionChart";
 import FinishPositionsGrid from "@/components/FinishPositionsGrid";
 import QualifyingPositionsGrid from "@/components/QualifyingPositionsGrid";
+import PositionsGainedGrid from "@/components/PositionsGainedGrid";
 import PodiumBars from "@/components/PodiumBars";
 import RecapCard from "@/components/RecapCard";
 import AboutCard from "@/components/AboutCard";
@@ -320,6 +321,13 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
       subtitle: "Where each driver finished in every Grand Prix.",
       snapshots: [{ name: "positions", active: true }],
       render: ({ pointsGrid }) => <PointsHeatmap grid={pointsGrid} mode="position" />,
+    },
+    {
+      id: "gained",
+      title: "Positions Gained",
+      subtitle: "Places gained or lost from the grid to the flag in every Grand Prix.",
+      snapshots: [{ name: "gained", active: true }],
+      render: ({ pointsGrid }) => <PositionsGainedGrid grid={pointsGrid} />,
     },
     {
       id: "freq",
