@@ -100,7 +100,9 @@ async function captureSeason(browser, season) {
       // noSnapshot=1 puts the page in capture mode: cards render live at
       // natural size — otherwise this script would screenshot the very
       // images it is meant to be regenerating.
-      await page.goto(`${BASE_URL}/?season=${season}&noSnapshot=1`, { waitUntil: "networkidle" });
+      // The carousel (the previous home page, kept at /carousel) is where
+      // the cards still render live; the desk home page only shows images.
+      await page.goto(`${BASE_URL}/carousel?season=${season}&noSnapshot=1`, { waitUntil: "networkidle" });
       await page.waitForTimeout(600);
 
       for (const { id, tab } of PLAIN_SECTIONS) {

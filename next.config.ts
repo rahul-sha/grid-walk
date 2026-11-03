@@ -30,6 +30,8 @@ const nextConfig: NextConfig = {
       { source: "/results", destination: "/", permanent: true },
       { source: "/positions", destination: "/", permanent: true },
       { source: "/about", destination: "/", permanent: true },
+      // The desk table's preview address, before it became the home page.
+      { source: "/desk", destination: "/", permanent: false },
     ];
   },
   async headers() {

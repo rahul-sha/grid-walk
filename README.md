@@ -9,25 +9,31 @@ language.
 
 ## Pages
 
-**Home / Grid Walk** (`/`) is the site's entry point and now its only page
-for race data. The first card, **Latest Race**, is current-season only: a
-recap of a race (podium, pole, fastest lap, full classification and
-qualifying order) plus that race's own session schedule, converted into the
-visitor's own time zone. A flag strip lets visitors browse any race of the
-season, not just the latest; only the latest race's recap loads with the
-page, and every other one is fetched on demand when picked. A race that
-hasn't happened yet shows a plain "race yet to be held" message instead. The
-remaining six graphics
-follow it on the same horizontal carousel strip, in the same order as the
-"Jump to" bar below it: Drivers/Team Results, Driver/Constructor Points
-Evolution, Positions, Positions Gained, Finish and Qualifying Frequency, and
-Driver/Constructor Podiums. Results, Evolution, Frequency and Podiums are shared cards — a driver half
-and a team half either stacked with a divider or toggled in place with a
-pill button — and each card is the same real heatmap, chart, grid or podium
-bars that used to live on its own page, under the same title and subtitle.
-The last card, **About**, covers who built the site, how, the design and
-data credits, and the unofficial-fan-site disclaimer F1's brand guidelines
-ask every fan site to carry on its landing page.
+**Home / Grid Walk** (`/`) is the site's entry point and its only page for
+race data: the season's cards laid out neatly on one big table, in labelled
+rows that group them by what they are about. **Latest race** holds the
+Latest Race card, which is current-season only: a recap of a race (podium,
+pole, fastest lap, full classification and qualifying order) plus that
+race's own session schedule, converted into the visitor's own time zone. A
+flag strip lets visitors browse any race of the season, not just the
+latest; only the latest race's recap loads with the page, and every other
+one is fetched on demand when picked. A race that hasn't happened yet shows
+a plain "race yet to be held" message instead. **Championship** holds
+Drivers/Team Results, Driver/Constructor Points Evolution and
+Driver/Constructor Podiums; **Race by race** holds Positions, Positions
+Gained and Finish/Qualifying Frequency. Results, Evolution, Frequency and
+Podiums are shared cards — a driver half and a team half either stacked
+with a divider or toggled in place with a pill button — and each card is
+the same real heatmap, chart, grid or podium bars that used to live on its
+own page, under the same title and subtitle. The last row, **About**,
+covers who built the site, how, the design and data credits, and the
+unofficial-fan-site disclaimer F1's brand guidelines ask every fan site to
+carry on its landing page.
+
+The previous presentation — the same cards on one horizontal carousel
+strip, browsed one at a time — is kept at **`/carousel`** so the two can be
+compared and the home page switched back easily; it is not linked from
+the site itself.
 
 On the Positions card every points finish (P1–P10) gets its own shade,
 blended from the palette's heat colours, with bigger steps between P1, P2 and
@@ -47,7 +53,8 @@ theme/palette combination is saved as a lossless WebP image under
 `public/card-snapshots/<season>/<palette>-<theme>/`, with a `manifest.json`
 recording each image's natural size so the layout is known before anything
 loads. Visitors never render those cards live. The images come from
-`scripts/capture-card-snapshots.mjs`, which the `capture-card-snapshots.yml`
+`scripts/capture-card-snapshots.mjs` (which photographs the cards rendered
+live on `/carousel`), which the `capture-card-snapshots.yml`
 workflow runs every Monday for the current season (pass a year, or `all`,
 to capture finished seasons by hand). The visitor's theme and palette are
 read from cookies so the server can pick the right image on first paint,
@@ -55,25 +62,31 @@ and the other colour combinations are prefetched once the browser is idle.
 Latest Race is the deliberate exception: it's built fresh on every request
 (`src/lib/recap.ts`), because converting each session time into the
 visitor's own time zone can't be baked into a shared image. It only shows
-anything for the current season, so it's left out of the strip entirely
+anything for the current season, so its row is left off the table entirely
 for any other one — switching seasons can change how many cards are on
-the strip. Picking a different race from its flag strip calls a server action
+the table. Picking a different race from its flag strip calls a server action
 (`src/app/actions/recap.ts`) rather than shipping every race's results with
 the page. About is the other exception: it's plain text and links, so
 there's no snapshot to bake and no GPU cost to save by baking one.
 
-Browse by dragging, swiping, the side arrows, the ← → keys or the jump-bar
-tabs. Scroll or pinch to zoom around the pointer, then drag to pan; a
-sideways trackpad swipe browses instead of zooming. Click the centred card
-(or press Esc) to jump between full size and fit. On desktop the controls
-sit in one translucent top bar; on phones they split between a top bar and
-a bottom jump bar. A live grid drawn in the active theme's colours sits
-behind the cards, glowing around the cursor and rippling on each click or
-tap — all of it switches off under reduced-motion settings, and its redraw
+Drag anywhere on the table to pan, and scroll or pinch to zoom around the
+pointer; the controls at the bottom zoom in and out or fit the whole table
+into view. An **overview** in the bottom-right corner shows the table in
+miniature — every card as a labelled shape under its row label, with the
+current view outlined — and pressing or dragging inside it moves the view.
+On phones the overview sits folded small above the zoom controls; a tap
+opens it full size and it folds away again a moment after the last touch.
+On load the camera sits on the whole table while the cards rise into place
+one after another, then glides in to the opening view (skipped under
+reduced-motion settings, and cancelled by any early input). The top bar
+holds the logo (back to the top of the table), an About pill that glides
+to the About card, and the theme, palette and season controls. A live grid
+drawn in the active theme's colours sits behind the cards, glowing around
+the cursor — it switches off under reduced-motion settings, and its redraw
 work stays limited to the area it actually lights up so dragging and
 scrolling stay smooth. The old standalone Results, Positions and About
 pages were retired once Grid Walk covered the same ground; their addresses
-redirect here.
+redirect here, as does the table's old preview address, `/desk`.
 
 Every page sits over a soft, slowly drifting gradient glow built from the
 active theme's own colours. The Grid Walk bars and logo, and each page's
@@ -87,8 +100,9 @@ year; only seasons from 2020 onwards are supported.
 
 ## Navigation
 
-Grid Walk's own top bar and jump bar are the only navigation — the whole
-site is this one page now.
+Grid Walk's own top bar is the only navigation — the whole site is this
+one table now. The carousel at `/carousel` keeps its own top bar and jump
+bar.
 
 ## Getting started
 
