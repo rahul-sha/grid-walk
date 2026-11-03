@@ -8,6 +8,7 @@ import RecapCard from "@/components/RecapCard";
 import AboutCard from "@/components/AboutCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import AccentToggle from "@/components/AccentToggle";
+import SeasonSelector from "@/components/SeasonSelector";
 import { Island, Pill, IconPill, Logo, CardHeader, CardToggle } from "@/components/ui";
 import type { RecapData } from "@/lib/recap";
 import {
@@ -119,7 +120,11 @@ const GROUPS: Group[] = [
   },
 ];
 
-const ALL_SHEETS: SheetDef[] = GROUPS.flatMap((g) => g.sheets);
+// Past seasons have no Latest Race card (as on the main site), so their
+// table starts at the Championship row.
+function groupsFor(hasRecap: boolean): Group[] {
+  return hasRecap ? GROUPS : GROUPS.filter((g) => g.id !== "latest");
+}
 
 function easeOutCubic(p: number) {
   return 1 - Math.pow(1 - p, 3);
@@ -130,6 +135,10 @@ function clampNum(v: number, lo: number, hi: number) {
 }
 
 export default function DeskView({ year, sizes, recap, initialVariant }: DeskViewProps) {
+  // Remounted by the page (keyed on the year) whenever the season changes,
+  // so these are fixed for the component's lifetime.
+  const groups = groupsFor(recap !== null);
+  const allSheets = groups.flatMap((g) => g.sheets);
   const wrapRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
@@ -137,7 +146,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   const zoomLevelRef = useRef<HTMLSpanElement>(null);
   const mmBoxRef = useRef<HTMLDivElement>(null);
   const mmViewportRef = useRef<HTMLDivElement>(null);
-  const mmScaleRef = useRef(1);
   const sheetRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const labelRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -185,7 +193,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   });
   const [mmCompact, setMmCompact] = useState(false);
   const [mmOpen, setMmOpen] = useState(false);
-  const MM_W = 280;
+  const MM_W = mmCompact ? 300 : 360;
 
   // Fit each card's content to its frame, then scale the whole card to the
   // sheet height — GridWalk's own two-pass fitContent()/layout() technique,
@@ -206,7 +214,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       frame.style.width = `${cw * fs}px`;
     }
     const measured: Record<string, Geom> = {};
-    ALL_SHEETS.forEach((def) => {
+    allSheets.forEach((def) => {
       const card = cardRefs.current[def.id];
       if (!card) return;
       card.style.transform = "";
@@ -220,6 +228,8 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     geomRef.current = measured;
     setGeom(measured);
     setLaidOut(true);
+    // once per mount: the sheet set is fixed for the component's lifetime
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---------- camera ----------
@@ -235,8 +245,9 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     if (zoomLevelRef.current) zoomLevelRef.current.textContent = `${Math.round(k * 100)}%`;
     const vp = mmViewportRef.current;
     const wrap = wrapRef.current;
-    if (vp && wrap) {
-      const s = mmScaleRef.current;
+    const box = mmBoxRef.current;
+    if (vp && wrap && box && bounds.current.w) {
+      const s = box.offsetWidth / bounds.current.w; // offsetWidth ignores the fold transform
       vp.style.left = `${(-tx / k) * s}px`;
       vp.style.top = `${(-ty / k) * s}px`;
       vp.style.width = `${(wrap.clientWidth / k) * s}px`;
@@ -260,7 +271,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     let y = PAD + LABEL_H;
     let maxW = 0;
     const labels: MmLabel[] = [];
-    GROUPS.forEach((group) => {
+    groups.forEach((group) => {
       const label = labelRefs.current[group.id];
       if (label) {
         label.style.left = `${PAD}px`;
@@ -283,11 +294,10 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       t.style.width = `${bounds.current.w}px`;
       t.style.height = `${bounds.current.h}px`;
     }
-    mmScaleRef.current = MM_W / bounds.current.w;
     setMm({
       w: bounds.current.w,
       h: bounds.current.h,
-      tiles: ALL_SHEETS.flatMap((d) => {
+      tiles: allSheets.flatMap((d) => {
         const p = poses.current[d.id];
         const g = geomRef.current[d.id];
         return p && g ? [{ id: d.id, title: d.title, x: p.x, y: p.y, w: g.w, h: g.h }] : [];
@@ -297,7 +307,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   }
 
   function settleAll(settled: boolean) {
-    ALL_SHEETS.forEach((d) => sheetRefs.current[d.id]?.classList.toggle("settled", settled));
+    allSheets.forEach((d) => sheetRefs.current[d.id]?.classList.toggle("settled", settled));
   }
 
   // Zoom so the whole table fits, centred.
@@ -699,7 +709,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
 
       <div className={"dk-world" + (laidOut ? "" : " pending")} ref={worldRef}>
         <div className="dk-table" ref={tableRef} aria-hidden="true" />
-        {GROUPS.map((g) => (
+        {groups.map((g) => (
           <div
             key={g.id}
             className="dk-group-label"
@@ -710,7 +720,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
             {g.label}
           </div>
         ))}
-        {ALL_SHEETS.map((def) => {
+        {allSheets.map((def) => {
           const g = geom[def.id];
           const chrome = sheetChrome(def);
           return (
@@ -747,6 +757,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
           <span className="dk-experimental-tag">Experimental table layout</span>
           <ThemeToggle />
           <AccentToggle />
+          <SeasonSelector initialSeason={year} />
         </Island>
       </div>
 
@@ -773,7 +784,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
             return (
               <div
                 key={`mm-${t.id}`}
-                className="dk-mm-tile"
+                className={"dk-mm-tile" + (t.w * s < 70 ? " narrow" : "")}
                 style={{ left: t.x * s, top: t.y * s, width: Math.max(2, t.w * s), height: Math.max(2, t.h * s) }}
               >
                 <span>{t.title}</span>

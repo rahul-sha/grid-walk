@@ -159,7 +159,7 @@
   bottom: 16px;
   z-index: 5;
   padding: 10px;
-  background: var(--surface-1);
+  background: color-mix(in srgb, var(--surface-1) 55%, transparent);
   border-radius: 14px;
   box-shadow: var(--shadow-island);
   transform-origin: 100% 100%;
@@ -180,7 +180,7 @@
 
 .dk-mm-box {
   position: relative;
-  background: var(--page-plane);
+  background: color-mix(in srgb, var(--page-plane) 35%, transparent);
   border: 1px solid var(--border-hairline);
   border-radius: 8px;
   overflow: hidden;
@@ -190,7 +190,7 @@
 .dk-mm-label {
   position: absolute;
   transform: translateY(calc(-100% - 2px)); /* sits just above its row */
-  font-size: 6.5px;
+  font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -202,15 +202,15 @@
 
 .dk-mm-tile {
   position: absolute;
-  background: var(--surface-3);
-  border: 1px solid color-mix(in srgb, var(--border-hairline) 60%, var(--surface-3));
+  background: color-mix(in srgb, var(--surface-3) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-hairline) 60%, transparent);
   border-radius: 3px;
   overflow: hidden;
-  padding: 3px;
-  font-size: 7.5px;
+  padding: 5px 5px 3px;
+  font-size: 12px;
   line-height: 1.15;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   pointer-events: none;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
@@ -230,6 +230,12 @@
   transition: opacity 0.2s ease;
 }
 
+.dk-mm-tile.narrow {
+  /* the tall, narrow sheets (Latest Race, About) */
+  font-size: 9px;
+  padding: 4px 3px 2px;
+}
+
 .dk-mm-viewport {
   position: absolute;
   border: 2px solid var(--accent);
@@ -242,7 +248,7 @@
    it full size; it folds again shortly after the last touch. */
 .dk-minimap.compact {
   bottom: 72px;
-  transform: scale(0.42);
+  transform: scale(0.4);
 }
 
 .dk-minimap.compact .dk-minimap-label,
