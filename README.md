@@ -29,6 +29,11 @@ The last card, **About**, covers who built the site, how, the design and
 data credits, and the unofficial-fan-site disclaimer F1's brand guidelines
 ask every fan site to carry on its landing page.
 
+On the Positions card every points finish (P1–P10) is shaded and anything
+outside the points is left plain, with the podium getting a shade each. The
+column on the right is each driver's median finishing position (retirements
+left out).
+
 Every card but Latest Race is pre-rendered: for each season, every
 theme/palette combination is saved as a lossless WebP image under
 `public/card-snapshots/<season>/<palette>-<theme>/`, with a `manifest.json`

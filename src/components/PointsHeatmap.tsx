@@ -435,7 +435,12 @@ export default function PointsHeatmap({
                 onLeave={hide}
               />
             ))}
-            <th className="sticky right-0 z-10 min-w-[64px] sm:min-w-[160px] px-2 sm:px-3 py-2 text-center text-xs font-semibold" />
+            <th
+              className="sticky right-0 z-10 min-w-[64px] sm:min-w-[160px] px-2 sm:px-3 py-2 align-bottom text-center text-xs font-semibold"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              {mode === "position" ? "Median" : null}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -506,10 +511,10 @@ export default function PointsHeatmap({
                         />
                       </div>
                       <span
-                        className="text-xs font-semibold tabular-nums"
+                        className="inline-block w-7 text-right text-xs font-semibold tabular-nums"
                         style={{ color: "var(--text-primary)" }}
                       >
-                        {medianFinish !== null ? medianFinish.toFixed(2) : "—"}
+                        {medianFinish !== null ? String(medianFinish) : "—"}
                       </span>
                     </div>
                   ) : (
