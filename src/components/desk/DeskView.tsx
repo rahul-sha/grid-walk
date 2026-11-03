@@ -34,69 +34,92 @@ type SheetDef = {
   snapshotName?: SnapshotName;
 };
 
+type Group = { id: string; label: string; sheets: SheetDef[] };
 type Geom = { w: number; h: number };
-type Pose = { x: number; y: number; rot: number };
+type Pose = { x: number; y: number };
 type Cam = { k: number; tx: number; ty: number };
 
-// Every sheet is scaled to this height on the desk; its width follows the
-// card's own aspect ratio, measured after mount (see the layout effect).
+// Every sheet is scaled to this height; its width follows the card's own
+// aspect ratio, measured after mount (see the layout effect).
 const SHEET_H = 430;
-const MARGIN = 90; // how much of a sheet must stay on the table
-const K_MIN = 0.3;
+const GAP = 36; // between sheets in a row
+const ROW_GAP = 64; // between rows
+const LABEL_H = 30; // room above each row for its label
+const PAD = 72; // table padding around the content
+const K_MIN = 0.25;
 const K_MAX = 2.5;
 const DRAG_THRESHOLD = 4;
 
-// Starting spread as fractions of the free view (view minus one sheet),
-// plus a tilt — loose and overlapping on purpose, paper left lying about.
-const SPREAD: [number, number, number][] = [
-  [0.04, 0.1, -7],
-  [0.58, 0.04, 6],
-  [0.3, 0.34, -3],
-  [0.78, 0.42, 11],
-  [0.1, 0.56, 5],
-  [0.46, 0.06, -12],
-  [0.4, 0.56, -6],
+// The season's cards, grouped by what they're about. Each group is one row
+// of the table; a sheet can be dragged to reorder within its row.
+const GROUPS: Group[] = [
+  {
+    id: "latest",
+    label: "Latest race",
+    sheets: [{ id: "recap", title: "Latest Race", subtitle: "The most recent race, in your own time zone.", kind: "live" }],
+  },
+  {
+    id: "championship",
+    label: "Championship",
+    sheets: [
+      {
+        id: "results",
+        title: "Drivers Results",
+        subtitle: "Points scored by each driver per Grand Prix.",
+        kind: "snapshot",
+        snapshotName: "results-drivers",
+      },
+      {
+        id: "evolution",
+        title: "Driver Points Evolution",
+        subtitle: "Cumulative points scored by each driver across the season.",
+        kind: "snapshot",
+        snapshotName: "evolution",
+      },
+      {
+        id: "podiumsD",
+        title: "Driver Podiums",
+        subtitle: "1st/2nd/3rd place finishes per driver.",
+        kind: "snapshot",
+        snapshotName: "podiumsD",
+      },
+    ],
+  },
+  {
+    id: "races",
+    label: "Race by race",
+    sheets: [
+      {
+        id: "positions",
+        title: "Positions",
+        subtitle: "Where each driver finished in every Grand Prix.",
+        kind: "snapshot",
+        snapshotName: "positions",
+      },
+      {
+        id: "gained",
+        title: "Positions Gained",
+        subtitle: "Places gained or lost from the grid to the flag in every Grand Prix.",
+        kind: "snapshot",
+        snapshotName: "gained",
+      },
+      {
+        id: "freq",
+        title: "Finish Frequency",
+        subtitle: "How often each driver has finished in each position.",
+        kind: "snapshot",
+        snapshotName: "freq-finish",
+      },
+    ],
+  },
+  {
+    id: "about",
+    label: "About",
+    sheets: [{ id: "about", title: "About this site", subtitle: "Who built it, how, and what it runs on.", kind: "live" }],
+  },
 ];
 
-const SHEETS: SheetDef[] = [
-  { id: "recap", title: "Latest Race", subtitle: "The most recent race, in your own time zone.", kind: "live" },
-  {
-    id: "results",
-    title: "Drivers Results",
-    subtitle: "Points scored by each driver per Grand Prix.",
-    kind: "snapshot",
-    snapshotName: "results-drivers",
-  },
-  {
-    id: "evolution",
-    title: "Driver Points Evolution",
-    subtitle: "Cumulative points scored by each driver across the season.",
-    kind: "snapshot",
-    snapshotName: "evolution",
-  },
-  {
-    id: "positions",
-    title: "Positions",
-    subtitle: "Where each driver finished in every Grand Prix.",
-    kind: "snapshot",
-    snapshotName: "positions",
-  },
-  {
-    id: "freq",
-    title: "Finish Frequency",
-    subtitle: "How often each driver has finished in each position.",
-    kind: "snapshot",
-    snapshotName: "freq-finish",
-  },
-  {
-    id: "podiumsD",
-    title: "Driver Podiums",
-    subtitle: "1st/2nd/3rd place finishes per driver.",
-    kind: "snapshot",
-    snapshotName: "podiumsD",
-  },
-  { id: "about", title: "About this site", subtitle: "Who built it, how, and what it runs on.", kind: "live" },
-];
+const ALL_SHEETS: SheetDef[] = GROUPS.flatMap((g) => g.sheets);
 
 function easeOutCubic(p: number) {
   return 1 - Math.pow(1 - p, 3);
@@ -114,6 +137,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   const zoomLevelRef = useRef<HTMLSpanElement>(null);
   const sheetRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const labelRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const [variant, setVariant] = useState(initialVariant);
   useEffect(() => {
@@ -133,17 +157,18 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   const [hintGone, setHintGone] = useState(false);
 
   // Measured sheet sizes drive the sheet elements' width/height (React);
-  // their positions are imperative (refs + style.transform) since they
-  // change on every pointer move.
+  // positions are imperative (refs + style.transform) since they change on
+  // every pointer move while reordering.
   const [geom, setGeom] = useState<Record<string, Geom>>({});
   const geomRef = useRef<Record<string, Geom>>({});
   const poses = useRef<Record<string, Pose>>({});
-  const zTop = useRef(1);
+  const order = useRef<string[][]>(GROUPS.map((g) => g.sheets.map((s) => s.id)));
+  const bounds = useRef({ w: 0, h: 0 });
   const [laidOut, setLaidOut] = useState(false);
 
   // Fit each card's content to its frame, then scale the whole card to the
-  // desk's sheet height — GridWalk's own two-pass fitContent()/layout()
-  // technique, so the sheets are the production cards at a smaller size.
+  // sheet height — GridWalk's own two-pass fitContent()/layout() technique,
+  // so the sheets are the production cards at a smaller size.
   useLayoutEffect(() => {
     function fitContent(card: HTMLElement) {
       const fit = card.querySelector<HTMLElement>(".gw-fit");
@@ -160,7 +185,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       frame.style.width = `${cw * fs}px`;
     }
     const measured: Record<string, Geom> = {};
-    SHEETS.forEach((def) => {
+    ALL_SHEETS.forEach((def) => {
       const card = cardRefs.current[def.id];
       if (!card) return;
       card.style.transform = "";
@@ -176,11 +201,10 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     setLaidOut(true);
   }, []);
 
-  // ---------- camera + table ----------
+  // ---------- camera ----------
   const cam = useRef<Cam>({ k: 1, tx: 0, ty: 0 });
   const animStart = useRef<Cam>({ k: 1, tx: 0, ty: 0 });
   const target = useRef<(Cam & { dur: number; t0: number | null }) | null>(null);
-  const table = useRef({ x: 0, y: 0, w: 0, h: 0 });
 
   function applyCam() {
     const world = worldRef.current;
@@ -194,97 +218,77 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     target.current = { ...to, dur, t0: null };
   }
 
-  // World coordinates equal screen coordinates at the home camera; the
-  // table extends one view in every direction around that.
-  function sizeTable() {
-    const wrap = wrapRef.current;
-    const t = tableRef.current;
-    if (!wrap || !t) return;
-    const vw = wrap.clientWidth;
-    const vh = wrap.clientHeight;
-    table.current = { x: -vw, y: -vh, w: vw * 3, h: vh * 3 };
-    t.style.left = `${-vw}px`;
-    t.style.top = `${-vh}px`;
-    t.style.width = `${vw * 3}px`;
-    t.style.height = `${vh * 3}px`;
-  }
-
   function applyPose(id: string) {
     const el = sheetRefs.current[id];
     const p = poses.current[id];
     if (!el || !p) return;
-    el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) rotate(${p.rot.toFixed(2)}deg)`;
+    el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
   }
 
-  function clampPose(id: string) {
-    const p = poses.current[id];
-    const g = geomRef.current[id];
-    const t = table.current;
-    if (!p || !g) return;
-    p.x = clampNum(p.x, t.x + MARGIN - g.w, t.x + t.w - MARGIN);
-    p.y = clampNum(p.y, t.y + MARGIN - g.h, t.y + t.h - MARGIN);
+  // Lays every row out left-aligned under its label, from the current
+  // order. The sheet being dragged (if any) keeps following the pointer;
+  // everything else slides to its slot.
+  function layout(skipId: string | null) {
+    let y = PAD + LABEL_H;
+    let maxW = 0;
+    order.current.forEach((row, r) => {
+      const label = labelRefs.current[GROUPS[r].id];
+      if (label) {
+        label.style.left = `${PAD}px`;
+        label.style.top = `${y - LABEL_H}px`;
+      }
+      let x = PAD;
+      row.forEach((id, i) => {
+        const g = geomRef.current[id] ?? { w: SHEET_H, h: SHEET_H };
+        if (id !== skipId) {
+          poses.current[id] = { x, y };
+          const el = sheetRefs.current[id];
+          if (el) el.style.zIndex = String(i + 1);
+          applyPose(id);
+        }
+        x += g.w + GAP;
+      });
+      maxW = Math.max(maxW, x - GAP);
+      y += SHEET_H + ROW_GAP + LABEL_H;
+    });
+    bounds.current = { w: maxW + PAD, h: y - ROW_GAP - LABEL_H + PAD };
+    const t = tableRef.current;
+    if (t) {
+      t.style.width = `${bounds.current.w}px`;
+      t.style.height = `${bounds.current.h}px`;
+    }
   }
 
   function settleAll(settled: boolean) {
-    SHEETS.forEach((d) => sheetRefs.current[d.id]?.classList.toggle("settled", settled));
+    ALL_SHEETS.forEach((d) => sheetRefs.current[d.id]?.classList.toggle("settled", settled));
   }
 
-  function scatter(animated: boolean) {
+  // Zoom so the whole table fits, centred.
+  function fitAll(animated: boolean) {
     const wrap = wrapRef.current;
     if (!wrap) return;
     const vw = wrap.clientWidth;
     const vh = wrap.clientHeight;
-    settleAll(animated);
-    SHEETS.forEach((d, i) => {
-      const g = geomRef.current[d.id] ?? { w: SHEET_H, h: SHEET_H };
-      const [fx, fy, rot] = SPREAD[i % SPREAD.length];
-      poses.current[d.id] = { x: fx * Math.max(0, vw - g.w), y: fy * Math.max(0, vh - g.h), rot };
-      clampPose(d.id);
-      const el = sheetRefs.current[d.id];
-      if (el) el.style.zIndex = String(i + 1);
-      applyPose(d.id);
-    });
-    zTop.current = SHEETS.length + 1;
-    if (animated) animateTo({ k: 1, tx: 0, ty: 0 }, 550);
-    else requestAnimationFrame(() => settleAll(true));
+    const { w, h } = bounds.current;
+    const k = clampNum(Math.min((vw - 32) / w, (vh - 32) / h, 1), K_MIN, K_MAX);
+    const to = { k, tx: vw / 2 - (w / 2) * k, ty: vh / 2 - (h / 2) * k };
+    if (animated) animateTo(to, 500);
+    else {
+      cam.current = to;
+      applyCam();
+    }
   }
 
-  // "Clean table": rows of sheets, each row centred, then the camera pulls
-  // back until every sheet is in view.
-  function tidy() {
+  // Opening view: as wide as the table, starting at the top, so the first
+  // rows are readable and the rest is a pan away.
+  function fitWidth() {
     const wrap = wrapRef.current;
     if (!wrap) return;
-    setHintGone(true);
     const vw = wrap.clientWidth;
-    const vh = wrap.clientHeight;
-    const gap = 40;
-    const n = SHEETS.length;
-    const perRow = Math.ceil(n / 2);
-    const rows: SheetDef[][] = [];
-    for (let i = 0; i < n; i += perRow) rows.push(SHEETS.slice(i, i + perRow));
-    const rowWidths = rows.map((r) => r.reduce((acc, d) => acc + (geomRef.current[d.id]?.w ?? SHEET_H), 0) + gap * (r.length - 1));
-    const gridW = Math.max(...rowWidths);
-    const gridH = rows.length * SHEET_H + gap * (rows.length - 1);
-    const ox = vw / 2 - gridW / 2;
-    const oy = vh / 2 - gridH / 2;
-    settleAll(true);
-    let i = 0;
-    rows.forEach((row, r) => {
-      let x = ox + (gridW - rowWidths[r]) / 2;
-      row.forEach((d) => {
-        const g = geomRef.current[d.id] ?? { w: SHEET_H, h: SHEET_H };
-        poses.current[d.id] = { x, y: oy + r * (SHEET_H + gap), rot: ((i * 7) % 5 - 2) * 0.8 };
-        const el = sheetRefs.current[d.id];
-        if (el) el.style.zIndex = String(i + 1);
-        applyPose(d.id);
-        x += g.w + gap;
-        i += 1;
-      });
-    });
-    zTop.current = n + 1;
-    const pad = 56;
-    const k = clampNum(Math.min((vw - pad * 2) / gridW, (vh - pad * 2) / gridH, 1), K_MIN, K_MAX);
-    animateTo({ k, tx: vw / 2 - k * (ox + gridW / 2), ty: vh / 2 - k * (oy + gridH / 2) }, 550);
+    const { w } = bounds.current;
+    const k = clampNum(Math.min((vw - 32) / w, 1), K_MIN, K_MAX);
+    cam.current = { k, tx: vw / 2 - (w / 2) * k, ty: 16 };
+    applyCam();
   }
 
   function zoomAt(px: number, py: number, factor: number) {
@@ -305,9 +309,9 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   // Initial placement once the sheets have been measured.
   useEffect(() => {
     if (!laidOut) return;
-    sizeTable();
-    scatter(false);
-    applyCam();
+    layout(null);
+    fitWidth();
+    requestAnimationFrame(() => settleAll(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [laidOut]);
 
@@ -344,25 +348,20 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     };
   }, []);
 
-  // ---------- pointer handling: push sheets, pan the table, zoom ----------
+  // ---------- pointer handling: reorder sheets, pan the table, zoom ----------
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
 
-    // A sheet under the pointer is dragged (it lifts to the top and stays
-    // where it is dropped, plus a short slide if flicked); empty table pans.
-    // Velocity is EMA-smoothed and the sheet repainted once per frame,
-    // which keeps the tilt from jittering with every raw pointer event.
+    // A sheet under the pointer is dragged along its row; the others slide
+    // aside to make room and it snaps into the gap when dropped. Empty table
+    // pans. Repaints are batched to one per frame.
     let activeId: string | null = null;
+    let activeRow = -1;
     let panning = false;
     let grabX = 0;
     let grabY = 0;
-    let base: Pose = { x: 0, y: 0, rot: 0 };
-    let lastX = 0;
-    let lastY = 0;
-    let lastT = 0;
-    let svx = 0;
-    let svy = 0;
+    let base: Pose = { x: 0, y: 0 };
     let moved = false;
     let panStart = { x: 0, y: 0, tx: 0, ty: 0 };
     let pending: (() => void) | null = null;
@@ -396,11 +395,27 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       );
     }
 
-    function liftSheet(id: string) {
-      const el = sheetRefs.current[id];
-      if (!el) return;
-      zTop.current += 1;
-      el.style.zIndex = String(zTop.current);
+    // Where the dragged sheet would slot in, judged by its centre against
+    // the other sheets' centres in the row.
+    function reorderIfNeeded(id: string) {
+      const row = order.current[activeRow];
+      const p = poses.current[id];
+      const g = geomRef.current[id];
+      if (!row || !p || !g) return;
+      const centre = p.x + g.w / 2;
+      const others = row.filter((o) => o !== id);
+      let index = 0;
+      let x = PAD;
+      for (const o of others) {
+        const og = geomRef.current[o] ?? { w: SHEET_H, h: SHEET_H };
+        if (centre > x + og.w / 2) index += 1;
+        x += og.w + GAP;
+      }
+      const current = row.indexOf(id);
+      if (index === current) return;
+      others.splice(index, 0, id);
+      order.current[activeRow] = others;
+      layout(id);
     }
 
     function dropActive() {
@@ -414,19 +429,11 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         pending = null;
       }
       const el = sheetRefs.current[id];
-      const p = poses.current[id];
-      if (!el || !p) return;
+      if (!el) return;
       el.classList.remove("lifted");
       el.classList.add("settled");
-      if (moved) {
-        const k = cam.current.k;
-        p.x += clampNum(svx * 120, -180, 180) / k;
-        p.y += clampNum(svy * 120, -180, 180) / k;
-        p.rot = base.rot + clampNum(svx * 8, -9, 9);
-        clampPose(id);
-        applyPose(id);
-        setHintGone(true);
-      }
+      layout(null);
+      if (moved) setHintGone(true);
     }
 
     function onPointerDown(e: PointerEvent) {
@@ -446,17 +453,14 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       const sheetEl = e.target instanceof Element ? e.target.closest<HTMLElement>(".dk-sheet") : null;
       const id = sheetEl?.dataset.id ?? null;
       if (id && poses.current[id]) {
-        liftSheet(id);
         if (onSheetControl(e)) return;
         activeId = id;
+        activeRow = order.current.findIndex((row) => row.includes(id));
         moved = false;
         base = { ...poses.current[id] };
         grabX = e.clientX;
         grabY = e.clientY;
-        lastX = e.clientX;
-        lastY = e.clientY;
-        lastT = e.timeStamp;
-        svx = svy = 0;
+        sheetEl!.style.zIndex = "50";
         sheetEl!.classList.remove("settled");
         sheetEl!.classList.add("lifted");
         sheetEl!.setPointerCapture(e.pointerId);
@@ -485,27 +489,18 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       }
       if (activeId) {
         const id = activeId;
-        const dt = Math.max(1, e.timeStamp - lastT);
-        const vx = (e.clientX - lastX) / dt;
-        const vy = (e.clientY - lastY) / dt;
-        svx = svx * 0.7 + vx * 0.3;
-        svy = svy * 0.7 + vy * 0.3;
-        lastX = e.clientX;
-        lastY = e.clientY;
-        lastT = e.timeStamp;
         if (Math.hypot(e.clientX - grabX, e.clientY - grabY) > DRAG_THRESHOLD) moved = true;
         if (!moved) return;
         const k = cam.current.k;
         const nx = base.x + (e.clientX - grabX) / k;
         const ny = base.y + (e.clientY - grabY) / k;
-        const tilt = clampNum(svx * 9, -6, 6);
         schedule(() => {
           const p = poses.current[id];
           if (!p) return;
           p.x = nx;
           p.y = ny;
-          p.rot = base.rot + tilt;
           applyPose(id);
+          reorderIfNeeded(id);
         });
       } else if (panning) {
         const dx = e.clientX - panStart.x;
@@ -541,11 +536,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     }
 
     function onResize() {
-      sizeTable();
-      SHEETS.forEach((d) => {
-        clampPose(d.id);
-        applyPose(d.id);
-      });
       applyCam();
     }
 
@@ -620,7 +610,18 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
 
       <div className={"dk-world" + (laidOut ? "" : " pending")} ref={worldRef}>
         <div className="dk-table" ref={tableRef} aria-hidden="true" />
-        {SHEETS.map((def) => {
+        {GROUPS.map((g) => (
+          <div
+            key={g.id}
+            className="dk-group-label"
+            ref={(el) => {
+              labelRefs.current[g.id] = el;
+            }}
+          >
+            {g.label}
+          </div>
+        ))}
+        {ALL_SHEETS.map((def) => {
           const g = geom[def.id];
           return (
             <div
@@ -654,14 +655,14 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       <div className="dk-topbar">
         <Logo href="/" label="Back to Grid Walk" />
         <Island className="dk-navpill">
-          <span className="dk-experimental-tag">Experimental desk layout</span>
+          <span className="dk-experimental-tag">Experimental table layout</span>
           <ThemeToggle />
           <AccentToggle />
         </Island>
       </div>
 
       <div className={"dk-hint" + (hintGone ? " gone" : "")} aria-hidden="true">
-        Push the sheets around · scroll to zoom · drag the table to pan
+        Drag the table to pan · scroll to zoom · drag a card to reorder its row
       </div>
 
       <div className="dk-ctl">
@@ -674,16 +675,14 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         <IconPill aria-label="Zoom in" onClick={() => zoomCentre(1.25)}>
           +
         </IconPill>
-        <Pill accent onClick={tidy}>
-          Clean table
-        </Pill>
         <Pill
+          accent
           onClick={() => {
             setHintGone(true);
-            scatter(true);
+            fitAll(true);
           }}
         >
-          Scatter
+          Fit all
         </Pill>
       </div>
     </div>
