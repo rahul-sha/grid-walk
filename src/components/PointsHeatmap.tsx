@@ -166,19 +166,19 @@ type HeatmapMode = "points" | "position";
 
 const DNF_CODES = new Set(["R", "W", "D", "E", "N"]);
 
-const POINTS_POSITIONS = 10;
+// Share of --heat-6 per points finish (index = position). The podium gets
+// wide steps so P1–P3 stand apart; P4–P10 share the rest evenly. The other
+// end is halfway between --heat-1 and --heat-2. P11+ gets neutral --heat-0.
+const POSITION_MIX = [0, 100, 72, 52, 40, 34, 27, 20, 13, 7, 0];
 
-// One shade per points finish, blended in oklab from --heat-6 (P1) down to
-// halfway between --heat-1 and --heat-2 (P10), so every palette gets ten
-// evenly spaced steps without new tokens. P11+ gets the neutral --heat-0.
 function positionShade(position: number): { background: string; strong: boolean } {
-  if (position < 1 || position > POINTS_POSITIONS) {
+  const pct = POSITION_MIX[position];
+  if (position < 1 || pct === undefined) {
     return { background: "var(--heat-0)", strong: false };
   }
-  const pct = Math.round(((POINTS_POSITIONS - position) / (POINTS_POSITIONS - 1)) * 100);
   return {
     background: `color-mix(in oklab, var(--heat-6) ${pct}%, color-mix(in oklab, var(--heat-2), var(--heat-1)))`,
-    strong: pct >= 50,
+    strong: pct >= 40,
   };
 }
 
@@ -329,6 +329,7 @@ function PositionCellContent({
   const style = {
     background: shade.background,
     color: shade.strong ? "var(--heat-fg-hi)" : "var(--heat-fg-lo)",
+    fontWeight: classified <= 3 ? 700 : undefined,
   } as React.CSSProperties;
 
   return (
