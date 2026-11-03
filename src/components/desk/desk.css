@@ -1,8 +1,7 @@
 /* Desk: the experimental "clean table" presentation of Grid Walk — the
    season's cards laid out neatly in labelled rows on a zoomable, pannable
-   table; a card can be dragged to reorder its row and snaps back into
-   line. See the "grid-walk-desk-preview" memory. A preview at /desk, not
-   linked from the main nav. */
+   table, with an overview in the corner. See the "grid-walk-desk-preview"
+   memory. A preview at /desk, not linked from the main nav. */
 
 .dk-wrap {
   position: fixed;
@@ -60,7 +59,7 @@
   position: absolute;
   left: 0;
   top: 0;
-  cursor: grab;
+  cursor: inherit;
   opacity: 1;
 }
 
@@ -68,17 +67,8 @@
   transition: transform 0.4s cubic-bezier(0.16, 0.8, 0.3, 1);
 }
 
-.dk-sheet.lifted {
-  cursor: grabbing;
-}
-
 .dk-sheet .gw-card {
   cursor: inherit;
-  transition: box-shadow 0.2s ease;
-}
-
-.dk-sheet.lifted .gw-card {
-  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.32), 0 0 0 1px var(--border-hairline);
 }
 
 /* GridWalk's cards block pointer events on their content (the carousel
@@ -160,65 +150,115 @@
   box-shadow: var(--shadow-card);
 }
 
-/* The overview: the table in miniature, each sheet a labelled shape, with
-   the current viewport outlined. Press or drag on it to move the view. */
+/* The overview: an island holding the table in miniature — each sheet a
+   labelled shape under its row label, the current viewport outlined in
+   the accent. Press or drag inside it to move the view. */
 .dk-minimap {
   position: fixed;
   right: 16px;
   bottom: 16px;
   z-index: 5;
-  box-sizing: content-box;
-  padding: 22px 8px 8px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-hairline);
-  border-radius: 10px;
-  box-shadow: var(--shadow-card);
-  cursor: crosshair;
+  padding: 10px;
+  background: var(--surface-1);
+  border-radius: 14px;
+  box-shadow: var(--shadow-island);
+  transform-origin: 100% 100%;
+  transition: transform 0.28s cubic-bezier(0.16, 0.8, 0.3, 1), bottom 0.28s ease;
   touch-action: none;
 }
 
 .dk-minimap-label {
-  position: absolute;
-  top: 6px;
-  left: 10px;
   font-size: 10px;
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-muted);
+  margin-bottom: 6px;
+  line-height: 1;
+  transition: opacity 0.2s ease;
 }
 
-.dk-minimap > .dk-mm-tile,
-.dk-minimap > .dk-mm-viewport {
-  /* tile/viewport coordinates are relative to the padded content box */
-  margin-left: 8px;
-  margin-top: 22px;
+.dk-mm-box {
+  position: relative;
+  background: var(--page-plane);
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.dk-mm-label {
+  position: absolute;
+  transform: translateY(calc(-100% - 2px)); /* sits just above its row */
+  font-size: 6.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .dk-mm-tile {
   position: absolute;
   background: var(--surface-3);
-  border: 1px solid var(--border-hairline);
-  border-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--border-hairline) 60%, var(--surface-3));
+  border-radius: 3px;
   overflow: hidden;
-  padding: 2px 3px;
-  font-size: 8px;
+  padding: 3px;
+  font-size: 7.5px;
   line-height: 1.15;
   font-weight: 600;
   color: var(--text-secondary);
   pointer-events: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.dk-mm-tile::before {
+  /* a hint of the card's header strip */
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.dk-mm-tile span {
+  transition: opacity 0.2s ease;
 }
 
 .dk-mm-viewport {
   position: absolute;
-  border: 1.5px solid var(--accent);
+  border: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   border-radius: 3px;
   pointer-events: none;
 }
 
-@media (max-width: 640px) {
-  .dk-minimap {
-    display: none;
-  }
+/* Phones: folded to a small thumbnail above the zoom controls. A tap opens
+   it full size; it folds again shortly after the last touch. */
+.dk-minimap.compact {
+  bottom: 72px;
+  transform: scale(0.42);
+}
+
+.dk-minimap.compact .dk-minimap-label,
+.dk-minimap.compact .dk-mm-tile span,
+.dk-minimap.compact .dk-mm-label {
+  opacity: 0;
+}
+
+.dk-minimap.compact.open {
+  transform: scale(1);
+}
+
+.dk-minimap.compact.open .dk-minimap-label,
+.dk-minimap.compact.open .dk-mm-tile span,
+.dk-minimap.compact.open .dk-mm-label {
+  opacity: 1;
 }
 
 .dk-zoom-level {

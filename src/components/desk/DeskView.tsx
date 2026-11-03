@@ -51,7 +51,7 @@ const K_MAX = 2.5;
 const DRAG_THRESHOLD = 4;
 
 // The season's cards, grouped by what they're about. Each group is one row
-// of the table; a sheet can be dragged to reorder within its row.
+// of the table, in this fixed order.
 const GROUPS: Group[] = [
   {
     id: "latest",
@@ -164,20 +164,28 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   const [freqView, setFreqView] = useState<"finish" | "quali">("finish");
 
   // Measured sheet sizes drive the sheet elements' width/height (React);
-  // positions are imperative (refs + style.transform) since they change on
-  // every pointer move while reordering.
+  // positions are imperative (refs + style.transform), set by layout().
   const [geom, setGeom] = useState<Record<string, Geom>>({});
   const geomRef = useRef<Record<string, Geom>>({});
   const poses = useRef<Record<string, Pose>>({});
-  const order = useRef<string[][]>(GROUPS.map((g) => g.sheets.map((s) => s.id)));
   const bounds = useRef({ w: 0, h: 0 });
   const [laidOut, setLaidOut] = useState(false);
 
-  // The overview in the corner: every sheet as a labelled shape, at the
-  // table's current layout, plus the viewport. Rebuilt by layout().
+  // The overview in the corner: the table in miniature — every sheet as a
+  // labelled shape under its row label, plus the viewport. Built by
+  // layout(). On narrow screens it sits folded small; a tap opens it full
+  // size and it folds away again shortly after the last touch.
   type MmTile = { id: string; title: string; x: number; y: number; w: number; h: number };
-  const [mm, setMm] = useState<{ w: number; h: number; tiles: MmTile[] }>({ w: 1, h: 1, tiles: [] });
-  const MM_W = 240;
+  type MmLabel = { id: string; label: string; x: number; y: number };
+  const [mm, setMm] = useState<{ w: number; h: number; tiles: MmTile[]; labels: MmLabel[] }>({
+    w: 1,
+    h: 1,
+    tiles: [],
+    labels: [],
+  });
+  const [mmCompact, setMmCompact] = useState(false);
+  const [mmOpen, setMmOpen] = useState(false);
+  const MM_W = 280;
 
   // Fit each card's content to its frame, then scale the whole card to the
   // sheet height — GridWalk's own two-pass fitContent()/layout() technique,
@@ -247,27 +255,23 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
   }
 
-  // Lays every row out left-aligned under its label, from the current
-  // order. The sheet being dragged (if any) keeps following the pointer;
-  // everything else slides to its slot.
-  function layout(skipId: string | null) {
+  // Lays every row out left-aligned under its label.
+  function layout() {
     let y = PAD + LABEL_H;
     let maxW = 0;
-    order.current.forEach((row, r) => {
-      const label = labelRefs.current[GROUPS[r].id];
+    const labels: MmLabel[] = [];
+    GROUPS.forEach((group) => {
+      const label = labelRefs.current[group.id];
       if (label) {
         label.style.left = `${PAD}px`;
         label.style.top = `${y - LABEL_H}px`;
       }
+      labels.push({ id: group.id, label: group.label, x: PAD, y: y - LABEL_H });
       let x = PAD;
-      row.forEach((id, i) => {
+      group.sheets.forEach(({ id }) => {
         const g = geomRef.current[id] ?? { w: SHEET_H, h: SHEET_H };
-        if (id !== skipId) {
-          poses.current[id] = { x, y };
-          const el = sheetRefs.current[id];
-          if (el) el.style.zIndex = String(i + 1);
-          applyPose(id);
-        }
+        poses.current[id] = { x, y };
+        applyPose(id);
         x += g.w + GAP;
       });
       maxW = Math.max(maxW, x - GAP);
@@ -288,6 +292,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         const g = geomRef.current[d.id];
         return p && g ? [{ id: d.id, title: d.title, x: p.x, y: p.y, w: g.w, h: g.h }] : [];
       }),
+      labels,
     });
   }
 
@@ -341,7 +346,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   // Initial placement once the sheets have been measured.
   useEffect(() => {
     if (!laidOut) return;
-    layout(null);
+    layout();
     fitWidth();
     requestAnimationFrame(() => settleAll(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -380,20 +385,14 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     };
   }, []);
 
-  // ---------- pointer handling: reorder sheets, pan the table, zoom ----------
+  // ---------- pointer handling: pan the table, zoom, the overview ----------
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
 
-    // A sheet under the pointer is dragged along its row; the others slide
-    // aside to make room and it snaps into the gap when dropped. Empty table
-    // pans. Repaints are batched to one per frame.
-    let activeId: string | null = null;
-    let activeRow = -1;
+    // Dragging anywhere on the table (sheets included) pans; two fingers
+    // pinch-zoom. Repaints are batched to one per frame.
     let panning = false;
-    let grabX = 0;
-    let grabY = 0;
-    let base: Pose = { x: 0, y: 0 };
     let moved = false;
     let panStart = { x: 0, y: 0, tx: 0, ty: 0 };
     let pending: (() => void) | null = null;
@@ -419,7 +418,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     }
 
     // Controls inside a sheet (the Latest Race card's race picker and
-    // table) must keep working as controls, not start a drag.
+    // table) must keep working as controls, not start a pan.
     function onSheetControl(e: Event) {
       return (
         e.target instanceof Element &&
@@ -427,66 +426,57 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       );
     }
 
-    // Where the dragged sheet would slot in, judged by its centre against
-    // the other sheets' centres in the row.
-    function reorderIfNeeded(id: string) {
-      const row = order.current[activeRow];
-      const p = poses.current[id];
-      const g = geomRef.current[id];
-      if (!row || !p || !g) return;
-      const centre = p.x + g.w / 2;
-      const others = row.filter((o) => o !== id);
-      let index = 0;
-      let x = PAD;
-      for (const o of others) {
-        const og = geomRef.current[o] ?? { w: SHEET_H, h: SHEET_H };
-        if (centre > x + og.w / 2) index += 1;
-        x += og.w + GAP;
-      }
-      const current = row.indexOf(id);
-      if (index === current) return;
-      others.splice(index, 0, id);
-      order.current[activeRow] = others;
-      layout(id);
+    // ----- the overview -----
+    // Narrow screens: folded small until tapped; folds away again a moment
+    // after the last touch, or as soon as the table itself is dragged.
+    const mq = window.matchMedia("(max-width: 640px)");
+    let compact = mq.matches;
+    let open = false;
+    let closeTimer = 0;
+    setMmCompact(compact);
+    function setOpen(v: boolean) {
+      open = v;
+      setMmOpen(v);
+    }
+    function foldLater() {
+      window.clearTimeout(closeTimer);
+      closeTimer = window.setTimeout(() => setOpen(false), 2200);
+    }
+    function onMqChange() {
+      compact = mq.matches;
+      setMmCompact(compact);
+      window.clearTimeout(closeTimer);
+      setOpen(false);
     }
 
-    function dropActive() {
-      if (!activeId) return;
-      const id = activeId;
-      activeId = null;
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-        rafId = 0;
-        pending?.();
-        pending = null;
-      }
-      const el = sheetRefs.current[id];
-      if (!el) return;
-      el.classList.remove("lifted");
-      el.classList.add("settled");
-      layout(null);
-      if (moved) setHintGone(true);
-    }
-
-    // The overview: press or drag to bring that part of the table into view.
+    // Press or drag on the overview to bring that part of the table into
+    // view. Mapped through the box's on-screen size, so the folded
+    // (scaled-down) box on phones maps the same way.
     function onMinimapPoint(clientX: number, clientY: number) {
       const box = mmBoxRef.current;
       if (!box) return;
       const rect = box.getBoundingClientRect();
-      const s = mmScaleRef.current;
+      if (!rect.width || !rect.height) return;
+      const { w, h } = bounds.current;
       const k = cam.current.k;
       target.current = null;
-      // 8/22: the box's left/top padding (see .dk-minimap in desk.css)
       cam.current = {
         k,
-        tx: wrap!.clientWidth / 2 - ((clientX - rect.left - 8) / s) * k,
-        ty: wrap!.clientHeight / 2 - ((clientY - rect.top - 22) / s) * k,
+        tx: wrap!.clientWidth / 2 - ((clientX - rect.left) / rect.width) * w * k,
+        ty: wrap!.clientHeight / 2 - ((clientY - rect.top) / rect.height) * h * k,
       };
       applyCam();
       setHintGone(true);
     }
     let mmDragging = false;
     function onMmDown(e: PointerEvent) {
+      window.clearTimeout(closeTimer);
+      if (compact && !open) {
+        // first tap only opens it
+        setOpen(true);
+        foldLater();
+        return;
+      }
       mmDragging = true;
       mmBoxRef.current?.setPointerCapture(e.pointerId);
       onMinimapPoint(e.clientX, e.clientY);
@@ -496,38 +486,27 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     }
     function onMmUp() {
       mmDragging = false;
+      if (compact && open) foldLater();
     }
 
     function onPointerDown(e: PointerEvent) {
       if (e.target instanceof Element && e.target.closest(".dk-topbar, .dk-ctl, .dk-minimap")) return;
       if (e.button !== 0 && e.pointerType === "mouse") return;
+      if (compact && open) {
+        window.clearTimeout(closeTimer);
+        setOpen(false);
+      }
       const rect = wrap!.getBoundingClientRect();
       pointers.set(e.pointerId, { x: e.clientX - rect.left, y: e.clientY - rect.top });
       if (pointers.size === 2) {
-        dropActive();
         panning = false;
         wrap!.classList.remove("panning");
         pinch = pinchState();
         return;
       }
       if (pointers.size > 2) return;
+      if (onSheetControl(e)) return;
       target.current = null;
-      const sheetEl = e.target instanceof Element ? e.target.closest<HTMLElement>(".dk-sheet") : null;
-      const id = sheetEl?.dataset.id ?? null;
-      if (id && poses.current[id]) {
-        if (onSheetControl(e)) return;
-        activeId = id;
-        activeRow = order.current.findIndex((row) => row.includes(id));
-        moved = false;
-        base = { ...poses.current[id] };
-        grabX = e.clientX;
-        grabY = e.clientY;
-        sheetEl!.style.zIndex = "50";
-        sheetEl!.classList.remove("settled");
-        sheetEl!.classList.add("lifted");
-        sheetEl!.setPointerCapture(e.pointerId);
-        return;
-      }
       panning = true;
       moved = false;
       panStart = { x: e.clientX, y: e.clientY, tx: cam.current.tx, ty: cam.current.ty };
@@ -549,22 +528,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         pinch = next;
         return;
       }
-      if (activeId) {
-        const id = activeId;
-        if (Math.hypot(e.clientX - grabX, e.clientY - grabY) > DRAG_THRESHOLD) moved = true;
-        if (!moved) return;
-        const k = cam.current.k;
-        const nx = base.x + (e.clientX - grabX) / k;
-        const ny = base.y + (e.clientY - grabY) / k;
-        schedule(() => {
-          const p = poses.current[id];
-          if (!p) return;
-          p.x = nx;
-          p.y = ny;
-          applyPose(id);
-          reorderIfNeeded(id);
-        });
-      } else if (panning) {
+      if (panning) {
         const dx = e.clientX - panStart.x;
         const dy = e.clientY - panStart.y;
         if (Math.hypot(dx, dy) > DRAG_THRESHOLD) moved = true;
@@ -577,7 +541,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     function onPointerUp(e: PointerEvent) {
       pointers.delete(e.pointerId);
       if (pointers.size < 2) pinch = null;
-      if (activeId) dropActive();
       if (panning) {
         panning = false;
         wrap!.classList.remove("panning");
@@ -607,12 +570,15 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     wrap.addEventListener("pointercancel", onPointerUp);
     wrap.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("resize", onResize);
+    mq.addEventListener("change", onMqChange);
     const mmBox = mmBoxRef.current;
     mmBox?.addEventListener("pointerdown", onMmDown);
     mmBox?.addEventListener("pointermove", onMmMove);
     mmBox?.addEventListener("pointerup", onMmUp);
     mmBox?.addEventListener("pointercancel", onMmUp);
     return () => {
+      window.clearTimeout(closeTimer);
+      mq.removeEventListener("change", onMqChange);
       mmBox?.removeEventListener("pointerdown", onMmDown);
       mmBox?.removeEventListener("pointermove", onMmMove);
       mmBox?.removeEventListener("pointerup", onMmUp);
@@ -754,7 +720,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
                 sheetRefs.current[def.id] = el;
               }}
               className="dk-sheet"
-              data-id={def.id}
               style={g ? { width: g.w, height: g.h } : undefined}
               aria-label={`${chrome.title}: ${chrome.subtitle}`}
             >
@@ -786,24 +751,37 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       </div>
 
       <div className={"dk-hint" + (hintGone ? " gone" : "")} aria-hidden="true">
-        Drag the table to pan · scroll to zoom · drag a card to reorder its row
+        Drag the table to pan · scroll to zoom
       </div>
 
-      <div className="dk-minimap" ref={mmBoxRef} style={{ width: MM_W, height: (mm.h / mm.w) * MM_W }} aria-hidden="true">
+      <div
+        className={"dk-minimap" + (mmCompact ? " compact" : "") + (mmOpen ? " open" : "")}
+        aria-hidden="true"
+      >
         <div className="dk-minimap-label">Overview</div>
-        {mm.tiles.map((t) => {
-          const s = MM_W / mm.w;
-          return (
-            <div
-              key={`mm-${t.id}`}
-              className="dk-mm-tile"
-              style={{ left: t.x * s, top: t.y * s, width: Math.max(2, t.w * s), height: Math.max(2, t.h * s) }}
-            >
-              <span>{t.title}</span>
-            </div>
-          );
-        })}
-        <div className="dk-mm-viewport" ref={mmViewportRef} />
+        <div className="dk-mm-box" ref={mmBoxRef} style={{ width: MM_W, height: (mm.h / mm.w) * MM_W }}>
+          {mm.labels.map((l) => {
+            const s = MM_W / mm.w;
+            return (
+              <div key={`mml-${l.id}`} className="dk-mm-label" style={{ left: l.x * s, top: l.y * s }}>
+                {l.label}
+              </div>
+            );
+          })}
+          {mm.tiles.map((t) => {
+            const s = MM_W / mm.w;
+            return (
+              <div
+                key={`mm-${t.id}`}
+                className="dk-mm-tile"
+                style={{ left: t.x * s, top: t.y * s, width: Math.max(2, t.w * s), height: Math.max(2, t.h * s) }}
+              >
+                <span>{t.title}</span>
+              </div>
+            );
+          })}
+          <div className="dk-mm-viewport" ref={mmViewportRef} />
+        </div>
       </div>
 
       <div className="dk-ctl">
