@@ -25,7 +25,7 @@ export function createLiveGrid(cv: HTMLCanvasElement) {
   const col: { line: RGB; accent: RGB } = { line: [128, 128, 128], accent: [128, 128, 128] };
   const ptr = { x: -9999, y: -9999, sx: -9999, sy: -9999, on: 0, want: 0 };
   let cam: Camera = { k: 1, tx: 0, ty: 0 };
-  let lastCam: Camera = { k: 1, tx: 0, ty: 0 };
+  const lastCam: Camera = { k: 1, tx: 0, ty: 0 };
   const waves: { x: number; y: number; t: number }[] = [];
   const comets: { horiz: boolean; line: number; dir: number; p: number; len: number; v: number; tail: number }[] = [];
   let nextComet = 0;
@@ -259,7 +259,12 @@ export function createLiveGrid(cv: HTMLCanvasElement) {
     const camStill = cam.k === lastCam.k && cam.tx === lastCam.tx && cam.ty === lastCam.ty;
     const dueComet = !reduce.matches && now > nextComet;
     const idle = ptr.on < 0.002 && waves.length === 0 && comets.length === 0 && camStill && !dueComet && !themeDirty;
-    lastCam = cam;
+    // Copied field by field, never kept as the caller's object: the desk
+    // pans by changing its camera in place, and a shared reference always
+    // compared as "still", so the canvas never dropped to 1x during a drag.
+    lastCam.k = cam.k;
+    lastCam.tx = cam.tx;
+    lastCam.ty = cam.ty;
     if (idle && wasIdle) return;
     wasIdle = idle;
     themeDirty = false;

@@ -57,8 +57,10 @@ loads. Visitors never render those cards live. The images come from
 live on `/carousel`), which the `capture-card-snapshots.yml`
 workflow runs every Monday for the current season (pass a year, or `all`,
 to capture finished seasons by hand). The visitor's theme and palette are
-read from cookies so the server can pick the right image on first paint,
-and the other colour combinations are prefetched once the browser is idle.
+read from cookies so the server can pick the right image on first paint.
+The table loads only the pictures for the current colour combination;
+switching theme or palette fetches the new set then. (The carousel at
+`/carousel` still prefetches every combination once the browser is idle.)
 Latest Race is the deliberate exception: it's built fresh on every request
 (`src/lib/recap.ts`), because converting each session time into the
 visitor's own time zone can't be baked into a shared image. It only shows
@@ -82,17 +84,19 @@ reduced-motion settings, and cancelled by any early input). The top bar
 holds the logo (back to the top of the table), an About pill that glides
 to the About card, and the theme, palette and season controls. A live grid
 drawn in the active theme's colours sits behind the cards, glowing around
-the cursor — it switches off under reduced-motion settings, and its redraw
-work stays limited to the area it actually lights up so dragging and
-scrolling stay smooth. The old standalone Results, Positions and About
+the cursor — it switches off under reduced-motion settings, its redraw
+work stays limited to the area it actually lights up, and it drops to
+standard resolution while the table is moving, so dragging and zooming
+stay smooth. Anything that changes every frame (the camera, the overview's
+outline, the open tab) is written straight to the page rather than
+re-rendering the cards. The old standalone Results, Positions and About
 pages were retired once Grid Walk covered the same ground; their addresses
 redirect here, as does the table's old preview address, `/desk`.
 
-Every page sits over a soft, slowly drifting gradient glow built from the
-active theme's own colours. The Grid Walk bars and logo, and each page's
-title/subtitle card, use a plain translucent surface with no blur (a real
-device trace showed blur costing the GPU on every frame); table cards
-elsewhere are solid.
+The top bar, logo and overview use a plain translucent surface with no
+blur (a real device trace showed blur costing the GPU on every frame). The
+carousel at `/carousel` also keeps its soft, slowly drifting gradient glow
+behind the cards.
 
 Pick a season from the selector in Grid Walk's top bar, shown as a
 calendar icon next to the year. The app defaults to the current calendar
@@ -147,7 +151,7 @@ The full reference — every part's name, its tokens, its rules, and where
 each lives in the code — is [docs/design-system.md](docs/design-system.md).
 
 In short: the UI is built from three shapes, an **island** (a floating
-rounded container such as the nav bar or logo island), a **pill** (a
+rounded container such as the top bar or logo island), a **pill** (a
 control inside an island, such as a tab) and a **card** (one graphic).
 Their sizing and styling are design tokens in `src/app/globals.css`, each
 shape is styled once in `src/styles/ui.css`, and the matching React
