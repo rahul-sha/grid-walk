@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import "@/components/gridwalk/gridwalk.css";
 import "./desk.css";
 import { createLiveGrid } from "@/components/gridwalk/liveGrid";
@@ -34,6 +34,9 @@ type SheetDef = {
   subtitle: string;
   kind: "snapshot" | "live";
   snapshotName?: SnapshotName;
+  // The picture already carries the card's title (as on the carousel), so
+  // the sheet shows no header of its own; see SectionDef.bakedTitle.
+  bakedTitle?: boolean;
 };
 
 type Group = { id: string; label: string; sheets: SheetDef[] };
@@ -81,6 +84,7 @@ const GROUPS: Group[] = [
         subtitle: "Cumulative points scored by each driver across the season.",
         kind: "snapshot",
         snapshotName: "evolution",
+        bakedTitle: true,
       },
       {
         id: "podiumsD",
@@ -89,6 +93,7 @@ const GROUPS: Group[] = [
         subtitle: "1st/2nd/3rd place finishes per driver.",
         kind: "snapshot",
         snapshotName: "podiumsD",
+        bakedTitle: true,
       },
     ],
   },
@@ -264,13 +269,19 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     const world = worldRef.current;
     if (!world) return;
     const { k, tx, ty } = cam.current;
+    // Every size this needs is read before anything is written, so a frame
+    // never makes the browser recompute styles halfway through.
+    const wrap = wrapRef.current;
+    const box = mmBoxRef.current;
+    const vw = wrap?.clientWidth ?? 0;
+    const vh = wrap?.clientHeight ?? 0;
+    const boxW = box?.offsetWidth ?? 0; // offsetWidth ignores the fold transform
     world.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${k.toFixed(4)})`;
     if (zoomLevelRef.current) zoomLevelRef.current.textContent = `${Math.round(k * 100)}%`;
     // The open tab follows whichever card is nearest the middle of the view.
-    const wrap0 = wrapRef.current;
-    if (wrap0) {
-      const cx = (wrap0.clientWidth / 2 - tx) / k;
-      const cy = (wrap0.clientHeight / 2 - ty) / k;
+    if (wrap) {
+      const cx = (vw / 2 - tx) / k;
+      const cy = (vh / 2 - ty) / k;
       let best = activeTabRef.current;
       let bd = Infinity;
       for (const t of tabs) {
@@ -289,14 +300,12 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       }
     }
     const vp = mmViewportRef.current;
-    const wrap = wrapRef.current;
-    const box = mmBoxRef.current;
     if (vp && wrap && box && bounds.current.w) {
-      const s = box.offsetWidth / bounds.current.w; // offsetWidth ignores the fold transform
+      const s = boxW / bounds.current.w;
       vp.style.left = `${(-tx / k) * s}px`;
       vp.style.top = `${(-ty / k) * s}px`;
-      vp.style.width = `${(wrap.clientWidth / k) * s}px`;
-      vp.style.height = `${(wrap.clientHeight / k) * s}px`;
+      vp.style.width = `${(vw / k) * s}px`;
+      vp.style.height = `${(vh / k) * s}px`;
     }
   }
 
@@ -795,6 +804,48 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     return { title: def.title, subtitle: def.subtitle, body: renderSnapshot(def.snapshotName!) };
   }
 
+  // The sheets change only when their own inputs do. This keeps them out
+  // of the per-frame path: the open jump tab changes while the table is
+  // panned, and re-rendering every card (Latest Race and About included)
+  // on each change cost a dropped frame on slower machines.
+  const sheets = useMemo(
+    () =>
+      allSheets.map((def) => {
+        const g = geom[def.id];
+        const chrome = sheetChrome(def);
+        return (
+          <div
+            key={def.id}
+            ref={(el) => {
+              sheetRefs.current[def.id] = el;
+            }}
+            className="dk-sheet"
+            style={{ ...(g ? { width: g.w, height: g.h } : {}), "--enter-i": allSheets.indexOf(def) } as CSSProperties}
+            aria-label={`${chrome.title}: ${chrome.subtitle}`}
+          >
+            <div
+              className="gw-card ui-card"
+              ref={(el) => {
+                cardRefs.current[def.id] = el;
+              }}
+            >
+              <div className="gw-card-inner">
+                {!def.bakedTitle && (
+                  <CardHeader title={chrome.title} subtitle={chrome.subtitle} actions={chrome.actions} />
+                )}
+                <div className="gw-frame">
+                  <div className="gw-fit">{chrome.body}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }),
+    // sheetChrome reads only these; the season's data is fixed per mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [geom, variant, failedSnapshots, resultsView, freqView],
+  );
+
   return (
     <div className="dk-wrap" ref={wrapRef}>
       <h1 className="sr-only">Grid Walk</h1>
@@ -814,35 +865,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
             {g.label}
           </div>
         ))}
-        {allSheets.map((def) => {
-          const g = geom[def.id];
-          const chrome = sheetChrome(def);
-          return (
-            <div
-              key={def.id}
-              ref={(el) => {
-                sheetRefs.current[def.id] = el;
-              }}
-              className="dk-sheet"
-              style={{ ...(g ? { width: g.w, height: g.h } : {}), "--enter-i": allSheets.indexOf(def) } as CSSProperties}
-              aria-label={`${chrome.title}: ${chrome.subtitle}`}
-            >
-              <div
-                className="gw-card ui-card"
-                ref={(el) => {
-                  cardRefs.current[def.id] = el;
-                }}
-              >
-                <div className="gw-card-inner">
-                  <CardHeader title={chrome.title} subtitle={chrome.subtitle} actions={chrome.actions} />
-                  <div className="gw-frame">
-                    <div className="gw-fit">{chrome.body}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {sheets}
       </div>
 
       <div className="dk-topbar">
