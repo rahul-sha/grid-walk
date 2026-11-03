@@ -1,6 +1,8 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, Ref } from "react";
 
 export interface PillProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  // Passed straight through to the <button> (React 19 treats ref as a prop).
+  ref?: Ref<HTMLButtonElement>;
   // The open tab: filled with the accent container.
   active?: boolean;
   // The one action in an island that leaves or resets the view (About, Fit).

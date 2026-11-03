@@ -9,7 +9,7 @@ import AboutCard from "@/components/AboutCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import AccentToggle from "@/components/AccentToggle";
 import SeasonSelector from "@/components/SeasonSelector";
-import { Island, Pill, IconPill, Logo, CardHeader, CardToggle } from "@/components/ui";
+import { Island, Pill, IconPill, Divider, Logo, CardHeader, CardToggle } from "@/components/ui";
 import type { RecapData } from "@/lib/recap";
 import {
   isAccent,
@@ -30,6 +30,7 @@ interface DeskViewProps {
 type SheetDef = {
   id: string;
   title: string;
+  navLabel?: string; // the jump tab's label, when shorter than the title
   subtitle: string;
   kind: "snapshot" | "live";
   snapshotName?: SnapshotName;
@@ -59,7 +60,7 @@ const GROUPS: Group[] = [
   {
     id: "latest",
     label: "Latest race",
-    sheets: [{ id: "recap", title: "Latest Race", subtitle: "The most recent race, in your own time zone.", kind: "live" }],
+    sheets: [{ id: "recap", title: "Latest Race", navLabel: "Latest Race", subtitle: "The most recent race, in your own time zone.", kind: "live" }],
   },
   {
     id: "championship",
@@ -67,6 +68,7 @@ const GROUPS: Group[] = [
     sheets: [
       {
         id: "results",
+        navLabel: "Points Finishes",
         title: "Drivers Results",
         subtitle: "Points scored by each driver per Grand Prix.",
         kind: "snapshot",
@@ -74,6 +76,7 @@ const GROUPS: Group[] = [
       },
       {
         id: "evolution",
+        navLabel: "Points Evolution",
         title: "Driver Points Evolution",
         subtitle: "Cumulative points scored by each driver across the season.",
         kind: "snapshot",
@@ -81,6 +84,7 @@ const GROUPS: Group[] = [
       },
       {
         id: "podiumsD",
+        navLabel: "Driver Podiums",
         title: "Driver Podiums",
         subtitle: "1st/2nd/3rd place finishes per driver.",
         kind: "snapshot",
@@ -108,6 +112,7 @@ const GROUPS: Group[] = [
       },
       {
         id: "freq",
+        navLabel: "Position Frequency",
         title: "Finish Frequency",
         subtitle: "How often each driver has finished in each position.",
         kind: "snapshot",
@@ -168,6 +173,22 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
 
   const [failedSnapshots, setFailedSnapshots] = useState<Set<string>>(new Set());
   const [hintGone, setHintGone] = useState(false);
+  // The jump tabs: one per card but About (which has its own pill). The
+  // accent marker slides to the open tab; the tab row itself never moves.
+  const tabs = allSheets.filter((d) => d.id !== "about");
+  const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? "");
+  const activeTabRef = useRef(activeTab);
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [marker, setMarker] = useState<{ left: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    function place() {
+      const el = tabRefs.current[activeTab];
+      setMarker(el ? { left: el.offsetLeft, width: el.offsetWidth } : null);
+    }
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [activeTab]);
   // The two toggled cards, as on the main site: both views stay mounted
   // and crossfade, so the sheet keeps one measured size.
   const [resultsView, setResultsView] = useState<"drivers" | "teams">("drivers");
@@ -245,6 +266,28 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     const { k, tx, ty } = cam.current;
     world.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${k.toFixed(4)})`;
     if (zoomLevelRef.current) zoomLevelRef.current.textContent = `${Math.round(k * 100)}%`;
+    // The open tab follows whichever card is nearest the middle of the view.
+    const wrap0 = wrapRef.current;
+    if (wrap0) {
+      const cx = (wrap0.clientWidth / 2 - tx) / k;
+      const cy = (wrap0.clientHeight / 2 - ty) / k;
+      let best = activeTabRef.current;
+      let bd = Infinity;
+      for (const t of tabs) {
+        const p = poses.current[t.id];
+        const g = geomRef.current[t.id];
+        if (!p || !g) continue;
+        const d = Math.hypot(p.x + g.w / 2 - cx, p.y + g.h / 2 - cy);
+        if (d < bd) {
+          bd = d;
+          best = t.id;
+        }
+      }
+      if (best !== activeTabRef.current) {
+        activeTabRef.current = best;
+        setActiveTab(best);
+      }
+    }
     const vp = mmViewportRef.current;
     const wrap = wrapRef.current;
     const box = mmBoxRef.current;
@@ -355,11 +398,12 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     userMoved.current = true;
   }
 
-  // Glide to the About sheet, filling the height of the view.
-  function goToAbout() {
+  // Glide to a sheet, filling the height of the view (the jump tabs and
+  // the About pill).
+  function goToSheet(id: string) {
     const wrap = wrapRef.current;
-    const p = poses.current.about;
-    const g = geomRef.current.about;
+    const p = poses.current[id];
+    const g = geomRef.current[id];
     if (!wrap || !p || !g) return;
     setHintGone(true);
     userMoved.current = true;
@@ -438,6 +482,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       cancelAnimationFrame(raf);
       grid?.destroy();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---------- pointer handling: pan the table, zoom, the overview ----------
@@ -811,7 +856,28 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
           }}
         />
         <Island className="dk-navpill">
-          <Pill accent className="dk-about-link" onClick={goToAbout}>
+          <nav className="dk-tabs" aria-label="Jump to">
+            {marker ? <span className="dk-tab-marker" style={{ left: marker.left, width: marker.width }} aria-hidden="true" /> : null}
+            {tabs.map((t) => (
+              <Pill
+                key={t.id}
+                className={"dk-tab" + (t.id === activeTab ? " on" : "")}
+                aria-current={t.id === activeTab ? "true" : undefined}
+                ref={(el: HTMLButtonElement | null) => {
+                  tabRefs.current[t.id] = el;
+                }}
+                onClick={() => {
+                  activeTabRef.current = t.id;
+                  setActiveTab(t.id);
+                  goToSheet(t.id);
+                }}
+              >
+                {t.navLabel ?? t.title}
+              </Pill>
+            ))}
+          </nav>
+          <Divider className="dk-navpill-divider" />
+          <Pill accent className="dk-about-link" onClick={() => goToSheet("about")}>
             About
           </Pill>
           <ThemeToggle />

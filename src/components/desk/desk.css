@@ -136,6 +136,61 @@
   margin-right: 2px;
 }
 
+/* The jump tabs: a fixed row of pills (it never scrolls or slides); the
+   accent marker glides behind whichever tab is open. */
+.dk-tabs {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dk-tab-marker {
+  position: absolute;
+  top: 0;
+  height: var(--pill-h);
+  border-radius: var(--radius-pill);
+  background: var(--accent-container);
+  transition: left 0.35s cubic-bezier(0.16, 0.8, 0.3, 1), width 0.35s cubic-bezier(0.16, 0.8, 0.3, 1);
+  pointer-events: none;
+}
+
+.dk-tab {
+  position: relative; /* above the marker */
+  transition: color 0.25s ease, padding 0.2s ease;
+}
+
+.dk-tab.on {
+  color: var(--on-accent-container);
+}
+
+.dk-tab.on:hover {
+  background: transparent;
+}
+
+.dk-navpill-divider {
+  margin: 0 2px;
+}
+
+/* Tighter tabs on smaller desktops; below ~1300px the row can't fit
+   beside the logo island, so it goes (the overview still jumps anywhere). */
+@media (max-width: 1540px) {
+  .dk-tab {
+    padding: 0 9px;
+    font-size: 12px;
+  }
+  .dk-navpill {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 1300px) {
+  .dk-tabs,
+  .dk-navpill-divider {
+    display: none;
+  }
+}
+
 .dk-hint {
   position: fixed;
   top: 16px;
@@ -188,8 +243,16 @@
   border-radius: 14px;
   box-shadow: var(--shadow-island);
   transform-origin: 100% 100%;
+  transform: scale(0.5);
   transition: transform 0.28s cubic-bezier(0.16, 0.8, 0.3, 1), bottom 0.28s ease;
   touch-action: none;
+}
+
+/* Shown at half size; grows to full size under the pointer. */
+@media (hover: hover) {
+  .dk-minimap:not(.compact):hover {
+    transform: scale(1);
+  }
 }
 
 .dk-minimap-label {
