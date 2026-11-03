@@ -351,6 +351,24 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     fitAll(true);
   }
 
+  function userMovedByClick() {
+    userMoved.current = true;
+  }
+
+  // Glide to the About sheet, filling the height of the view.
+  function goToAbout() {
+    const wrap = wrapRef.current;
+    const p = poses.current.about;
+    const g = geomRef.current.about;
+    if (!wrap || !p || !g) return;
+    setHintGone(true);
+    userMoved.current = true;
+    const vw = wrap.clientWidth;
+    const vh = wrap.clientHeight;
+    const k = clampNum(Math.min((vh - 120) / g.h, (vw - 32) / g.w, 1), K_MIN, K_MAX);
+    animateTo({ k, tx: vw / 2 - (p.x + g.w / 2) * k, ty: vh / 2 - (p.y + g.h / 2) * k }, 700);
+  }
+
   function zoomCentre(factor: number) {
     const wrap = wrapRef.current;
     if (!wrap) return;
@@ -734,7 +752,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
 
   return (
     <div className="dk-wrap" ref={wrapRef}>
-      <h1 className="sr-only">Grid Walk desk — experimental layout</h1>
+      <h1 className="sr-only">Grid Walk</h1>
       <canvas className="gw-grid" ref={gridCanvasRef} aria-hidden="true" />
 
       <div className={"dk-world" + (laidOut ? "" : " pending")} ref={worldRef}>
@@ -783,9 +801,19 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       </div>
 
       <div className="dk-topbar">
-        <Logo href="/" label="Back to Grid Walk" />
+        {/* The logo is its own island, and takes you back to the top of the table. */}
+        <Logo
+          label="Grid Walk: back to the top of the table"
+          onClick={() => {
+            setHintGone(true);
+            userMovedByClick();
+            animateTo(openingView(), 700);
+          }}
+        />
         <Island className="dk-navpill">
-          <span className="dk-experimental-tag">Experimental table layout</span>
+          <Pill accent className="dk-about-link" onClick={goToAbout}>
+            About
+          </Pill>
           <ThemeToggle />
           <AccentToggle />
           <SeasonSelector initialSeason={year} />

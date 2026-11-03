@@ -22,7 +22,7 @@ export default function AboutCard() {
         tinkering with side projects; by race weekend, fully invested in the midfield battle as
         much as the win. Every design is reviewed and approved before it goes live, with Claude
         (Anthropic&rsquo;s AI coding assistant) doing the implementation — the heatmaps, charts,
-        theming, and this carousel itself. This is an independent fan project, not affiliated with
+        theming, and this table itself. This is an independent fan project, not affiliated with
         Formula 1, the FIA, or any team.
       </p>
 

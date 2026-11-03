@@ -1,50 +1,20 @@
-import { buildPointsGrid } from "@/lib/points-grid";
-import { buildConstructorPointsGrid } from "@/lib/constructor-points-grid";
-import { buildFinishPositionSummary } from "@/lib/finish-positions";
-import { buildQualifyingPositionSummary } from "@/lib/qualifying-positions";
 import { currentSeason, resolvePersistedSeason } from "@/lib/seasons";
 import { readSnapshotManifest, resolvePersistedVariant } from "@/lib/card-snapshots";
 import { buildRecapData } from "@/lib/recap";
-import GridWalk, { type GridWalkData } from "@/components/gridwalk/GridWalk";
+import DeskView from "@/components/desk/DeskView";
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: Promise<{ season?: string; noSnapshot?: string }>;
-}) {
+// Grid Walk's home page: the season's cards laid out neatly in labelled
+// rows on one zoomable, pannable table, with an overview in the corner.
+// The previous presentation, the horizontal carousel, is kept at /carousel.
+export default async function Home({ searchParams }: { searchParams: Promise<{ season?: string }> }) {
   const params = await searchParams;
-  const season = Number(params.season) || (await resolvePersistedSeason()) || currentSeason();
-
-  // Visitors only ever get the pre-rendered card images, so the season's
-  // data grids are neither built nor sent to the browser. The one
-  // exception is capture mode (?noSnapshot=1), used by
-  // scripts/capture-card-snapshots.mjs to render the cards live so it can
-  // photograph them — the only place live rendering still happens.
-  const captureMode = params.noSnapshot === "1";
-  let live: GridWalkData | null = null;
-  if (captureMode) {
-    const [pointsGrid, constructorGrid, finishSummary, qualifyingSummary] = await Promise.all([
-      buildPointsGrid(season),
-      buildConstructorPointsGrid(season),
-      buildFinishPositionSummary(season),
-      buildQualifyingPositionSummary(season),
-    ]);
-    live = { pointsGrid, constructorGrid, finishSummary, qualifyingSummary };
-  }
-
-  const [manifest, variant, recap] = await Promise.all([
-    readSnapshotManifest(season),
+  const year = Number(params.season) || (await resolvePersistedSeason()) || currentSeason();
+  const [variant, recap] = await Promise.all([
     resolvePersistedVariant(),
-    season === currentSeason() ? buildRecapData(season) : Promise.resolve(null),
+    year === currentSeason() ? buildRecapData(year) : Promise.resolve(null),
   ]);
-
-  return (
-    <GridWalk
-      season={season}
-      live={live}
-      sizes={manifest?.sizes ?? null}
-      initialVariant={variant}
-      recap={recap}
-    />
-  );
+  const manifest = readSnapshotManifest(year);
+  // Keyed on the year so a season change remounts the table and re-measures
+  // every sheet for that season's images.
+  return <DeskView key={year} year={year} sizes={manifest?.sizes ?? null} recap={recap} initialVariant={variant} />;
 }

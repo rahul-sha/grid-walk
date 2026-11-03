@@ -1,7 +1,6 @@
-/* Desk: the experimental "clean table" presentation of Grid Walk — the
-   season's cards laid out neatly in labelled rows on a zoomable, pannable
-   table, with an overview in the corner. See the "grid-walk-desk-preview"
-   memory. A preview at /desk, not linked from the main nav. */
+/* Desk: Grid Walk's home page — the season's cards laid out neatly in
+   labelled rows on a zoomable, pannable table, with an overview in the
+   corner. The previous carousel presentation is kept at /carousel. */
 
 .dk-wrap {
   position: fixed;
@@ -133,11 +132,8 @@
   height: var(--island-h);
 }
 
-.dk-experimental-tag {
-  font-size: 12px;
-  color: var(--text-secondary);
-  padding: 0 6px;
-  white-space: nowrap;
+.dk-about-link {
+  margin-right: 2px;
 }
 
 .dk-hint {
@@ -305,9 +301,6 @@
 }
 
 @media (max-width: 640px) {
-  .dk-experimental-tag {
-    display: none;
-  }
   .dk-hint {
     white-space: normal;
     text-align: center;
