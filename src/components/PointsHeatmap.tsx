@@ -167,7 +167,7 @@ type HeatmapMode = "points" | "position";
 const DNF_CODES = new Set(["R", "W", "D", "E", "N"]);
 
 // Share of --heat-6 per points finish (index = position). The podium gets
-// wide steps so P1–P3 stand apart; P4–P10 share the rest evenly. The other
+// wider steps so P1–P3 stand apart; P4–P10 share the rest evenly. The other
 // end is halfway between --heat-1 and --heat-2. P11+ gets neutral --heat-0.
 const POSITION_MIX = [0, 100, 72, 52, 40, 34, 27, 20, 13, 7, 0];
 
@@ -329,7 +329,6 @@ function PositionCellContent({
   const style = {
     background: shade.background,
     color: shade.strong ? "var(--heat-fg-hi)" : "var(--heat-fg-lo)",
-    fontWeight: classified <= 3 ? 700 : undefined,
   } as React.CSSProperties;
 
   return (
