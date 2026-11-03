@@ -166,6 +166,22 @@ type HeatmapMode = "points" | "position";
 
 const DNF_CODES = new Set(["R", "W", "D", "E", "N"]);
 
+// Share of --heat-6 per points finish (index = position). The podium gets
+// wider steps so P1–P3 stand apart; P4–P10 share the rest evenly. The other
+// end is halfway between --heat-1 and --heat-2. P11+ gets neutral --heat-0.
+const POSITION_MIX = [0, 100, 72, 52, 40, 34, 27, 20, 13, 7, 0];
+
+function positionShade(position: number): { background: string; strong: boolean } {
+  const pct = POSITION_MIX[position];
+  if (position < 1 || pct === undefined) {
+    return { background: "var(--heat-0)", strong: false };
+  }
+  return {
+    background: `color-mix(in oklab, var(--heat-6) ${pct}%, color-mix(in oklab, var(--heat-2), var(--heat-1)))`,
+    strong: pct >= 40,
+  };
+}
+
 function PointsCellContent({
   cell,
   max,
@@ -308,19 +324,11 @@ function PositionCellContent({
     );
   }
 
-  // Lower finishing position is a stronger result, so the ramp runs in
-  // reverse from the points heatmap: 1st place gets the deepest shade.
-  // A straight linear spread across the whole field (1..maxPosition)
-  // crowds 1st/2nd/3rd into the same top bucket once there are 20+ cars,
-  // since there are only 7 shades to go around — so the top finishers each
-  // get their own shade and everything from 8th back shares the lightest
-  // one, rather than every position getting an equal, and mostly invisible,
-  // slice of the ramp.
   const classified = cell.classifiedPosition ?? maxPosition;
-  const bucket = Math.max(0, Math.min(6, 7 - classified));
+  const shade = positionShade(classified);
   const style = {
-    background: `var(--heat-${bucket})`,
-    color: bucket >= 4 ? "var(--heat-fg-hi)" : "var(--heat-fg-lo)",
+    background: shade.background,
+    color: shade.strong ? "var(--heat-fg-hi)" : "var(--heat-fg-lo)",
   } as React.CSSProperties;
 
   return (
@@ -433,7 +441,12 @@ export default function PointsHeatmap({
                 onLeave={hide}
               />
             ))}
-            <th className="sticky right-0 z-10 min-w-[64px] sm:min-w-[160px] px-2 sm:px-3 py-2 text-center text-xs font-semibold" />
+            <th
+              className="sticky right-0 z-10 min-w-[64px] sm:min-w-[160px] px-2 sm:px-3 py-2 align-bottom text-center text-xs font-semibold"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              {mode === "position" ? "Median" : null}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -504,10 +517,10 @@ export default function PointsHeatmap({
                         />
                       </div>
                       <span
-                        className="text-xs font-semibold tabular-nums"
+                        className="inline-block w-7 text-right text-xs font-semibold tabular-nums"
                         style={{ color: "var(--text-primary)" }}
                       >
-                        {medianFinish !== null ? medianFinish.toFixed(2) : "—"}
+                        {medianFinish !== null ? String(medianFinish) : "—"}
                       </span>
                     </div>
                   ) : (

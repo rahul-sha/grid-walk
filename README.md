@@ -17,17 +17,30 @@ visitor's own time zone. A flag strip lets visitors browse any race of the
 season, not just the latest; only the latest race's recap loads with the
 page, and every other one is fetched on demand when picked. A race that
 hasn't happened yet shows a plain "race yet to be held" message instead. The
-remaining five graphics
+remaining six graphics
 follow it on the same horizontal carousel strip, in the same order as the
-"Jump to" bar below it: Driver/Constructor Points Evolution,
-Driver/Constructor Podiums, Drivers/Team Results, Finish and Qualifying
-Frequency, and Positions. The latter four are shared cards — a driver half
+"Jump to" bar below it: Drivers/Team Results, Driver/Constructor Points
+Evolution, Positions, Positions Gained, Finish and Qualifying Frequency, and
+Driver/Constructor Podiums. Results, Evolution, Frequency and Podiums are shared cards — a driver half
 and a team half either stacked with a divider or toggled in place with a
 pill button — and each card is the same real heatmap, chart, grid or podium
 bars that used to live on its own page, under the same title and subtitle.
 The last card, **About**, covers who built the site, how, the design and
 data credits, and the unofficial-fan-site disclaimer F1's brand guidelines
 ask every fan site to carry on its landing page.
+
+On the Positions card every points finish (P1–P10) gets its own shade,
+blended from the palette's heat colours, with bigger steps between P1, P2 and
+P3 so the podium stands out; anything outside the points is left plain. The
+column on the right is each driver's median finishing position (retirements
+left out).
+
+The Positions Gained card, next to it, shows how many places each driver
+gained or lost from their grid slot to the chequered flag in every Grand
+Prix (starting 12th and finishing 5th is +7). Gains are shaded on the
+palette's heat ramp and losses in a neutral grey. Retirements are marked but
+not counted, and the two columns on the right are each driver's average and
+median over the races they finished.
 
 Every card but Latest Race is pre-rendered: for each season, every
 theme/palette combination is saved as a lossless WebP image under
@@ -95,6 +108,11 @@ don't hit the live API on every request. A weekly GitHub Action
 season's snapshot. A live fetch from `https://api.jolpi.ca/ergast/f1` is
 used only as a fallback, when no snapshot exists yet for a season at all.
 No API key is required.
+
+Vercel skips a deployment when a commit changes only season data, and
+skips branch previews for commits that change only the baked card images
+(`scripts/vercel-ignore-build.sh`). Each deployment stores its own copy of
+the images, so this keeps deployment storage down.
 
 Grand Prix flags/abbreviations, constructor colours and team-name display
 overrides are mapped locally in `src/lib/circuits.ts`,

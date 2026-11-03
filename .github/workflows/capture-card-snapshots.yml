@@ -25,6 +25,12 @@ on:
 permissions:
   contents: write
 
+# Two captures at once would each commit a full image set (two deployments)
+# and the later one overwrites the earlier. Queue them instead.
+concurrency:
+  group: capture-card-snapshots
+  cancel-in-progress: false
+
 jobs:
   capture:
     runs-on: ubuntu-latest

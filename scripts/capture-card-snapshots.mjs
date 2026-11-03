@@ -47,6 +47,7 @@ const THEMES = ["light", "dark"];
 const PLAIN_SECTIONS = [
   { id: "evolution", tab: "Points Evolution" },
   { id: "positions", tab: "Positions" },
+  { id: "gained", tab: "Positions Gained" },
   { id: "podiumsD", tab: "Driver Podiums" },
 ];
 // Cards with an in-header toggle: both views captured, one image each.

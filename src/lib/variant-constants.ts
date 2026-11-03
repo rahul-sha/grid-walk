@@ -41,6 +41,7 @@ export const SNAPSHOT_NAMES = [
   "results-teams",
   "evolution",
   "positions",
+  "gained",
   "freq-finish",
   "freq-quali",
   "podiumsD",

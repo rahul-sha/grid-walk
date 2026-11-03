@@ -1,6 +1,6 @@
 {
   "season": 2023,
-  "capturedAt": "2026-10-27T09:27:42.939Z",
+  "capturedAt": "2026-11-03T02:01:53.534Z",
   "sizes": {
     "evolution": {
       "w": 900,
@@ -9,6 +9,10 @@
     "positions": {
       "w": 1390,
       "h": 892
+    },
+    "gained": {
+      "w": 1362,
+      "h": 927
     },
     "podiumsD": {
       "w": 658,
