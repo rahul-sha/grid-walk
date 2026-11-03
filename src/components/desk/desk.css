@@ -160,6 +160,67 @@
   box-shadow: var(--shadow-card);
 }
 
+/* The overview: the table in miniature, each sheet a labelled shape, with
+   the current viewport outlined. Press or drag on it to move the view. */
+.dk-minimap {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 5;
+  box-sizing: content-box;
+  padding: 22px 8px 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.dk-minimap-label {
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dk-minimap > .dk-mm-tile,
+.dk-minimap > .dk-mm-viewport {
+  /* tile/viewport coordinates are relative to the padded content box */
+  margin-left: 8px;
+  margin-top: 22px;
+}
+
+.dk-mm-tile {
+  position: absolute;
+  background: var(--surface-3);
+  border: 1px solid var(--border-hairline);
+  border-radius: 2px;
+  overflow: hidden;
+  padding: 2px 3px;
+  font-size: 8px;
+  line-height: 1.15;
+  font-weight: 600;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.dk-mm-viewport {
+  position: absolute;
+  border: 1.5px solid var(--accent);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .dk-minimap {
+    display: none;
+  }
+}
+
 .dk-zoom-level {
   font-size: 12px;
   color: var(--text-secondary);

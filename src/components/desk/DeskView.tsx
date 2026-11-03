@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import "@/components/gridwalk/gridwalk.css";
 import "./desk.css";
 import { createLiveGrid } from "@/components/gridwalk/liveGrid";
@@ -8,7 +8,7 @@ import RecapCard from "@/components/RecapCard";
 import AboutCard from "@/components/AboutCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import AccentToggle from "@/components/AccentToggle";
-import { Island, Pill, IconPill, Logo, CardHeader } from "@/components/ui";
+import { Island, Pill, IconPill, Logo, CardHeader, CardToggle } from "@/components/ui";
 import type { RecapData } from "@/lib/recap";
 import {
   isAccent,
@@ -135,6 +135,9 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   const tableRef = useRef<HTMLDivElement>(null);
   const gridCanvasRef = useRef<HTMLCanvasElement>(null);
   const zoomLevelRef = useRef<HTMLSpanElement>(null);
+  const mmBoxRef = useRef<HTMLDivElement>(null);
+  const mmViewportRef = useRef<HTMLDivElement>(null);
+  const mmScaleRef = useRef(1);
   const sheetRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const labelRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -155,6 +158,10 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
 
   const [failedSnapshots, setFailedSnapshots] = useState<Set<string>>(new Set());
   const [hintGone, setHintGone] = useState(false);
+  // The two toggled cards, as on the main site: both views stay mounted
+  // and crossfade, so the sheet keeps one measured size.
+  const [resultsView, setResultsView] = useState<"drivers" | "teams">("drivers");
+  const [freqView, setFreqView] = useState<"finish" | "quali">("finish");
 
   // Measured sheet sizes drive the sheet elements' width/height (React);
   // positions are imperative (refs + style.transform) since they change on
@@ -165,6 +172,12 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   const order = useRef<string[][]>(GROUPS.map((g) => g.sheets.map((s) => s.id)));
   const bounds = useRef({ w: 0, h: 0 });
   const [laidOut, setLaidOut] = useState(false);
+
+  // The overview in the corner: every sheet as a labelled shape, at the
+  // table's current layout, plus the viewport. Rebuilt by layout().
+  type MmTile = { id: string; title: string; x: number; y: number; w: number; h: number };
+  const [mm, setMm] = useState<{ w: number; h: number; tiles: MmTile[] }>({ w: 1, h: 1, tiles: [] });
+  const MM_W = 240;
 
   // Fit each card's content to its frame, then scale the whole card to the
   // sheet height — GridWalk's own two-pass fitContent()/layout() technique,
@@ -212,6 +225,15 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     const { k, tx, ty } = cam.current;
     world.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${k.toFixed(4)})`;
     if (zoomLevelRef.current) zoomLevelRef.current.textContent = `${Math.round(k * 100)}%`;
+    const vp = mmViewportRef.current;
+    const wrap = wrapRef.current;
+    if (vp && wrap) {
+      const s = mmScaleRef.current;
+      vp.style.left = `${(-tx / k) * s}px`;
+      vp.style.top = `${(-ty / k) * s}px`;
+      vp.style.width = `${(wrap.clientWidth / k) * s}px`;
+      vp.style.height = `${(wrap.clientHeight / k) * s}px`;
+    }
   }
 
   function animateTo(to: Cam, dur: number) {
@@ -257,6 +279,16 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       t.style.width = `${bounds.current.w}px`;
       t.style.height = `${bounds.current.h}px`;
     }
+    mmScaleRef.current = MM_W / bounds.current.w;
+    setMm({
+      w: bounds.current.w,
+      h: bounds.current.h,
+      tiles: ALL_SHEETS.flatMap((d) => {
+        const p = poses.current[d.id];
+        const g = geomRef.current[d.id];
+        return p && g ? [{ id: d.id, title: d.title, x: p.x, y: p.y, w: g.w, h: g.h }] : [];
+      }),
+    });
   }
 
   function settleAll(settled: boolean) {
@@ -436,8 +468,38 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       if (moved) setHintGone(true);
     }
 
+    // The overview: press or drag to bring that part of the table into view.
+    function onMinimapPoint(clientX: number, clientY: number) {
+      const box = mmBoxRef.current;
+      if (!box) return;
+      const rect = box.getBoundingClientRect();
+      const s = mmScaleRef.current;
+      const k = cam.current.k;
+      target.current = null;
+      // 8/22: the box's left/top padding (see .dk-minimap in desk.css)
+      cam.current = {
+        k,
+        tx: wrap!.clientWidth / 2 - ((clientX - rect.left - 8) / s) * k,
+        ty: wrap!.clientHeight / 2 - ((clientY - rect.top - 22) / s) * k,
+      };
+      applyCam();
+      setHintGone(true);
+    }
+    let mmDragging = false;
+    function onMmDown(e: PointerEvent) {
+      mmDragging = true;
+      mmBoxRef.current?.setPointerCapture(e.pointerId);
+      onMinimapPoint(e.clientX, e.clientY);
+    }
+    function onMmMove(e: PointerEvent) {
+      if (mmDragging) onMinimapPoint(e.clientX, e.clientY);
+    }
+    function onMmUp() {
+      mmDragging = false;
+    }
+
     function onPointerDown(e: PointerEvent) {
-      if (e.target instanceof Element && e.target.closest(".dk-topbar, .dk-ctl")) return;
+      if (e.target instanceof Element && e.target.closest(".dk-topbar, .dk-ctl, .dk-minimap")) return;
       if (e.button !== 0 && e.pointerType === "mouse") return;
       const rect = wrap!.getBoundingClientRect();
       pointers.set(e.pointerId, { x: e.clientX - rect.left, y: e.clientY - rect.top });
@@ -526,7 +588,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     // Wheel zooms about the cursor; a trackpad pinch arrives as ctrl+wheel.
     // Scrollable regions inside the Latest Race card keep their own scroll.
     function onWheel(e: WheelEvent) {
-      if (e.target instanceof Element && e.target.closest(".recap-table, .recap-picker-strip, .dk-topbar, .dk-ctl")) return;
+      if (e.target instanceof Element && e.target.closest(".recap-table, .recap-picker-strip, .dk-topbar, .dk-ctl, .dk-minimap")) return;
       e.preventDefault();
       target.current = null;
       const rect = wrap!.getBoundingClientRect();
@@ -545,7 +607,16 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     wrap.addEventListener("pointercancel", onPointerUp);
     wrap.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("resize", onResize);
+    const mmBox = mmBoxRef.current;
+    mmBox?.addEventListener("pointerdown", onMmDown);
+    mmBox?.addEventListener("pointermove", onMmMove);
+    mmBox?.addEventListener("pointerup", onMmUp);
+    mmBox?.addEventListener("pointercancel", onMmUp);
     return () => {
+      mmBox?.removeEventListener("pointerdown", onMmDown);
+      mmBox?.removeEventListener("pointermove", onMmMove);
+      mmBox?.removeEventListener("pointerup", onMmUp);
+      mmBox?.removeEventListener("pointercancel", onMmUp);
       wrap.removeEventListener("pointerdown", onPointerDown);
       wrap.removeEventListener("pointermove", onPointerMove);
       wrap.removeEventListener("pointerup", onPointerUp);
@@ -597,10 +668,62 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     );
   }
 
-  function renderBody(def: SheetDef) {
-    if (def.id === "recap") return <RecapCard data={recap} />;
-    if (def.id === "about") return <AboutCard />;
-    return renderSnapshot(def.snapshotName!);
+  function renderViews(views: { name: SnapshotName; active: boolean }[]) {
+    return (
+      <div className="ui-card-views">
+        {views.map((v) => (
+          <div key={v.name} className={"ui-card-view" + (v.active ? " active" : "")} aria-hidden={!v.active}>
+            {renderSnapshot(v.name)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Title, subtitle, header control and body for a sheet; the two toggled
+  // cards derive theirs from their current view.
+  function sheetChrome(def: SheetDef): { title: string; subtitle: string; actions?: ReactNode; body: ReactNode } {
+    if (def.id === "recap") return { title: def.title, subtitle: def.subtitle, body: <RecapCard data={recap} /> };
+    if (def.id === "about") return { title: def.title, subtitle: def.subtitle, body: <AboutCard /> };
+    if (def.id === "results") {
+      const drivers = resultsView === "drivers";
+      return {
+        title: drivers ? "Drivers Results" : "Team Results",
+        subtitle: drivers ? "Points scored by each driver per Grand Prix." : "Points scored by each team per Grand Prix.",
+        actions: (
+          <CardToggle
+            name="results"
+            label={drivers ? "Teams" : "Drivers"}
+            onToggle={() => setResultsView((v) => (v === "drivers" ? "teams" : "drivers"))}
+          />
+        ),
+        body: renderViews([
+          { name: "results-drivers", active: drivers },
+          { name: "results-teams", active: !drivers },
+        ]),
+      };
+    }
+    if (def.id === "freq") {
+      const finish = freqView === "finish";
+      return {
+        title: finish ? "Finish Frequency" : "Qualifying Frequency",
+        subtitle: finish
+          ? "How often each driver has finished in each position."
+          : "How often each driver has qualified in each grid position.",
+        actions: (
+          <CardToggle
+            name="freq"
+            label={finish ? "Qualifying" : "Race"}
+            onToggle={() => setFreqView((v) => (v === "finish" ? "quali" : "finish"))}
+          />
+        ),
+        body: renderViews([
+          { name: "freq-finish", active: finish },
+          { name: "freq-quali", active: !finish },
+        ]),
+      };
+    }
+    return { title: def.title, subtitle: def.subtitle, body: renderSnapshot(def.snapshotName!) };
   }
 
   return (
@@ -623,6 +746,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         ))}
         {ALL_SHEETS.map((def) => {
           const g = geom[def.id];
+          const chrome = sheetChrome(def);
           return (
             <div
               key={def.id}
@@ -632,7 +756,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
               className="dk-sheet"
               data-id={def.id}
               style={g ? { width: g.w, height: g.h } : undefined}
-              aria-label={`${def.title}: ${def.subtitle}`}
+              aria-label={`${chrome.title}: ${chrome.subtitle}`}
             >
               <div
                 className="gw-card ui-card"
@@ -641,9 +765,9 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
                 }}
               >
                 <div className="gw-card-inner">
-                  <CardHeader title={def.title} subtitle={def.subtitle} />
+                  <CardHeader title={chrome.title} subtitle={chrome.subtitle} actions={chrome.actions} />
                   <div className="gw-frame">
-                    <div className="gw-fit">{renderBody(def)}</div>
+                    <div className="gw-fit">{chrome.body}</div>
                   </div>
                 </div>
               </div>
@@ -663,6 +787,23 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
 
       <div className={"dk-hint" + (hintGone ? " gone" : "")} aria-hidden="true">
         Drag the table to pan · scroll to zoom · drag a card to reorder its row
+      </div>
+
+      <div className="dk-minimap" ref={mmBoxRef} style={{ width: MM_W, height: (mm.h / mm.w) * MM_W }} aria-hidden="true">
+        <div className="dk-minimap-label">Overview</div>
+        {mm.tiles.map((t) => {
+          const s = MM_W / mm.w;
+          return (
+            <div
+              key={`mm-${t.id}`}
+              className="dk-mm-tile"
+              style={{ left: t.x * s, top: t.y * s, width: Math.max(2, t.w * s), height: Math.max(2, t.h * s) }}
+            >
+              <span>{t.title}</span>
+            </div>
+          );
+        })}
+        <div className="dk-mm-viewport" ref={mmViewportRef} />
       </div>
 
       <div className="dk-ctl">
