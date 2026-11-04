@@ -129,6 +129,16 @@ const GROUPS: Group[] = [
   },
 ];
 
+// Set once the start-up has played; module state, so it survives the
+// remount a season switch causes (client-side navigation) but not a reload.
+const startup = { played: false };
+// Returns whether the start-up has already played, and marks it played.
+function startupAlreadyPlayed() {
+  const was = startup.played;
+  startup.played = true;
+  return was;
+}
+
 function easeOutCubic(p: number) {
   return 1 - Math.pow(1 - p, 3);
 }
@@ -438,7 +448,10 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     layout();
     const world = worldRef.current;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
+    // The start-up plays once per visit: a season switch remounts the
+    // table, and that should just show the new season in place.
+    const replay = startupAlreadyPlayed();
+    if (reduced || replay) {
       cam.current = openingView();
       applyCam();
       requestAnimationFrame(() => settleAll(true));
