@@ -10,6 +10,7 @@ import AccentToggle from "@/components/AccentToggle";
 import SeasonSelector from "@/components/SeasonSelector";
 import LatestRaceMenu from "./LatestRaceMenu";
 import { fitContent } from "./fitCard";
+import { buildId, buildDateLabel } from "@/lib/buildInfo";
 import { Island, Pill, IconPill, Divider, Logo, CardHeader, CardToggle } from "@/components/ui";
 import type { RecapData } from "@/lib/recap";
 import {
@@ -749,7 +750,20 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   // Title, subtitle, header control and body for a sheet; the two toggled
   // cards derive theirs from their current view.
   function sheetChrome(def: SheetDef): { title: string; subtitle: string; actions?: ReactNode; body: ReactNode } {
-    if (def.id === "about") return { title: def.title, subtitle: def.subtitle, body: <AboutCard /> };
+    if (def.id === "about")
+      return {
+        title: def.title,
+        subtitle: def.subtitle,
+        // The build badge, as on the carousel: derived from the deployed
+        // commit (next.config.ts / src/lib/buildInfo.ts).
+        actions: (
+          <span className="about-tag">
+            Build {buildId}
+            {buildDateLabel ? ` · ${buildDateLabel}` : ""}
+          </span>
+        ),
+        body: <AboutCard />,
+      };
     if (def.id === "results") {
       const drivers = resultsView === "drivers";
       return {
