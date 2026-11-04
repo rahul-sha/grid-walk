@@ -4,11 +4,13 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import "@/components/gridwalk/gridwalk.css";
 import "./desk.css";
 import { createLiveGrid } from "@/components/gridwalk/liveGrid";
-import RecapCard from "@/components/RecapCard";
 import AboutCard from "@/components/AboutCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import AccentToggle from "@/components/AccentToggle";
 import SeasonSelector from "@/components/SeasonSelector";
+import LatestRaceMenu from "./LatestRaceMenu";
+import { fitContent } from "./fitCard";
+import { buildId, buildDateLabel } from "@/lib/buildInfo";
 import { Island, Pill, IconPill, Divider, Logo, CardHeader, CardToggle } from "@/components/ui";
 import type { RecapData } from "@/lib/recap";
 import {
@@ -53,18 +55,13 @@ const LABEL_H = 30; // room above each row for its label
 const PAD = 72; // table padding around the content
 const K_MIN = 0.25;
 const K_MAX = 2.5;
-const DRAG_THRESHOLD = 4;
 const ENTER_STAGGER = 90; // ms between one sheet's arrival and the next
 const ENTER_DUR = 600; // ms a sheet takes to arrive (matches desk.css)
 
 // The season's cards, grouped by what they're about. Each group is one row
-// of the table, in this fixed order.
+// of the table, in this fixed order. The Latest Race card is not on the
+// table: it opens from its own pill (LatestRaceMenu), for every season.
 const GROUPS: Group[] = [
-  {
-    id: "latest",
-    label: "Latest race",
-    sheets: [{ id: "recap", title: "Latest Race", navLabel: "Latest Race", subtitle: "The most recent race, in your own time zone.", kind: "live" }],
-  },
   {
     id: "championship",
     label: "Championship",
@@ -132,10 +129,14 @@ const GROUPS: Group[] = [
   },
 ];
 
-// Past seasons have no Latest Race card (as on the main site), so their
-// table starts at the Championship row.
-function groupsFor(hasRecap: boolean): Group[] {
-  return hasRecap ? GROUPS : GROUPS.filter((g) => g.id !== "latest");
+// Set once the start-up has played; module state, so it survives the
+// remount a season switch causes (client-side navigation) but not a reload.
+const startup = { played: false };
+// Returns whether the start-up has already played, and marks it played.
+function startupAlreadyPlayed() {
+  const was = startup.played;
+  startup.played = true;
+  return was;
 }
 
 function easeOutCubic(p: number) {
@@ -149,7 +150,7 @@ function clampNum(v: number, lo: number, hi: number) {
 export default function DeskView({ year, sizes, recap, initialVariant }: DeskViewProps) {
   // Remounted by the page (keyed on the year) whenever the season changes,
   // so these are fixed for the component's lifetime.
-  const groups = groupsFor(recap !== null);
+  const groups = GROUPS;
   const allSheets = groups.flatMap((g) => g.sheets);
   const wrapRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
@@ -176,8 +177,18 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     return () => observer.disconnect();
   }, []);
 
+  // Phones put the Latest Race pill in the bottom island (the top bar is
+  // full); unknown until mounted, so the pill renders once, in one place.
+  const [narrow, setNarrow] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const read = () => setNarrow(mq.matches);
+    read();
+    mq.addEventListener("change", read);
+    return () => mq.removeEventListener("change", read);
+  }, []);
+
   const [failedSnapshots, setFailedSnapshots] = useState<Set<string>>(new Set());
-  const [hintGone, setHintGone] = useState(false);
   // The jump tabs: one per card but About (which has its own pill). The
   // accent marker slides to the open tab; the tab row itself never moves.
   const tabs = allSheets.filter((d) => d.id !== "about");
@@ -185,6 +196,11 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   const activeTabRef = useRef(activeTab);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [marker, setMarker] = useState<{ left: number; width: number } | null>(null);
+  // No tab is lit on arrival (the start-up, then the opening view): the
+  // tabs only start following the view once the visitor moves the table,
+  // zooms, or uses a tab or pill.
+  const [intro, setIntro] = useState(true);
+  const introRef = useRef(true);
   useLayoutEffect(() => {
     function place() {
       const el = tabRefs.current[activeTab];
@@ -227,20 +243,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   // sheet height — GridWalk's own two-pass fitContent()/layout() technique,
   // so the sheets are the production cards at a smaller size.
   useLayoutEffect(() => {
-    function fitContent(card: HTMLElement) {
-      const fit = card.querySelector<HTMLElement>(".gw-fit");
-      const frame = fit?.parentElement ?? null;
-      if (!fit || !frame) return;
-      fit.style.transform = "";
-      frame.style.width = "";
-      const fh = frame.clientHeight;
-      const cw = fit.offsetWidth;
-      const ch = fit.offsetHeight;
-      if (!cw || !ch || !fh) return;
-      const fs = fh / ch;
-      fit.style.transform = `scale(${fs})`;
-      frame.style.width = `${cw * fs}px`;
-    }
     const measured: Record<string, Geom> = {};
     allSheets.forEach((def) => {
       const card = cardRefs.current[def.id];
@@ -279,7 +281,11 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     world.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${k.toFixed(4)})`;
     if (zoomLevelRef.current) zoomLevelRef.current.textContent = `${Math.round(k * 100)}%`;
     // The open tab follows whichever card is nearest the middle of the view.
-    if (wrap) {
+    if (introRef.current && userMoved.current) {
+      introRef.current = false;
+      setIntro(false);
+    }
+    if (wrap && !introRef.current) {
       const cx = (vw / 2 - tx) / k;
       const cy = (vh / 2 - ty) / k;
       let best = activeTabRef.current;
@@ -403,8 +409,13 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     fitAll(true);
   }
 
-  function userMovedByClick() {
-    userMoved.current = true;
+  // The logo: back to the opening view, as on arrival, with the tabs unlit
+  // again until the next move.
+  function backToArrival() {
+    userMoved.current = false;
+    introRef.current = true;
+    setIntro(true);
+    animateTo(openingView(), 700);
   }
 
   // Glide to a sheet, filling the height of the view (the jump tabs and
@@ -414,7 +425,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     const p = poses.current[id];
     const g = geomRef.current[id];
     if (!wrap || !p || !g) return;
-    setHintGone(true);
     userMoved.current = true;
     const vw = wrap.clientWidth;
     const vh = wrap.clientHeight;
@@ -443,7 +453,10 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     layout();
     const world = worldRef.current;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
+    // The start-up plays once per visit: a season switch remounts the
+    // table, and that should just show the new season in place.
+    const replay = startupAlreadyPlayed();
+    if (reduced || replay) {
       cam.current = openingView();
       applyCam();
       requestAnimationFrame(() => settleAll(true));
@@ -502,7 +515,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     // Dragging anywhere on the table (sheets included) pans; two fingers
     // pinch-zoom. Repaints are batched to one per frame.
     let panning = false;
-    let moved = false;
     let panStart = { x: 0, y: 0, tx: 0, ty: 0 };
     let pending: (() => void) | null = null;
     let rafId = 0;
@@ -526,8 +538,8 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       return { d: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
     }
 
-    // Controls inside a sheet (the Latest Race card's race picker and
-    // table) must keep working as controls, not start a pan.
+    // Controls inside a sheet (the card toggles and the About card's links)
+    // must keep working as controls, not start a pan.
     function onSheetControl(e: Event) {
       return (
         e.target instanceof Element &&
@@ -570,13 +582,12 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       const { w, h } = bounds.current;
       const k = cam.current.k;
       target.current = null;
-      cam.current = {
+        cam.current = {
         k,
         tx: wrap!.clientWidth / 2 - ((clientX - rect.left) / rect.width) * w * k,
         ty: wrap!.clientHeight / 2 - ((clientY - rect.top) / rect.height) * h * k,
       };
       applyCam();
-      setHintGone(true);
     }
     let mmDragging = false;
     function onMmDown(e: PointerEvent) {
@@ -618,8 +629,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       if (pointers.size > 2) return;
       if (onSheetControl(e)) return;
       target.current = null;
-      panning = true;
-      moved = false;
+        panning = true;
       panStart = { x: e.clientX, y: e.clientY, tx: cam.current.tx, ty: cam.current.ty };
       wrap!.classList.add("panning");
       wrap!.setPointerCapture(e.pointerId);
@@ -642,7 +652,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       if (panning) {
         const dx = e.clientX - panStart.x;
         const dy = e.clientY - panStart.y;
-        if (Math.hypot(dx, dy) > DRAG_THRESHOLD) moved = true;
         cam.current.tx = panStart.tx + dx;
         cam.current.ty = panStart.ty + dy;
         schedule(applyCam);
@@ -655,7 +664,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       if (panning) {
         panning = false;
         wrap!.classList.remove("panning");
-        if (moved) setHintGone(true);
       }
     }
 
@@ -666,10 +674,9 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       e.preventDefault();
       userMoved.current = true;
       target.current = null;
-      const rect = wrap!.getBoundingClientRect();
+        const rect = wrap!.getBoundingClientRect();
       const factor = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0016));
       zoomAt(e.clientX - rect.left, e.clientY - rect.top, factor);
-      setHintGone(true);
     }
 
     function onResize() {
@@ -761,8 +768,20 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   // Title, subtitle, header control and body for a sheet; the two toggled
   // cards derive theirs from their current view.
   function sheetChrome(def: SheetDef): { title: string; subtitle: string; actions?: ReactNode; body: ReactNode } {
-    if (def.id === "recap") return { title: def.title, subtitle: def.subtitle, body: <RecapCard data={recap} /> };
-    if (def.id === "about") return { title: def.title, subtitle: def.subtitle, body: <AboutCard /> };
+    if (def.id === "about")
+      return {
+        title: def.title,
+        subtitle: def.subtitle,
+        // The build badge, as on the carousel: derived from the deployed
+        // commit (next.config.ts / src/lib/buildInfo.ts).
+        actions: (
+          <span className="about-tag">
+            Build {buildId}
+            {buildDateLabel ? ` · ${buildDateLabel}` : ""}
+          </span>
+        ),
+        body: <AboutCard />,
+      };
     if (def.id === "results") {
       const drivers = resultsView === "drivers";
       return {
@@ -771,8 +790,12 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         actions: (
           <CardToggle
             name="results"
-            label={drivers ? "Teams" : "Drivers"}
-            onToggle={() => setResultsView((v) => (v === "drivers" ? "teams" : "drivers"))}
+            options={[
+              { value: "drivers", label: "Drivers" },
+              { value: "teams", label: "Teams" },
+            ]}
+            value={resultsView}
+            onChange={setResultsView}
           />
         ),
         body: renderViews([
@@ -791,8 +814,12 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         actions: (
           <CardToggle
             name="freq"
-            label={finish ? "Qualifying" : "Race"}
-            onToggle={() => setFreqView((v) => (v === "finish" ? "quali" : "finish"))}
+            options={[
+              { value: "finish", label: "Race" },
+              { value: "quali", label: "Qualifying" },
+            ]}
+            value={freqView}
+            onChange={setFreqView}
           />
         ),
         body: renderViews([
@@ -869,23 +896,20 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       </div>
 
       <div className="dk-topbar">
-        {/* The logo is its own island, and takes you back to the top of the table. */}
+        {/* The logo is its own island, and takes you back to the top of the
+            table, as on arrival: the tabs go unlit again until the next move. */}
         <Logo
           label="Grid Walk: back to the top of the table"
-          onClick={() => {
-            setHintGone(true);
-            userMovedByClick();
-            animateTo(openingView(), 700);
-          }}
+          onClick={backToArrival}
         />
         <Island className="dk-navpill">
           <nav className="dk-tabs" aria-label="Jump to">
-            {marker ? <span className="dk-tab-marker" style={{ left: marker.left, width: marker.width }} aria-hidden="true" /> : null}
+            {marker && !intro ? <span className="dk-tab-marker" style={{ left: marker.left, width: marker.width }} aria-hidden="true" /> : null}
             {tabs.map((t) => (
               <Pill
                 key={t.id}
-                className={"dk-tab" + (t.id === activeTab ? " on" : "")}
-                aria-current={t.id === activeTab ? "true" : undefined}
+                className={"dk-tab" + (!intro && t.id === activeTab ? " on" : "")}
+                aria-current={!intro && t.id === activeTab ? "true" : undefined}
                 ref={(el: HTMLButtonElement | null) => {
                   tabRefs.current[t.id] = el;
                 }}
@@ -900,17 +924,12 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
             ))}
           </nav>
           <Divider className="dk-navpill-divider" />
+          {recap && narrow === false ? <LatestRaceMenu data={recap} placement="top" /> : null}
+          <SeasonSelector initialSeason={year} />
           <Pill accent className="dk-about-link" onClick={() => goToSheet("about")}>
             About
           </Pill>
-          <ThemeToggle />
-          <AccentToggle />
-          <SeasonSelector initialSeason={year} />
         </Island>
-      </div>
-
-      <div className={"dk-hint" + (hintGone ? " gone" : "")} aria-hidden="true">
-        Drag the table to pan · scroll to zoom
       </div>
 
       <div
@@ -944,19 +963,27 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       </div>
 
       <div className="dk-ctl">
-        <IconPill aria-label="Zoom out" onClick={() => zoomCentre(0.8)}>
+        {recap && narrow === true ? (
+          <>
+            <LatestRaceMenu data={recap} placement="bottom" />
+            <Divider />
+          </>
+        ) : null}
+        <ThemeToggle />
+        <AccentToggle />
+        <Divider />
+        <IconPill className="dk-zoom-step" aria-label="Zoom out" onClick={() => zoomCentre(0.8)}>
           −
         </IconPill>
         <span className="dk-zoom-level" ref={zoomLevelRef}>
           100%
         </span>
-        <IconPill aria-label="Zoom in" onClick={() => zoomCentre(1.25)}>
+        <IconPill className="dk-zoom-step" aria-label="Zoom in" onClick={() => zoomCentre(1.25)}>
           +
         </IconPill>
         <Pill
           accent
           onClick={() => {
-            setHintGone(true);
             fitAllByUser();
           }}
         >

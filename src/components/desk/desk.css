@@ -100,9 +100,10 @@
 }
 
 /* GridWalk's cards block pointer events on their content (the carousel
-   owns every press); on the desk the Latest Race card's own controls must
-   keep working, so re-enable them. */
-.dk-sheet .gw-card-inner {
+   owns every press); on the desk the cards' own controls must keep
+   working, so re-enable them. */
+.dk-sheet .gw-card-inner,
+.dk-lr-panel .gw-card-inner {
   pointer-events: auto;
   padding: 1.2rem 1.3rem 1.4rem;
 }
@@ -189,29 +190,6 @@
   .dk-navpill-divider {
     display: none;
   }
-}
-
-.dk-hint {
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 4;
-  background: var(--surface-2);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-card);
-  padding: 8px 14px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  opacity: 1;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-  margin-top: calc(var(--island-h) + 10px);
-  white-space: nowrap;
-}
-
-.dk-hint.gone {
-  opacity: 0;
 }
 
 .dk-ctl {
@@ -363,10 +341,137 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Phones: the bottom island also holds the Latest race pill and the theme
+   and palette toggles, so the step buttons and zoom level give way (pinch
+   zooms; Fit all stays). */
 @media (max-width: 640px) {
-  .dk-hint {
-    white-space: normal;
-    text-align: center;
-    max-width: calc(100vw - 32px);
+  .dk-ctl .dk-zoom-step,
+  .dk-ctl .dk-zoom-level {
+    display: none;
+  }
+}
+
+/* The overview is for phones only; desktop has the jump tabs. */
+@media (min-width: 641px) {
+  .dk-minimap {
+    display: none;
+  }
+}
+
+/* ---- Latest race: a pill that opens the real card in a panel ----------
+   Desktop: the pill sits in the top bar, styled like the season switcher,
+   and the card hangs 8px under it (as the season menu does), right edges
+   aligned, sized to the screen's height. Phones: the pill sits in the
+   bottom island and the card opens upwards, as wide as the top bar, and
+   scrolls inside itself. */
+/* An open card sits above the zoom island and the overview. */
+.dk-topbar:has(.dk-lr.open) {
+  z-index: 6;
+}
+
+.dk-lr {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.dk-lr-pill {
+  position: relative;
+}
+
+.dk-lr-flag {
+  width: 18px;
+  height: 13px;
+  border-radius: 2px;
+  background-size: cover;
+  box-shadow: 0 0 0 1px var(--border-hairline);
+}
+
+.dk-lr-chevron {
+  transition: transform 0.15s ease;
+}
+.dk-lr.top.open .dk-lr-chevron,
+.dk-lr.bottom:not(.open) .dk-lr-chevron {
+  transform: rotate(180deg);
+}
+
+/* A newer result than the one last opened. */
+.dk-lr-pill.unseen::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.dk-lr-panel {
+  position: absolute;
+  z-index: 40;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-menu), var(--shadow-card);
+  background: var(--surface-2);
+  overflow: hidden;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+}
+.dk-lr.open .dk-lr-panel {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s;
+}
+
+.dk-lr-panel {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+}
+
+.dk-lr.top .dk-lr-panel {
+  /* the pill is inset 6px in its island; clear the island, then 8px */
+  top: calc(100% + 6px + 8px);
+  right: 0;
+  transform: translateY(-6px) scale(0.98);
+  transform-origin: top right;
+}
+.dk-lr.top.open .dk-lr-panel {
+  transform: none;
+}
+
+.dk-lr.bottom {
+  position: static;
+}
+.dk-lr.bottom .dk-lr-panel {
+  /* .dk-ctl is centred on the screen, so a centred panel lands on the
+     page gutters */
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, 8px) scale(0.98);
+  transform-origin: bottom center;
+  scrollbar-width: none;
+}
+.dk-lr.bottom.open .dk-lr-panel {
+  transform: translate(-50%, 0);
+}
+
+.dk-lr-scale {
+  position: relative;
+}
+
+.dk-lr-panel .gw-card {
+  cursor: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dk-lr-panel,
+  .dk-lr-chevron {
+    transition: none;
   }
 }

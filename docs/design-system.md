@@ -23,15 +23,14 @@ The site uses three shapes. An **island** floats on its own, a **pill** is a sma
 | Logo island | The island holding the Grid Walk mark and name. On the desk it glides back to the opening view | Island | Top left |
 | Controls | About, theme, palette, and season, grouped together at the right of the top bar | Group | Top bar |
 | Accent pill | A pill tinted with the accent colour, for the one action that leaves or resets the view | Pill | About, Fit all |
-| Card toggle | A small accent pill, 12px text with a swap icon, at the top right of a card that has two views. It crossfades between them | Pill | Results (Drivers/Teams), Frequency (Finish/Qualifying) |
+| Card toggle | A segmented switch at the top right of a card that has two views: both names in one rounded track, with an accent thumb that slides under the one showing. It crossfades between the views | Pill | Results (Drivers/Teams), Frequency (Finish/Qualifying) |
 | Subsection | A second graphic lower in the same card, under its own header and a hairline | Part | Evolution (Constructors), Podiums (Teams) |
 | Baked title | A card whose picture already carries its own title (because it also has a subsection), so the card shows no header of its own | Part | Evolution, Podiums |
 | Divider | A 1 × 22px hairline between groups inside an island | Part | Top bar |
 | Menu | A floating panel of options that opens from a pill | Surface | Season picker |
-| Hint | The one line of muted help text that fades after your first move | Text | Under the top bar |
 | Page plane | The flat background colour every page sits on | Layer | Everywhere |
 | Live grid | The canvas grid that bends and glows round the cursor or finger, and drifts with the camera | Layer | Behind the desk and the carousel |
-| Latest Race card | The one live card (not a picture): the race picker flag strip, the results, and session times in your own time zone | Card | First row of the desk (current season only) |
+| Latest Race card | The one live card (not a picture): the race picker flag strip, the results, and session times in your own time zone | Card | Opens from the Latest race pill: under the top bar on desktop, above the zoom bar on phones (always the current season) |
 | About card | The live "About this site" card | Card | Last row of the desk |
 
 ### The desk (home page)
@@ -48,7 +47,7 @@ The site uses three shapes. An **island** floats on its own, a **pill** is a sma
 | Top bar island | The island holding the jump tabs, a divider, About, and the controls | Island | Top right |
 | Jump tabs | A fixed row of pills, one per card except About. A tap glides the camera to that card | Pill | Top bar island, desktop only |
 | Tab marker | The accent-container pill behind the open jump tab. The tabs never move; the marker glides to whichever tab is open. The open tab follows the card nearest the middle of the view as you pan | Part | Behind the jump tabs |
-| Overview | An island in the bottom-right corner showing the whole table in miniature: a tile per card under its row label, and the viewport. Press or drag inside it to move the view | Island | Bottom right |
+| Overview | An island in the bottom-right corner showing the whole table in miniature: a tile per card under its row label, and the viewport. Press or drag inside it to move the view | Island | Bottom right, phones only |
 | Viewport | The accent-outlined rectangle in the overview showing what is on screen | Part | Overview |
 | Zoom bar | The rounded bar at the bottom centre with −, zoom level, +, and Fit all | Control | Bottom centre |
 | Start-up | On load, the camera sits on the whole table while the sheets and row labels rise in one after another, then it glides in to the opening view | Motion | Home page, once per load |
@@ -93,7 +92,7 @@ Every colour comes from a small set of tokens, and each palette in each theme fi
 | --- | --- | --- |
 | Island height | 48px (`--island-h`) | Logo island, top bar island, nav bar, jump bar, zoom island |
 | Pill height | 36px (`--pill-h`) | Jump tabs, tab marker, controls, Fit all, zoom buttons |
-| Card toggle height | about 28px (6px padding, 12px text) | Card toggle |
+| Card toggle height | 36px track, 3px inset thumb, 12px text, equal-width options | Card toggle |
 | Card height | 900px, every card (`--card-h`) | Cards on the carousel; the desk measures each card at this size, then scales it |
 | Sheet height | 430px at 100% zoom (`SHEET_H`) | Sheets on the desk |
 | Gap between sheets | 36px (`GAP`) | Desk rows |
@@ -107,7 +106,7 @@ Every colour comes from a small set of tokens, and each palette in each theme fi
 | Menu radius | 16px, options 10px (`--radius-menu`, `--radius-menu-option`) | Season menu |
 | Gap inside an island | 4px between tabs, 6–8px between groups | Top bar island, nav bar, jump bar |
 | Edge inset | 16px on the desk; 20px desktop and 0.9rem phone on the carousel | Islands from the screen edge |
-| Overview width | 360px (300px on phones), drawn at half size until hovered | Overview |
+| Overview width | 300px, phones only | Overview |
 
 **Type:** the system font stack throughout. Pills and tabs use 13px at weight 600 (12px for jump tabs below 1540px wide), and card toggles 12px at weight 600. Row labels are 13px at weight 600, upper case, with 0.08em spacing, in `--text-muted`. The logo uses 0.95rem at weight 800, upper case, with 0.04em spacing. Card titles are 14px at weight 600 in `--text-secondary`, and subtitles, captions, and the hint use `--text-muted`. Overview tile titles are 12px at weight 600 (9px on the narrow Latest Race and About tiles), and its row labels 8px upper case.
 
@@ -143,7 +142,7 @@ Each component below lists what it holds, how it reacts, and where its code live
 | Icon pill | Icon | Press shrinks to 90%; each theme or palette click spins the icon and sends an accent ring | 36 × 36px | Same | `IconPill` (`.ui-icon-pill`) in `ThemeToggle.tsx`, `AccentToggle.tsx`, and the zoom bar; the click feedback is `.icon-toggle-btn` in `globals.css`; icons in `ui/icons.tsx` |
 | Season picker | Calendar icon, year, chevron; menu of seasons | Open flips the chevron; selected option uses accent container | Opens downwards | Same | `Pill` plus `Menu`, `MenuAnchor`, and `MenuOption` (`.ui-menu`, `.ui-menu-option`) in `SeasonSelector.tsx` |
 | Card | Title, subtitle, a picture of the graphic, an optional subsection | See the desk and carousel tables | | | `.ui-card` for the look; `.gw-card`, `.gw-frame`, `.gw-fit` for fitting the content; `CardHeader` (`.ui-card-header`) for the title, left out when the card has a baked title |
-| Card toggle | Swap icon and the other view's name | Hover lifts 1px; click crossfades the two pictures | Top right of the card header | Same | `CardToggle` (`.ui-card-toggle`) in the header (`.ui-card-head`); the two pictures are `.ui-card-views` and `.ui-card-view` |
+| Card toggle | Both view names; the one showing sits on the accent thumb | Hover brightens the other name; click slides the thumb (instant with reduced motion) and crossfades the two pictures | Top right of the card header | Same | `CardToggle` (`.ui-card-toggle`) in the header (`.ui-card-head`); the two pictures are `.ui-card-views` and `.ui-card-view` |
 | Subsection | Its own title and subtitle, then a graphic | None | A hairline and 1.6rem gap above | Same | `CardHeader subsection` (`.ui-subsection`) |
 | Card picture | A `.webp` of one graphic, captured weekly per theme and palette | Shows "Image unavailable" at the right size if a capture is missing | Chosen from the theme and palette cookies | Same | `card-snapshots.ts`, `variant-constants.ts`, `scripts/capture-card-snapshots.mjs` (photographs `/carousel`) |
 | Live grid | A canvas | Bends and glows round the pointer; a ring on each press; drops to 1x resolution while the camera moves and sharpens a beat after it stops | Behind everything | Same | `liveGrid.ts` |
@@ -153,12 +152,11 @@ Each component below lists what it holds, how it reacts, and where its code live
 | Component | Holds | States | Desktop | Phone | Code |
 | --- | --- | --- | --- | --- | --- |
 | Table | Rows of sheets with their labels | Drag pans; wheel, ctrl-wheel, or pinch zooms about the pointer | Fills the window | Same | `.dk-wrap`, `.dk-world` (the camera's transform), `.dk-table`, `.dk-group-label`; layout in `layout()` in `DeskView.tsx` |
-| Sheet | One production card, fitted to its frame then scaled to 430px tall | Controls inside (Latest Race's picker and table, card toggles) keep working; everything else pans | Same | Same | `.dk-sheet` around `.gw-card ui-card` |
-| Top bar island | Jump tabs, divider, About, theme, palette, season | None of its own | Translucent island, top right | Solid island; the jump tabs are hidden | `Island` with `.dk-navpill` |
-| Jump tabs | One `Pill` per card except About, and the tab marker | Tap glides to the card; the open tab follows the card nearest the view's middle | 13px, 12px below 1540px, hidden below 1300px | Hidden | `.dk-tabs`, `.dk-tab`, `.dk-tab-marker` |
-| Overview | A tile per card under its row label, and the viewport | Hover grows it to full size; press or drag moves the view | Bottom right, half size until hovered | Folded to 40% above the zoom bar; tap opens | `.dk-minimap`, `.dk-mm-box`, `.dk-mm-tile`, `.dk-mm-label`, `.dk-mm-viewport` |
-| Zoom bar | −, zoom level, +, Fit all | Level reads a percentage | Bottom centre | Same | `IconPill` and `Pill accent` inside `.dk-ctl` |
-| Hint | "Drag the table to pan · scroll to zoom" | Fades after the first move | Under the top bar | Wraps to two lines | `.dk-hint` |
+| Sheet | One production card, fitted to its frame then scaled to 430px tall | Controls inside (card toggles, the About card's links) keep working; everything else pans | Same | Same | `.dk-sheet` around `.gw-card ui-card` |
+| Top bar island | Jump tabs, divider, Latest race pill, season, About | None of its own | Translucent island, top right | Solid island; the jump tabs are hidden | `Island` with `.dk-navpill` |
+| Jump tabs | One `Pill` per card except About, and the tab marker | Tap glides to the card; no tab is lit on arrival, then the open tab follows the card nearest the view's middle once the visitor moves | 13px, 12px below 1540px, hidden below 1300px | Hidden | `.dk-tabs`, `.dk-tab`, `.dk-tab-marker` |
+| Overview | A tile per card under its row label, and the viewport | Press or drag moves the view | Hidden (the jump tabs do this job) | Folded to 40% above the zoom bar; tap opens | `.dk-minimap`, `.dk-mm-box`, `.dk-mm-tile`, `.dk-mm-label`, `.dk-mm-viewport` |
+| Zoom bar | Theme, palette, divider, −, zoom level, +, Fit all | Level reads a percentage | Bottom centre | Latest race pill first; − , level and + hidden (pinch zooms) | `IconPill` and `Pill accent` inside `.dk-ctl` |
 
 ### Carousel (`/carousel`)
 
@@ -230,11 +228,10 @@ Rules of thumb:
 
 These are places where the desk does not yet follow the rules above. They are listed so they are not copied; each would be a small visible change, so each wants a mock-up before it is touched.
 
-1. **The zoom bar, overview, hint, and table set their own look** in `desk.css` (fill, border, radius, shadow) instead of being an `Island` or using tokens. The zoom bar in particular is a hand-made pill bar rather than an island.
-2. **The top bar island does not fit a phone.** At 390px wide the island runs past the right edge, so the season picker is cut off.
+1. **The zoom bar, overview, and table set their own look** in `desk.css` (fill, border, radius, shadow) instead of being an `Island` or using tokens. The zoom bar in particular is a hand-made pill bar rather than an island.
+2. **The top bar island only just fits a phone.** It fits at 390px wide; on screens narrower than about 375px it still runs past the right edge.
 3. **The opening view on a phone** is limited by the 25% minimum zoom, so the table opens wider than the screen with its left side cut off.
-4. **The hint says "scroll to zoom" on phones**, where it means pinch.
-5. **Card radius:** cards (14px) and table cards (20px) still differ. Unifying on 20px is not done.
+4. **Card radius:** cards (14px) and table cards (20px) still differ. Unifying on 20px is not done.
 
 ## How we got here
 

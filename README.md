@@ -11,19 +11,22 @@ language.
 
 **Home / Grid Walk** (`/`) is the site's entry point and its only page for
 race data: the season's cards laid out neatly on one big table, in labelled
-rows that group them by what they are about. **Latest race** holds the
-Latest Race card, which is current-season only: a recap of a race (podium,
-pole, fastest lap, full classification and qualifying order) plus that
-race's own session schedule, converted into the visitor's own time zone. A
-flag strip lets visitors browse any race of the season, not just the
-latest; only the latest race's recap loads with the page, and every other
-one is fetched on demand when picked. A race that hasn't happened yet shows
-a plain "race yet to be held" message instead. **Championship** holds
+rows that group them by what they are about. The Latest Race card is kept
+off the table: a pill in the top bar (on phones, in the bottom island next
+to the zoom controls) opens it as a drop-down, and it always shows the
+current season, whichever season is on the table. A small dot on the pill
+marks a result the visitor hasn't opened yet. The card is a recap of a race
+(podium, pole, fastest lap, full classification and qualifying order) plus
+that race's own session schedule, converted into the visitor's own time
+zone. A flag strip lets visitors browse any race of the season, not just
+the latest; only the latest race's recap loads with the page, and every
+other one is fetched on demand when picked. A race that hasn't happened yet
+shows a plain "race yet to be held" message instead. **Championship** holds
 Drivers/Team Results, Driver/Constructor Points Evolution and
 Driver/Constructor Podiums; **Race by race** holds Positions, Positions
 Gained and Finish/Qualifying Frequency. Results, Evolution, Frequency and
 Podiums are shared cards — a driver half and a team half either stacked
-with a divider or toggled in place with a pill button — and each card is
+with a divider or toggled in place with a sliding two-way switch — and each card is
 the same real heatmap, chart, grid or podium bars that used to live on its
 own page, under the same title and subtitle. The last row, **About**,
 covers who built the site, how, the design and data credits, and the
@@ -72,17 +75,20 @@ the page. About is the other exception: it's plain text and links, so
 there's no snapshot to bake and no GPU cost to save by baking one.
 
 Drag anywhere on the table to pan, and scroll or pinch to zoom around the
-pointer; the controls at the bottom zoom in and out or fit the whole table
-into view. An **overview** in the bottom-right corner shows the table in
-miniature — every card as a labelled shape under its row label, with the
-current view outlined — and pressing or dragging inside it moves the view.
-On phones the overview sits folded small above the zoom controls; a tap
-opens it full size and it folds away again a moment after the last touch.
-On load the camera sits on the whole table while the cards rise into place
-one after another, then glides in to the opening view (skipped under
+pointer; the controls at the bottom (with the theme and palette toggles)
+zoom in and out or fit the whole table into view. On desktop the jump tabs
+in the top bar glide to any card; no tab is lit until you first move, and
+pressing the logo returns to the opening view. On phones an **overview**
+sits folded small above the bottom controls — the table in miniature, every
+card as a labelled shape under its row label, with the current view
+outlined; a tap opens it full size, pressing or dragging inside it moves
+the view, and it folds away again a moment after the last touch.
+The start-up plays once per visit (not on a season switch): the camera
+sits on the whole table while the cards rise into place one after another, then glides in to the opening view (skipped under
 reduced-motion settings, and cancelled by any early input). The top bar
-holds the logo (back to the top of the table), an About pill that glides
-to the About card, and the theme, palette and season controls. A live grid
+holds the logo (back to the top of the table), the jump tabs, the Latest
+race pill, the season switcher, and an About pill that glides to the About
+card. A live grid
 drawn in the active theme's colours sits behind the cards, glowing around
 the cursor — it switches off under reduced-motion settings, its redraw
 work stays limited to the area it actually lights up, and it drops to

@@ -279,10 +279,14 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
       navLabel: "Points Finishes",
       headerActions: () => (
         <CardToggle
-          name="results"
-          label={resultsView === "drivers" ? "Teams" : "Drivers"}
-          onToggle={() => setResultsView((v) => (v === "drivers" ? "teams" : "drivers"))}
-        />
+            name="results"
+            options={[
+              { value: "drivers", label: "Drivers" },
+              { value: "teams", label: "Teams" },
+            ]}
+            value={resultsView}
+            onChange={setResultsView}
+          />
       ),
       snapshots: [
         { name: "results-drivers", active: resultsView === "drivers" },
@@ -339,10 +343,14 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
       navLabel: "Position Frequency",
       headerActions: () => (
         <CardToggle
-          name="freq"
-          label={freqView === "finish" ? "Qualifying" : "Race"}
-          onToggle={() => setFreqView((v) => (v === "finish" ? "quali" : "finish"))}
-        />
+            name="freq"
+            options={[
+              { value: "finish", label: "Race" },
+              { value: "quali", label: "Qualifying" },
+            ]}
+            value={freqView}
+            onChange={setFreqView}
+          />
       ),
       snapshots: [
         { name: "freq-finish", active: freqView === "finish" },
