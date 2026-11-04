@@ -11,7 +11,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
   const year = Number(params.season) || (await resolvePersistedSeason()) || currentSeason();
   const [variant, recap] = await Promise.all([
     resolvePersistedVariant(),
-    year === currentSeason() ? buildRecapData(year) : Promise.resolve(null),
+    // The Latest Race card always shows the current season, whichever
+    // season is on the table.
+    buildRecapData(currentSeason()),
   ]);
   const manifest = readSnapshotManifest(year);
   // Keyed on the year so a season change remounts the table and re-measures

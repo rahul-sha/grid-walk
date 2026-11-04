@@ -11,14 +11,17 @@ language.
 
 **Home / Grid Walk** (`/`) is the site's entry point and its only page for
 race data: the season's cards laid out neatly on one big table, in labelled
-rows that group them by what they are about. **Latest race** holds the
-Latest Race card, which is current-season only: a recap of a race (podium,
-pole, fastest lap, full classification and qualifying order) plus that
-race's own session schedule, converted into the visitor's own time zone. A
-flag strip lets visitors browse any race of the season, not just the
-latest; only the latest race's recap loads with the page, and every other
-one is fetched on demand when picked. A race that hasn't happened yet shows
-a plain "race yet to be held" message instead. **Championship** holds
+rows that group them by what they are about. The Latest Race card is kept
+off the table: a pill in the top bar (on phones, in the bottom island next
+to the zoom controls) opens it as a drop-down, and it always shows the
+current season, whichever season is on the table. A small dot on the pill
+marks a result the visitor hasn't opened yet. The card is a recap of a race
+(podium, pole, fastest lap, full classification and qualifying order) plus
+that race's own session schedule, converted into the visitor's own time
+zone. A flag strip lets visitors browse any race of the season, not just
+the latest; only the latest race's recap loads with the page, and every
+other one is fetched on demand when picked. A race that hasn't happened yet
+shows a plain "race yet to be held" message instead. **Championship** holds
 Drivers/Team Results, Driver/Constructor Points Evolution and
 Driver/Constructor Podiums; **Race by race** holds Positions, Positions
 Gained and Finish/Qualifying Frequency. Results, Evolution, Frequency and

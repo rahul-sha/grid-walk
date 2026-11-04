@@ -4,11 +4,12 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import "@/components/gridwalk/gridwalk.css";
 import "./desk.css";
 import { createLiveGrid } from "@/components/gridwalk/liveGrid";
-import RecapCard from "@/components/RecapCard";
 import AboutCard from "@/components/AboutCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import AccentToggle from "@/components/AccentToggle";
 import SeasonSelector from "@/components/SeasonSelector";
+import LatestRaceMenu from "./LatestRaceMenu";
+import { fitContent } from "./fitCard";
 import { Island, Pill, IconPill, Divider, Logo, CardHeader, CardToggle } from "@/components/ui";
 import type { RecapData } from "@/lib/recap";
 import {
@@ -58,13 +59,9 @@ const ENTER_STAGGER = 90; // ms between one sheet's arrival and the next
 const ENTER_DUR = 600; // ms a sheet takes to arrive (matches desk.css)
 
 // The season's cards, grouped by what they're about. Each group is one row
-// of the table, in this fixed order.
+// of the table, in this fixed order. The Latest Race card is not on the
+// table: it opens from its own pill (LatestRaceMenu), for every season.
 const GROUPS: Group[] = [
-  {
-    id: "latest",
-    label: "Latest race",
-    sheets: [{ id: "recap", title: "Latest Race", navLabel: "Latest Race", subtitle: "The most recent race, in your own time zone.", kind: "live" }],
-  },
   {
     id: "championship",
     label: "Championship",
@@ -132,12 +129,6 @@ const GROUPS: Group[] = [
   },
 ];
 
-// Past seasons have no Latest Race card (as on the main site), so their
-// table starts at the Championship row.
-function groupsFor(hasRecap: boolean): Group[] {
-  return hasRecap ? GROUPS : GROUPS.filter((g) => g.id !== "latest");
-}
-
 function easeOutCubic(p: number) {
   return 1 - Math.pow(1 - p, 3);
 }
@@ -149,7 +140,7 @@ function clampNum(v: number, lo: number, hi: number) {
 export default function DeskView({ year, sizes, recap, initialVariant }: DeskViewProps) {
   // Remounted by the page (keyed on the year) whenever the season changes,
   // so these are fixed for the component's lifetime.
-  const groups = groupsFor(recap !== null);
+  const groups = GROUPS;
   const allSheets = groups.flatMap((g) => g.sheets);
   const wrapRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
@@ -174,6 +165,17 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     const observer = new MutationObserver(read);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-accent"] });
     return () => observer.disconnect();
+  }, []);
+
+  // Phones put the Latest Race pill in the bottom island (the top bar is
+  // full); unknown until mounted, so the pill renders once, in one place.
+  const [narrow, setNarrow] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const read = () => setNarrow(mq.matches);
+    read();
+    mq.addEventListener("change", read);
+    return () => mq.removeEventListener("change", read);
   }, []);
 
   const [failedSnapshots, setFailedSnapshots] = useState<Set<string>>(new Set());
@@ -227,20 +229,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   // sheet height — GridWalk's own two-pass fitContent()/layout() technique,
   // so the sheets are the production cards at a smaller size.
   useLayoutEffect(() => {
-    function fitContent(card: HTMLElement) {
-      const fit = card.querySelector<HTMLElement>(".gw-fit");
-      const frame = fit?.parentElement ?? null;
-      if (!fit || !frame) return;
-      fit.style.transform = "";
-      frame.style.width = "";
-      const fh = frame.clientHeight;
-      const cw = fit.offsetWidth;
-      const ch = fit.offsetHeight;
-      if (!cw || !ch || !fh) return;
-      const fs = fh / ch;
-      fit.style.transform = `scale(${fs})`;
-      frame.style.width = `${cw * fs}px`;
-    }
     const measured: Record<string, Geom> = {};
     allSheets.forEach((def) => {
       const card = cardRefs.current[def.id];
@@ -526,8 +514,8 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       return { d: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
     }
 
-    // Controls inside a sheet (the Latest Race card's race picker and
-    // table) must keep working as controls, not start a pan.
+    // Controls inside a sheet (the card toggles and the About card's links)
+    // must keep working as controls, not start a pan.
     function onSheetControl(e: Event) {
       return (
         e.target instanceof Element &&
@@ -761,7 +749,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   // Title, subtitle, header control and body for a sheet; the two toggled
   // cards derive theirs from their current view.
   function sheetChrome(def: SheetDef): { title: string; subtitle: string; actions?: ReactNode; body: ReactNode } {
-    if (def.id === "recap") return { title: def.title, subtitle: def.subtitle, body: <RecapCard data={recap} /> };
     if (def.id === "about") return { title: def.title, subtitle: def.subtitle, body: <AboutCard /> };
     if (def.id === "results") {
       const drivers = resultsView === "drivers";
@@ -900,6 +887,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
             ))}
           </nav>
           <Divider className="dk-navpill-divider" />
+          {recap && narrow === false ? <LatestRaceMenu data={recap} placement="top" /> : null}
           <Pill accent className="dk-about-link" onClick={() => goToSheet("about")}>
             About
           </Pill>
@@ -944,6 +932,12 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       </div>
 
       <div className="dk-ctl">
+        {recap && narrow === true ? (
+          <>
+            <LatestRaceMenu data={recap} placement="bottom" />
+            <Divider />
+          </>
+        ) : null}
         <IconPill aria-label="Zoom out" onClick={() => zoomCentre(0.8)}>
           −
         </IconPill>
