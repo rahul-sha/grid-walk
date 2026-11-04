@@ -351,6 +351,13 @@
   }
 }
 
+/* The overview is for phones only; desktop has the jump tabs. */
+@media (min-width: 641px) {
+  .dk-minimap {
+    display: none;
+  }
+}
+
 /* ---- Latest race: a pill that opens the real card in a panel ----------
    Desktop: the pill sits in the top bar, styled like the season switcher,
    and the card hangs 8px under it (as the season menu does), right edges

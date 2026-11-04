@@ -47,7 +47,7 @@ The site uses three shapes. An **island** floats on its own, a **pill** is a sma
 | Top bar island | The island holding the jump tabs, a divider, About, and the controls | Island | Top right |
 | Jump tabs | A fixed row of pills, one per card except About. A tap glides the camera to that card | Pill | Top bar island, desktop only |
 | Tab marker | The accent-container pill behind the open jump tab. The tabs never move; the marker glides to whichever tab is open. The open tab follows the card nearest the middle of the view as you pan | Part | Behind the jump tabs |
-| Overview | An island in the bottom-right corner showing the whole table in miniature: a tile per card under its row label, and the viewport. Press or drag inside it to move the view | Island | Bottom right |
+| Overview | An island in the bottom-right corner showing the whole table in miniature: a tile per card under its row label, and the viewport. Press or drag inside it to move the view | Island | Bottom right, phones only |
 | Viewport | The accent-outlined rectangle in the overview showing what is on screen | Part | Overview |
 | Zoom bar | The rounded bar at the bottom centre with −, zoom level, +, and Fit all | Control | Bottom centre |
 | Start-up | On load, the camera sits on the whole table while the sheets and row labels rise in one after another, then it glides in to the opening view | Motion | Home page, once per load |
@@ -106,7 +106,7 @@ Every colour comes from a small set of tokens, and each palette in each theme fi
 | Menu radius | 16px, options 10px (`--radius-menu`, `--radius-menu-option`) | Season menu |
 | Gap inside an island | 4px between tabs, 6–8px between groups | Top bar island, nav bar, jump bar |
 | Edge inset | 16px on the desk; 20px desktop and 0.9rem phone on the carousel | Islands from the screen edge |
-| Overview width | 360px (300px on phones), drawn at half size until hovered | Overview |
+| Overview width | 300px, phones only | Overview |
 
 **Type:** the system font stack throughout. Pills and tabs use 13px at weight 600 (12px for jump tabs below 1540px wide), and card toggles 12px at weight 600. Row labels are 13px at weight 600, upper case, with 0.08em spacing, in `--text-muted`. The logo uses 0.95rem at weight 800, upper case, with 0.04em spacing. Card titles are 14px at weight 600 in `--text-secondary`, and subtitles, captions, and the hint use `--text-muted`. Overview tile titles are 12px at weight 600 (9px on the narrow Latest Race and About tiles), and its row labels 8px upper case.
 
@@ -155,7 +155,7 @@ Each component below lists what it holds, how it reacts, and where its code live
 | Sheet | One production card, fitted to its frame then scaled to 430px tall | Controls inside (card toggles, the About card's links) keep working; everything else pans | Same | Same | `.dk-sheet` around `.gw-card ui-card` |
 | Top bar island | Jump tabs, divider, Latest race pill, season, About | None of its own | Translucent island, top right | Solid island; the jump tabs are hidden | `Island` with `.dk-navpill` |
 | Jump tabs | One `Pill` per card except About, and the tab marker | Tap glides to the card; no tab is lit on arrival, then the open tab follows the card nearest the view's middle once the visitor moves | 13px, 12px below 1540px, hidden below 1300px | Hidden | `.dk-tabs`, `.dk-tab`, `.dk-tab-marker` |
-| Overview | A tile per card under its row label, and the viewport | Hover grows it to full size; press or drag moves the view | Bottom right, half size until hovered | Folded to 40% above the zoom bar; tap opens | `.dk-minimap`, `.dk-mm-box`, `.dk-mm-tile`, `.dk-mm-label`, `.dk-mm-viewport` |
+| Overview | A tile per card under its row label, and the viewport | Press or drag moves the view | Hidden (the jump tabs do this job) | Folded to 40% above the zoom bar; tap opens | `.dk-minimap`, `.dk-mm-box`, `.dk-mm-tile`, `.dk-mm-label`, `.dk-mm-viewport` |
 | Zoom bar | Theme, palette, divider, −, zoom level, +, Fit all | Level reads a percentage | Bottom centre | Latest race pill first; − , level and + hidden (pinch zooms) | `IconPill` and `Pill accent` inside `.dk-ctl` |
 
 ### Carousel (`/carousel`)

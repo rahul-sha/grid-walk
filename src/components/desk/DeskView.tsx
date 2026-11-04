@@ -409,8 +409,13 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     fitAll(true);
   }
 
-  function userMovedByClick() {
-    userMoved.current = true;
+  // The logo: back to the opening view, as on arrival, with the tabs unlit
+  // again until the next move.
+  function backToArrival() {
+    userMoved.current = false;
+    introRef.current = true;
+    setIntro(true);
+    animateTo(openingView(), 700);
   }
 
   // Glide to a sheet, filling the height of the view (the jump tabs and
@@ -883,13 +888,11 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       </div>
 
       <div className="dk-topbar">
-        {/* The logo is its own island, and takes you back to the top of the table. */}
+        {/* The logo is its own island, and takes you back to the top of the
+            table, as on arrival: the tabs go unlit again until the next move. */}
         <Logo
           label="Grid Walk: back to the top of the table"
-          onClick={() => {
-            userMovedByClick();
-            animateTo(openingView(), 700);
-          }}
+          onClick={backToArrival}
         />
         <Island className="dk-navpill">
           <nav className="dk-tabs" aria-label="Jump to">
