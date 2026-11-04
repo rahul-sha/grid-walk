@@ -84,7 +84,7 @@ card as a labelled shape under its row label, with the current view
 outlined; a tap opens it full size, pressing or dragging inside it moves
 the view, and it folds away again a moment after the last touch.
 The start-up plays once per visit (not on a season switch): the camera
-sits on the whole table while the cards rise into place one after another, then glides in to the opening view (skipped under
+sits on the whole table while the cards rise into place one after another, then glides in to the opening view (the top of the table on desktop, the first card on phones; skipped under
 reduced-motion settings, and cancelled by any early input). The top bar
 holds the logo (back to the top of the table), the jump tabs, the Latest
 race pill, the season switcher, and an About pill that glides to the About

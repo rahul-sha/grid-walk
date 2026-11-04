@@ -55,6 +55,8 @@ const LABEL_H = 30; // room above each row for its label
 const PAD = 72; // table padding around the content
 const K_MIN = 0.25;
 const K_MAX = 2.5;
+// Phones (matches the 640px breakpoint in desk.css).
+const PHONE_MAX = 640;
 const ENTER_STAGGER = 90; // ms between one sheet's arrival and the next
 const ENTER_DUR = 600; // ms a sheet takes to arrive (matches desk.css)
 
@@ -181,7 +183,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   // full); unknown until mounted, so the pill renders once, in one place.
   const [narrow, setNarrow] = useState<boolean | null>(null);
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
+    const mq = window.matchMedia(`(max-width: ${PHONE_MAX}px)`);
     const read = () => setNarrow(mq.matches);
     read();
     mq.addEventListener("change", read);
@@ -386,11 +388,18 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     }
   }
 
-  // Opening view: as wide as the table, starting at the top, so the first
-  // rows are readable and the rest is a pan away.
+  // Opening view. Desktop: as wide as the table, starting at the top, so
+  // the first rows are readable and the rest is a pan away. Phones: the
+  // whole table is far too small to read at phone width, so it opens on
+  // the first card instead, framed as its jump tab would frame it.
   function openingView(): Cam {
     const wrap = wrapRef.current;
     const vw = wrap?.clientWidth ?? 1200;
+    const first = allSheets[0]?.id;
+    if (vw <= PHONE_MAX && first) {
+      const v = sheetView(first);
+      if (v) return v;
+    }
     const { w } = bounds.current;
     const k = clampNum(Math.min((vw - 32) / w, 1), K_MIN, K_MAX);
     return { k, tx: vw / 2 - (w / 2) * k, ty: 16 };
@@ -418,18 +427,25 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     animateTo(openingView(), 700);
   }
 
-  // Glide to a sheet, filling the height of the view (the jump tabs and
-  // the About pill).
-  function goToSheet(id: string) {
+  // The view that frames one sheet, filling the height of the view (or
+  // the width, on a narrow screen).
+  function sheetView(id: string): Cam | null {
     const wrap = wrapRef.current;
     const p = poses.current[id];
     const g = geomRef.current[id];
-    if (!wrap || !p || !g) return;
-    userMoved.current = true;
+    if (!wrap || !p || !g) return null;
     const vw = wrap.clientWidth;
     const vh = wrap.clientHeight;
     const k = clampNum(Math.min((vh - 120) / g.h, (vw - 32) / g.w, 1), K_MIN, K_MAX);
-    animateTo({ k, tx: vw / 2 - (p.x + g.w / 2) * k, ty: vh / 2 - (p.y + g.h / 2) * k }, 700);
+    return { k, tx: vw / 2 - (p.x + g.w / 2) * k, ty: vh / 2 - (p.y + g.h / 2) * k };
+  }
+
+  // Glide to a sheet (the jump tabs and the About pill).
+  function goToSheet(id: string) {
+    const v = sheetView(id);
+    if (!v) return;
+    userMoved.current = true;
+    animateTo(v, 700);
   }
 
   function zoomCentre(factor: number) {
@@ -550,7 +566,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     // ----- the overview -----
     // Narrow screens: folded small until tapped; folds away again a moment
     // after the last touch, or as soon as the table itself is dragged.
-    const mq = window.matchMedia("(max-width: 640px)");
+    const mq = window.matchMedia(`(max-width: ${PHONE_MAX}px)`);
     let compact = mq.matches;
     let open = false;
     let closeTimer = 0;

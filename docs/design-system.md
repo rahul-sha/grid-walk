@@ -42,7 +42,7 @@ The site uses three shapes. An **island** floats on its own, a **pill** is a sma
 | Row label | The small upper-case name above a row | Text | Table |
 | Sheet | A card as it sits on the table, scaled down to 430px tall; its width follows the card's own shape | Card | Table |
 | Camera | The view of the table: zoom from 25% to 250%, plus position | Behaviour | Home page |
-| Opening view | The camera as the table opens: as wide as the table, at the top | Behaviour | Home page |
+| Opening view | The camera as the table opens: on desktop, as wide as the table, at the top; on phones, framed on the first card (Drivers Results) | Behaviour | Home page |
 | Top bar | The logo island on the left and the top bar island on the right, along the top edge | Layout | Home page |
 | Top bar island | The island holding the jump tabs, a divider, About, and the controls | Island | Top right |
 | Jump tabs | A fixed row of pills, one per card except About. A tap glides the camera to that card | Pill | Top bar island, desktop only |
