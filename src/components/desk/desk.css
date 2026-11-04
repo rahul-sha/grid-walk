@@ -192,29 +192,6 @@
   }
 }
 
-.dk-hint {
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 4;
-  background: var(--surface-2);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-card);
-  padding: 8px 14px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  opacity: 1;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-  margin-top: calc(var(--island-h) + 10px);
-  white-space: nowrap;
-}
-
-.dk-hint.gone {
-  opacity: 0;
-}
-
 .dk-ctl {
   position: fixed;
   left: 50%;
@@ -364,14 +341,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 640px) {
-  .dk-hint {
-    white-space: normal;
-    text-align: center;
-    max-width: calc(100vw - 32px);
-  }
-}
-
 /* ---- Latest race: a pill that opens the real card in a panel ----------
    Desktop: the pill sits in the top bar, styled like the season switcher,
    and the card hangs 8px under it (as the season menu does), right edges
@@ -441,6 +410,13 @@
   transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s;
 }
 
+.dk-lr-panel {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+}
+
 .dk-lr.top .dk-lr-panel {
   /* the pill is inset 6px in its island; clear the island, then 8px */
   top: calc(100% + 6px + 8px);
@@ -462,9 +438,6 @@
   left: 50%;
   transform: translate(-50%, 8px) scale(0.98);
   transform-origin: bottom center;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
   scrollbar-width: none;
 }
 .dk-lr.bottom.open .dk-lr-panel {

@@ -45,8 +45,10 @@ export default function LatestRaceMenu({ data, placement }: { data: RecapData; p
   }, [seenKey]);
 
   // Same two-pass fit as the sheets on the table, then one scale for the
-  // panel: to the screen's height on desktop, to the top bar's width on
-  // phones.
+  // panel. Desktop shows the card at its full size (shrinking it to the
+  // screen's height made the text too small to read) and scrolls inside
+  // the panel when the screen is shorter than the card. Phones scale it to
+  // the top bar's width and scroll the same way.
   const measure = useCallback(() => {
     const card = cardRef.current;
     const root = rootRef.current;
@@ -58,17 +60,17 @@ export default function LatestRaceMenu({ data, placement }: { data: RecapData; p
     if (!nw) return;
     const r = root.getBoundingClientRect();
     let s: number;
-    let h: number;
+    let avail: number;
     if (placement === "top") {
+      s = 1;
       // the pill is inset 6px in its island; the card starts 8px below that
-      const avail = window.innerHeight - (r.bottom + 6 + GAP) - EDGE;
-      s = Math.min(1, avail / nh);
-      h = nh * s;
+      avail = window.innerHeight - (r.bottom + 6 + GAP) - EDGE;
     } else {
       s = (window.innerWidth - 2 * EDGE) / nw;
       const islandTop = root.closest(".dk-ctl")?.getBoundingClientRect().top ?? r.top;
-      h = Math.min(nh * s, islandTop - GAP - TOP_CLEAR);
+      avail = islandTop - GAP - TOP_CLEAR;
     }
+    const h = Math.min(nh * s, avail);
     card.style.transform = `scale(${s})`;
     setBox({ w: nw * s, h, innerH: nh * s });
   }, [placement]);

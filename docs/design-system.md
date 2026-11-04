@@ -28,10 +28,9 @@ The site uses three shapes. An **island** floats on its own, a **pill** is a sma
 | Baked title | A card whose picture already carries its own title (because it also has a subsection), so the card shows no header of its own | Part | Evolution, Podiums |
 | Divider | A 1 × 22px hairline between groups inside an island | Part | Top bar |
 | Menu | A floating panel of options that opens from a pill | Surface | Season picker |
-| Hint | The one line of muted help text that fades after your first move | Text | Under the top bar |
 | Page plane | The flat background colour every page sits on | Layer | Everywhere |
 | Live grid | The canvas grid that bends and glows round the cursor or finger, and drifts with the camera | Layer | Behind the desk and the carousel |
-| Latest Race card | The one live card (not a picture): the race picker flag strip, the results, and session times in your own time zone | Card | First row of the desk (current season only) |
+| Latest Race card | The one live card (not a picture): the race picker flag strip, the results, and session times in your own time zone | Card | Opens from the Latest race pill: under the top bar on desktop, above the zoom bar on phones (always the current season) |
 | About card | The live "About this site" card | Card | Last row of the desk |
 
 ### The desk (home page)
@@ -153,12 +152,11 @@ Each component below lists what it holds, how it reacts, and where its code live
 | Component | Holds | States | Desktop | Phone | Code |
 | --- | --- | --- | --- | --- | --- |
 | Table | Rows of sheets with their labels | Drag pans; wheel, ctrl-wheel, or pinch zooms about the pointer | Fills the window | Same | `.dk-wrap`, `.dk-world` (the camera's transform), `.dk-table`, `.dk-group-label`; layout in `layout()` in `DeskView.tsx` |
-| Sheet | One production card, fitted to its frame then scaled to 430px tall | Controls inside (Latest Race's picker and table, card toggles) keep working; everything else pans | Same | Same | `.dk-sheet` around `.gw-card ui-card` |
-| Top bar island | Jump tabs, divider, About, theme, palette, season | None of its own | Translucent island, top right | Solid island; the jump tabs are hidden | `Island` with `.dk-navpill` |
+| Sheet | One production card, fitted to its frame then scaled to 430px tall | Controls inside (card toggles, the About card's links) keep working; everything else pans | Same | Same | `.dk-sheet` around `.gw-card ui-card` |
+| Top bar island | Jump tabs, divider, Latest race pill, About, theme, palette, season | None of its own | Translucent island, top right | Solid island; the jump tabs are hidden | `Island` with `.dk-navpill` |
 | Jump tabs | One `Pill` per card except About, and the tab marker | Tap glides to the card; the open tab follows the card nearest the view's middle | 13px, 12px below 1540px, hidden below 1300px | Hidden | `.dk-tabs`, `.dk-tab`, `.dk-tab-marker` |
 | Overview | A tile per card under its row label, and the viewport | Hover grows it to full size; press or drag moves the view | Bottom right, half size until hovered | Folded to 40% above the zoom bar; tap opens | `.dk-minimap`, `.dk-mm-box`, `.dk-mm-tile`, `.dk-mm-label`, `.dk-mm-viewport` |
 | Zoom bar | −, zoom level, +, Fit all | Level reads a percentage | Bottom centre | Same | `IconPill` and `Pill accent` inside `.dk-ctl` |
-| Hint | "Drag the table to pan · scroll to zoom" | Fades after the first move | Under the top bar | Wraps to two lines | `.dk-hint` |
 
 ### Carousel (`/carousel`)
 
@@ -230,11 +228,10 @@ Rules of thumb:
 
 These are places where the desk does not yet follow the rules above. They are listed so they are not copied; each would be a small visible change, so each wants a mock-up before it is touched.
 
-1. **The zoom bar, overview, hint, and table set their own look** in `desk.css` (fill, border, radius, shadow) instead of being an `Island` or using tokens. The zoom bar in particular is a hand-made pill bar rather than an island.
+1. **The zoom bar, overview, and table set their own look** in `desk.css` (fill, border, radius, shadow) instead of being an `Island` or using tokens. The zoom bar in particular is a hand-made pill bar rather than an island.
 2. **The top bar island does not fit a phone.** At 390px wide the island runs past the right edge, so the season picker is cut off.
 3. **The opening view on a phone** is limited by the 25% minimum zoom, so the table opens wider than the screen with its left side cut off.
-4. **The hint says "scroll to zoom" on phones**, where it means pinch.
-5. **Card radius:** cards (14px) and table cards (20px) still differ. Unifying on 20px is not done.
+4. **Card radius:** cards (14px) and table cards (20px) still differ. Unifying on 20px is not done.
 
 ## How we got here
 

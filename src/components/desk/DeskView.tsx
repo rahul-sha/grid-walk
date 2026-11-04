@@ -54,7 +54,6 @@ const LABEL_H = 30; // room above each row for its label
 const PAD = 72; // table padding around the content
 const K_MIN = 0.25;
 const K_MAX = 2.5;
-const DRAG_THRESHOLD = 4;
 const ENTER_STAGGER = 90; // ms between one sheet's arrival and the next
 const ENTER_DUR = 600; // ms a sheet takes to arrive (matches desk.css)
 
@@ -179,7 +178,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   }, []);
 
   const [failedSnapshots, setFailedSnapshots] = useState<Set<string>>(new Set());
-  const [hintGone, setHintGone] = useState(false);
   // The jump tabs: one per card but About (which has its own pill). The
   // accent marker slides to the open tab; the tab row itself never moves.
   const tabs = allSheets.filter((d) => d.id !== "about");
@@ -187,6 +185,23 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   const activeTabRef = useRef(activeTab);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [marker, setMarker] = useState<{ left: number; width: number } | null>(null);
+  // During the start-up (cards arriving, then the camera gliding in) no tab
+  // is open yet: the tabs stay unlit until the camera has settled.
+  const [intro, setIntro] = useState(true);
+  const introRef = useRef(true);
+  const introGlide = useRef(false);
+  // Any input that cancels the opening glide also ends the start-up.
+  function stopIntroGlide() {
+    if (!introGlide.current) return;
+    introGlide.current = false;
+    endIntro();
+  }
+  function endIntro() {
+    if (!introRef.current) return;
+    introRef.current = false;
+    setIntro(false);
+    applyCam();
+  }
   useLayoutEffect(() => {
     function place() {
       const el = tabRefs.current[activeTab];
@@ -267,7 +282,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     world.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${k.toFixed(4)})`;
     if (zoomLevelRef.current) zoomLevelRef.current.textContent = `${Math.round(k * 100)}%`;
     // The open tab follows whichever card is nearest the middle of the view.
-    if (wrap) {
+    if (wrap && !introRef.current) {
       const cx = (vw / 2 - tx) / k;
       const cy = (vh / 2 - ty) / k;
       let best = activeTabRef.current;
@@ -402,7 +417,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     const p = poses.current[id];
     const g = geomRef.current[id];
     if (!wrap || !p || !g) return;
-    setHintGone(true);
     userMoved.current = true;
     const vw = wrap.clientWidth;
     const vh = wrap.clientHeight;
@@ -415,6 +429,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     if (!wrap) return;
     userMoved.current = true;
     target.current = null;
+    stopIntroGlide();
     zoomAt(wrap.clientWidth / 2, wrap.clientHeight / 2, factor);
   }
 
@@ -435,13 +450,18 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       cam.current = openingView();
       applyCam();
       requestAnimationFrame(() => settleAll(true));
+      endIntro();
       return;
     }
     fitAll(false);
     world?.classList.add("entered");
     const arrival = allSheets.length * ENTER_STAGGER + ENTER_DUR;
     const timer = window.setTimeout(() => {
-      if (!userMoved.current) animateTo(openingView(), 1100);
+      if (userMoved.current) endIntro();
+      else {
+        introGlide.current = true;
+        animateTo(openingView(), 1100);
+      }
     }, arrival + 150);
     requestAnimationFrame(() => settleAll(true));
     return () => window.clearTimeout(timer);
@@ -470,6 +490,10 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         };
         if (p >= 1) target.current = null;
         applyCam();
+        if (p >= 1 && introGlide.current) {
+          introGlide.current = false;
+          endIntro();
+        }
       }
       grid?.draw(now, cam.current);
       raf = requestAnimationFrame(tick);
@@ -490,7 +514,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     // Dragging anywhere on the table (sheets included) pans; two fingers
     // pinch-zoom. Repaints are batched to one per frame.
     let panning = false;
-    let moved = false;
     let panStart = { x: 0, y: 0, tx: 0, ty: 0 };
     let pending: (() => void) | null = null;
     let rafId = 0;
@@ -558,13 +581,13 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       const { w, h } = bounds.current;
       const k = cam.current.k;
       target.current = null;
+      stopIntroGlide();
       cam.current = {
         k,
         tx: wrap!.clientWidth / 2 - ((clientX - rect.left) / rect.width) * w * k,
         ty: wrap!.clientHeight / 2 - ((clientY - rect.top) / rect.height) * h * k,
       };
       applyCam();
-      setHintGone(true);
     }
     let mmDragging = false;
     function onMmDown(e: PointerEvent) {
@@ -606,8 +629,8 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       if (pointers.size > 2) return;
       if (onSheetControl(e)) return;
       target.current = null;
+      stopIntroGlide();
       panning = true;
-      moved = false;
       panStart = { x: e.clientX, y: e.clientY, tx: cam.current.tx, ty: cam.current.ty };
       wrap!.classList.add("panning");
       wrap!.setPointerCapture(e.pointerId);
@@ -630,7 +653,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       if (panning) {
         const dx = e.clientX - panStart.x;
         const dy = e.clientY - panStart.y;
-        if (Math.hypot(dx, dy) > DRAG_THRESHOLD) moved = true;
         cam.current.tx = panStart.tx + dx;
         cam.current.ty = panStart.ty + dy;
         schedule(applyCam);
@@ -643,7 +665,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       if (panning) {
         panning = false;
         wrap!.classList.remove("panning");
-        if (moved) setHintGone(true);
       }
     }
 
@@ -654,10 +675,10 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       e.preventDefault();
       userMoved.current = true;
       target.current = null;
+      stopIntroGlide();
       const rect = wrap!.getBoundingClientRect();
       const factor = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0016));
       zoomAt(e.clientX - rect.left, e.clientY - rect.top, factor);
-      setHintGone(true);
     }
 
     function onResize() {
@@ -860,19 +881,18 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         <Logo
           label="Grid Walk: back to the top of the table"
           onClick={() => {
-            setHintGone(true);
             userMovedByClick();
             animateTo(openingView(), 700);
           }}
         />
         <Island className="dk-navpill">
           <nav className="dk-tabs" aria-label="Jump to">
-            {marker ? <span className="dk-tab-marker" style={{ left: marker.left, width: marker.width }} aria-hidden="true" /> : null}
+            {marker && !intro ? <span className="dk-tab-marker" style={{ left: marker.left, width: marker.width }} aria-hidden="true" /> : null}
             {tabs.map((t) => (
               <Pill
                 key={t.id}
-                className={"dk-tab" + (t.id === activeTab ? " on" : "")}
-                aria-current={t.id === activeTab ? "true" : undefined}
+                className={"dk-tab" + (!intro && t.id === activeTab ? " on" : "")}
+                aria-current={!intro && t.id === activeTab ? "true" : undefined}
                 ref={(el: HTMLButtonElement | null) => {
                   tabRefs.current[t.id] = el;
                 }}
@@ -895,10 +915,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
           <AccentToggle />
           <SeasonSelector initialSeason={year} />
         </Island>
-      </div>
-
-      <div className={"dk-hint" + (hintGone ? " gone" : "")} aria-hidden="true">
-        Drag the table to pan · scroll to zoom
       </div>
 
       <div
@@ -950,7 +966,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         <Pill
           accent
           onClick={() => {
-            setHintGone(true);
             fitAllByUser();
           }}
         >
