@@ -790,8 +790,12 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         actions: (
           <CardToggle
             name="results"
-            label={drivers ? "Teams" : "Drivers"}
-            onToggle={() => setResultsView((v) => (v === "drivers" ? "teams" : "drivers"))}
+            options={[
+              { value: "drivers", label: "Drivers" },
+              { value: "teams", label: "Teams" },
+            ]}
+            value={resultsView}
+            onChange={setResultsView}
           />
         ),
         body: renderViews([
@@ -810,8 +814,12 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         actions: (
           <CardToggle
             name="freq"
-            label={finish ? "Qualifying" : "Race"}
-            onToggle={() => setFreqView((v) => (v === "finish" ? "quali" : "finish"))}
+            options={[
+              { value: "finish", label: "Race" },
+              { value: "quali", label: "Qualifying" },
+            ]}
+            value={freqView}
+            onChange={setFreqView}
           />
         ),
         body: renderViews([

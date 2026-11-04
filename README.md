@@ -26,7 +26,7 @@ Drivers/Team Results, Driver/Constructor Points Evolution and
 Driver/Constructor Podiums; **Race by race** holds Positions, Positions
 Gained and Finish/Qualifying Frequency. Results, Evolution, Frequency and
 Podiums are shared cards — a driver half and a team half either stacked
-with a divider or toggled in place with a pill button — and each card is
+with a divider or toggled in place with a sliding two-way switch — and each card is
 the same real heatmap, chart, grid or podium bars that used to live on its
 own page, under the same title and subtitle. The last row, **About**,
 covers who built the site, how, the design and data credits, and the

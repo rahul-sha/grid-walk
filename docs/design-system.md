@@ -23,7 +23,7 @@ The site uses three shapes. An **island** floats on its own, a **pill** is a sma
 | Logo island | The island holding the Grid Walk mark and name. On the desk it glides back to the opening view | Island | Top left |
 | Controls | About, theme, palette, and season, grouped together at the right of the top bar | Group | Top bar |
 | Accent pill | A pill tinted with the accent colour, for the one action that leaves or resets the view | Pill | About, Fit all |
-| Card toggle | A small accent pill, 12px text with a swap icon, at the top right of a card that has two views. It crossfades between them | Pill | Results (Drivers/Teams), Frequency (Finish/Qualifying) |
+| Card toggle | A segmented switch at the top right of a card that has two views: both names in one rounded track, with an accent thumb that slides under the one showing. It crossfades between the views | Pill | Results (Drivers/Teams), Frequency (Finish/Qualifying) |
 | Subsection | A second graphic lower in the same card, under its own header and a hairline | Part | Evolution (Constructors), Podiums (Teams) |
 | Baked title | A card whose picture already carries its own title (because it also has a subsection), so the card shows no header of its own | Part | Evolution, Podiums |
 | Divider | A 1 × 22px hairline between groups inside an island | Part | Top bar |
@@ -92,7 +92,7 @@ Every colour comes from a small set of tokens, and each palette in each theme fi
 | --- | --- | --- |
 | Island height | 48px (`--island-h`) | Logo island, top bar island, nav bar, jump bar, zoom island |
 | Pill height | 36px (`--pill-h`) | Jump tabs, tab marker, controls, Fit all, zoom buttons |
-| Card toggle height | about 28px (6px padding, 12px text) | Card toggle |
+| Card toggle height | 36px track, 3px inset thumb, 12px text, equal-width options | Card toggle |
 | Card height | 900px, every card (`--card-h`) | Cards on the carousel; the desk measures each card at this size, then scales it |
 | Sheet height | 430px at 100% zoom (`SHEET_H`) | Sheets on the desk |
 | Gap between sheets | 36px (`GAP`) | Desk rows |
@@ -142,7 +142,7 @@ Each component below lists what it holds, how it reacts, and where its code live
 | Icon pill | Icon | Press shrinks to 90%; each theme or palette click spins the icon and sends an accent ring | 36 × 36px | Same | `IconPill` (`.ui-icon-pill`) in `ThemeToggle.tsx`, `AccentToggle.tsx`, and the zoom bar; the click feedback is `.icon-toggle-btn` in `globals.css`; icons in `ui/icons.tsx` |
 | Season picker | Calendar icon, year, chevron; menu of seasons | Open flips the chevron; selected option uses accent container | Opens downwards | Same | `Pill` plus `Menu`, `MenuAnchor`, and `MenuOption` (`.ui-menu`, `.ui-menu-option`) in `SeasonSelector.tsx` |
 | Card | Title, subtitle, a picture of the graphic, an optional subsection | See the desk and carousel tables | | | `.ui-card` for the look; `.gw-card`, `.gw-frame`, `.gw-fit` for fitting the content; `CardHeader` (`.ui-card-header`) for the title, left out when the card has a baked title |
-| Card toggle | Swap icon and the other view's name | Hover lifts 1px; click crossfades the two pictures | Top right of the card header | Same | `CardToggle` (`.ui-card-toggle`) in the header (`.ui-card-head`); the two pictures are `.ui-card-views` and `.ui-card-view` |
+| Card toggle | Both view names; the one showing sits on the accent thumb | Hover brightens the other name; click slides the thumb (instant with reduced motion) and crossfades the two pictures | Top right of the card header | Same | `CardToggle` (`.ui-card-toggle`) in the header (`.ui-card-head`); the two pictures are `.ui-card-views` and `.ui-card-view` |
 | Subsection | Its own title and subtitle, then a graphic | None | A hairline and 1.6rem gap above | Same | `CardHeader subsection` (`.ui-subsection`) |
 | Card picture | A `.webp` of one graphic, captured weekly per theme and palette | Shows "Image unavailable" at the right size if a capture is missing | Chosen from the theme and palette cookies | Same | `card-snapshots.ts`, `variant-constants.ts`, `scripts/capture-card-snapshots.mjs` (photographs `/carousel`) |
 | Live grid | A canvas | Bends and glows round the pointer; a ring on each press; drops to 1x resolution while the camera moves and sharpens a beat after it stops | Behind everything | Same | `liveGrid.ts` |
