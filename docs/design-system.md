@@ -153,10 +153,10 @@ Each component below lists what it holds, how it reacts, and where its code live
 | --- | --- | --- | --- | --- | --- |
 | Table | Rows of sheets with their labels | Drag pans; wheel, ctrl-wheel, or pinch zooms about the pointer | Fills the window | Same | `.dk-wrap`, `.dk-world` (the camera's transform), `.dk-table`, `.dk-group-label`; layout in `layout()` in `DeskView.tsx` |
 | Sheet | One production card, fitted to its frame then scaled to 430px tall | Controls inside (card toggles, the About card's links) keep working; everything else pans | Same | Same | `.dk-sheet` around `.gw-card ui-card` |
-| Top bar island | Jump tabs, divider, Latest race pill, About, theme, palette, season | None of its own | Translucent island, top right | Solid island; the jump tabs are hidden | `Island` with `.dk-navpill` |
-| Jump tabs | One `Pill` per card except About, and the tab marker | Tap glides to the card; the open tab follows the card nearest the view's middle | 13px, 12px below 1540px, hidden below 1300px | Hidden | `.dk-tabs`, `.dk-tab`, `.dk-tab-marker` |
+| Top bar island | Jump tabs, divider, Latest race pill, season, About | None of its own | Translucent island, top right | Solid island; the jump tabs are hidden | `Island` with `.dk-navpill` |
+| Jump tabs | One `Pill` per card except About, and the tab marker | Tap glides to the card; no tab is lit on arrival, then the open tab follows the card nearest the view's middle once the visitor moves | 13px, 12px below 1540px, hidden below 1300px | Hidden | `.dk-tabs`, `.dk-tab`, `.dk-tab-marker` |
 | Overview | A tile per card under its row label, and the viewport | Hover grows it to full size; press or drag moves the view | Bottom right, half size until hovered | Folded to 40% above the zoom bar; tap opens | `.dk-minimap`, `.dk-mm-box`, `.dk-mm-tile`, `.dk-mm-label`, `.dk-mm-viewport` |
-| Zoom bar | −, zoom level, +, Fit all | Level reads a percentage | Bottom centre | Same | `IconPill` and `Pill accent` inside `.dk-ctl` |
+| Zoom bar | Theme, palette, divider, −, zoom level, +, Fit all | Level reads a percentage | Bottom centre | Latest race pill first; − , level and + hidden (pinch zooms) | `IconPill` and `Pill accent` inside `.dk-ctl` |
 
 ### Carousel (`/carousel`)
 
@@ -229,7 +229,7 @@ Rules of thumb:
 These are places where the desk does not yet follow the rules above. They are listed so they are not copied; each would be a small visible change, so each wants a mock-up before it is touched.
 
 1. **The zoom bar, overview, and table set their own look** in `desk.css` (fill, border, radius, shadow) instead of being an `Island` or using tokens. The zoom bar in particular is a hand-made pill bar rather than an island.
-2. **The top bar island does not fit a phone.** At 390px wide the island runs past the right edge, so the season picker is cut off.
+2. **The top bar island only just fits a phone.** It fits at 390px wide; on screens narrower than about 375px it still runs past the right edge.
 3. **The opening view on a phone** is limited by the 25% minimum zoom, so the table opens wider than the screen with its left side cut off.
 4. **Card radius:** cards (14px) and table cards (20px) still differ. Unifying on 20px is not done.
 

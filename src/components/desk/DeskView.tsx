@@ -185,23 +185,11 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
   const activeTabRef = useRef(activeTab);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [marker, setMarker] = useState<{ left: number; width: number } | null>(null);
-  // During the start-up (cards arriving, then the camera gliding in) no tab
-  // is open yet: the tabs stay unlit until the camera has settled.
+  // No tab is lit on arrival (the start-up, then the opening view): the
+  // tabs only start following the view once the visitor moves the table,
+  // zooms, or uses a tab or pill.
   const [intro, setIntro] = useState(true);
   const introRef = useRef(true);
-  const introGlide = useRef(false);
-  // Any input that cancels the opening glide also ends the start-up.
-  function stopIntroGlide() {
-    if (!introGlide.current) return;
-    introGlide.current = false;
-    endIntro();
-  }
-  function endIntro() {
-    if (!introRef.current) return;
-    introRef.current = false;
-    setIntro(false);
-    applyCam();
-  }
   useLayoutEffect(() => {
     function place() {
       const el = tabRefs.current[activeTab];
@@ -282,6 +270,10 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     world.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${k.toFixed(4)})`;
     if (zoomLevelRef.current) zoomLevelRef.current.textContent = `${Math.round(k * 100)}%`;
     // The open tab follows whichever card is nearest the middle of the view.
+    if (introRef.current && userMoved.current) {
+      introRef.current = false;
+      setIntro(false);
+    }
     if (wrap && !introRef.current) {
       const cx = (vw / 2 - tx) / k;
       const cy = (vh / 2 - ty) / k;
@@ -429,7 +421,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
     if (!wrap) return;
     userMoved.current = true;
     target.current = null;
-    stopIntroGlide();
     zoomAt(wrap.clientWidth / 2, wrap.clientHeight / 2, factor);
   }
 
@@ -450,18 +441,13 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       cam.current = openingView();
       applyCam();
       requestAnimationFrame(() => settleAll(true));
-      endIntro();
       return;
     }
     fitAll(false);
     world?.classList.add("entered");
     const arrival = allSheets.length * ENTER_STAGGER + ENTER_DUR;
     const timer = window.setTimeout(() => {
-      if (userMoved.current) endIntro();
-      else {
-        introGlide.current = true;
-        animateTo(openingView(), 1100);
-      }
+      if (!userMoved.current) animateTo(openingView(), 1100);
     }, arrival + 150);
     requestAnimationFrame(() => settleAll(true));
     return () => window.clearTimeout(timer);
@@ -490,10 +476,6 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         };
         if (p >= 1) target.current = null;
         applyCam();
-        if (p >= 1 && introGlide.current) {
-          introGlide.current = false;
-          endIntro();
-        }
       }
       grid?.draw(now, cam.current);
       raf = requestAnimationFrame(tick);
@@ -581,8 +563,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       const { w, h } = bounds.current;
       const k = cam.current.k;
       target.current = null;
-      stopIntroGlide();
-      cam.current = {
+        cam.current = {
         k,
         tx: wrap!.clientWidth / 2 - ((clientX - rect.left) / rect.width) * w * k,
         ty: wrap!.clientHeight / 2 - ((clientY - rect.top) / rect.height) * h * k,
@@ -629,8 +610,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       if (pointers.size > 2) return;
       if (onSheetControl(e)) return;
       target.current = null;
-      stopIntroGlide();
-      panning = true;
+        panning = true;
       panStart = { x: e.clientX, y: e.clientY, tx: cam.current.tx, ty: cam.current.ty };
       wrap!.classList.add("panning");
       wrap!.setPointerCapture(e.pointerId);
@@ -675,8 +655,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       e.preventDefault();
       userMoved.current = true;
       target.current = null;
-      stopIntroGlide();
-      const rect = wrap!.getBoundingClientRect();
+        const rect = wrap!.getBoundingClientRect();
       const factor = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0016));
       zoomAt(e.clientX - rect.left, e.clientY - rect.top, factor);
     }
@@ -908,12 +887,10 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
           </nav>
           <Divider className="dk-navpill-divider" />
           {recap && narrow === false ? <LatestRaceMenu data={recap} placement="top" /> : null}
+          <SeasonSelector initialSeason={year} />
           <Pill accent className="dk-about-link" onClick={() => goToSheet("about")}>
             About
           </Pill>
-          <ThemeToggle />
-          <AccentToggle />
-          <SeasonSelector initialSeason={year} />
         </Island>
       </div>
 
@@ -954,13 +931,16 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
             <Divider />
           </>
         ) : null}
-        <IconPill aria-label="Zoom out" onClick={() => zoomCentre(0.8)}>
+        <ThemeToggle />
+        <AccentToggle />
+        <Divider />
+        <IconPill className="dk-zoom-step" aria-label="Zoom out" onClick={() => zoomCentre(0.8)}>
           −
         </IconPill>
         <span className="dk-zoom-level" ref={zoomLevelRef}>
           100%
         </span>
-        <IconPill aria-label="Zoom in" onClick={() => zoomCentre(1.25)}>
+        <IconPill className="dk-zoom-step" aria-label="Zoom in" onClick={() => zoomCentre(1.25)}>
           +
         </IconPill>
         <Pill

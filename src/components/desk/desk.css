@@ -341,6 +341,16 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Phones: the bottom island also holds the Latest race pill and the theme
+   and palette toggles, so the step buttons and zoom level give way (pinch
+   zooms; Fit all stays). */
+@media (max-width: 640px) {
+  .dk-ctl .dk-zoom-step,
+  .dk-ctl .dk-zoom-level {
+    display: none;
+  }
+}
+
 /* ---- Latest race: a pill that opens the real card in a panel ----------
    Desktop: the pill sits in the top bar, styled like the season switcher,
    and the card hangs 8px under it (as the season menu does), right edges
