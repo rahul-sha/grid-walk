@@ -1,7 +1,7 @@
 # Grid Walk
 
-A personal Formula 1 results tracker built with Next.js, TypeScript and
-Tailwind CSS. It reads race, sprint and championship data from the
+A personal Formula 1 results tracker built with Next.js, TypeScript, and
+Tailwind CSS. It reads race, sprint, and championship data from the
 [Jolpica F1 API](https://api.jolpi.ca/ergast/f1) (a community-run successor
 to the retired Ergast API) and presents it as a set of driver/constructor
 heatmaps and standings, styled after Google's Material 3 Expressive
