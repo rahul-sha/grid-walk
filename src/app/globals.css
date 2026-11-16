@@ -936,4 +936,7 @@ html::-webkit-scrollbar {
   .toggle-ring {
     display: none;
   }
+  .round-chip:hover {
+    transform: none;
+  }
 }
