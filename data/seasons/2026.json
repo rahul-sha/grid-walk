@@ -1397,8 +1397,13 @@
       "wins": "0",
       "Driver": {
         "driverId": "rafael_camara",
+        "permanentNumber": "51",
+        "code": "CAM",
+        "url": "https://en.wikipedia.org/wiki/Rafael_C%C3%A2mara",
         "givenName": "Rafael",
-        "familyName": "Camara"
+        "familyName": "Camara",
+        "dateOfBirth": "2005-05-05",
+        "nationality": "Brazilian"
       },
       "Constructors": [
         {
@@ -16916,8 +16921,13 @@
         "points": "0",
         "Driver": {
           "driverId": "rafael_camara",
+          "permanentNumber": "51",
+          "code": "CAM",
+          "url": "https://en.wikipedia.org/wiki/Rafael_C%C3%A2mara",
           "givenName": "Rafael",
-          "familyName": "Camara"
+          "familyName": "Camara",
+          "dateOfBirth": "2005-05-05",
+          "nationality": "Brazilian"
         },
         "Constructor": {
           "constructorId": "haas",
@@ -30538,29 +30548,6 @@
         "Q3": "1:17.117"
       },
       {
-        "number": "30",
-        "position": "8",
-        "Driver": {
-          "driverId": "lawson",
-          "permanentNumber": "30",
-          "code": "LAW",
-          "url": "http://en.wikipedia.org/wiki/Liam_Lawson",
-          "givenName": "Liam",
-          "familyName": "Lawson",
-          "dateOfBirth": "2002-02-11",
-          "nationality": "New Zealander"
-        },
-        "Constructor": {
-          "constructorId": "rb",
-          "url": "https://en.wikipedia.org/wiki/Racing_Bulls",
-          "name": "RB F1 Team",
-          "nationality": "Italian"
-        },
-        "Q1": "",
-        "Q2": "1:17.207",
-        "Q3": "1:17.029"
-      },
-      {
         "number": "10",
         "position": "9",
         "Driver": {
@@ -30842,6 +30829,27 @@
           "nationality": "American"
         },
         "Q1": "1:19.852"
+      },
+      {
+        "number": "30",
+        "position": "22",
+        "Driver": {
+          "driverId": "lawson",
+          "permanentNumber": "30",
+          "code": "LAW",
+          "url": "http://en.wikipedia.org/wiki/Liam_Lawson",
+          "givenName": "Liam",
+          "familyName": "Lawson",
+          "dateOfBirth": "2002-02-11",
+          "nationality": "New Zealander"
+        },
+        "Constructor": {
+          "constructorId": "rb",
+          "url": "https://en.wikipedia.org/wiki/Racing_Bulls",
+          "name": "RB F1 Team",
+          "nationality": "Italian"
+        },
+        "Q1": ""
       }
     ],
     "20": [
@@ -31124,8 +31132,13 @@
         "position": "13",
         "Driver": {
           "driverId": "rafael_camara",
+          "permanentNumber": "51",
+          "code": "CAM",
+          "url": "https://en.wikipedia.org/wiki/Rafael_C%C3%A2mara",
           "givenName": "Rafael",
-          "familyName": "Camara"
+          "familyName": "Camara",
+          "dateOfBirth": "2005-05-05",
+          "nationality": "Brazilian"
         },
         "Constructor": {
           "constructorId": "haas",
