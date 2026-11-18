@@ -14,7 +14,7 @@ Grid Walk is Rahul's personal Formula 1 stats site: every card of a season (resu
 - Install: `npm install`
 - Start locally: `npm run dev`, then open http://localhost:3000
 - Check: `npm run lint` (one known warning about `<img>` in `GridWalk.tsx`), and `npm run build`
-- Tests: no test suite. `npm run test:e2e` exists but there are no e2e tests.
+- Tests: no test suite. `npm test` runs the lint and build checks; Cartographer's safety check runs it before every pull request. `npm run test:e2e` exists but there are no e2e tests.
 - Refresh a season's data: `npm run snapshot:season`, or run the `snapshot-season.yml` workflow.
 - Re-bake card pictures: run the `capture-card-snapshots.yml` workflow (a year, or `all`; `all` takes 10 to 15 minutes).
 - Deploy: merge to `main`; Vercel deploys production automatically.
