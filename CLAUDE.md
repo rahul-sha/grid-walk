@@ -41,7 +41,6 @@ Grid Walk is Rahul's personal Formula 1 stats site: every card of a season (resu
 - Rahul is new to Linux and programming: explain each step plainly, give exact commands, and say where to click.
 - UK English with the Oxford comma.
 - For a design change, show Rahul a mock-up or screenshot before building.
-- Update the README, `docs/design-system.md`, and the About card in the same pull request as a change they describe.
 
 ## Conventions and decisions
 - Cards are baked pictures, not live: heavy charts made panning choppy. Latest Race and About are the only live cards.
