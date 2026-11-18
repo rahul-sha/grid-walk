@@ -123,6 +123,10 @@ npm run dev
 
 Then open [http://localhost:3000](http://localhost:3000).
 
+Before opening a pull request, run `npm test`. It runs the lint check
+(`npm run lint`) and then the production build (`npm run build`), and takes
+a few minutes. Claude runs it automatically before every pull request.
+
 ## Data source
 
 Season data is snapshot-first: each season from 2020 onwards is saved as a

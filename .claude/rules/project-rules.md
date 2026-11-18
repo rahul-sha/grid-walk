@@ -2,6 +2,8 @@
 
 Rules for this project only. They add to, or override, the shared rules from the Cartographer plugin (`DESIGN.md` and the shared skills). Claude Code loads this file automatically because it sits in `.claude/rules/`.
 
+Cartographer plugin: 0.16.0 (the version this project last took in; the setup-project skill sets it, and the version check compares it at the start of each session)
+
 Keep each rule to one line, with the reason after a colon. Tag each one so the weekly review can sort it.
 
 ## Adds
@@ -18,6 +20,7 @@ Rules the shared base does not cover.
 - [workflow] Keep the old carousel working at `/carousel`: the weekly capture photographs the cards there.
 - [deploy] Leave `scripts/vercel-ignore-build.sh` skipping data-only and preview image-only deploys: each deploy stores about 48 MB of card images.
 - [workflow] Update the README in the same pull request when a page, card, or workflow changes: the README is the site's full description.
+- [workflow] Update `docs/design-system.md` and the About card in the same pull request as a change they describe: the About card tells visitors how the site works, and the design system names every part.
 
 ## Overrides
 Rules that replace a shared one for this project. Name the shared rule being replaced.
