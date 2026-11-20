@@ -1,6 +1,10 @@
 # Bugs
 
+Last full check-up: none yet
+
 Known bugs and gaps in Grid Walk, newest first. The Cartographer weekly review reads this file, so the helper can answer "any open bugs?" from any project. Add bugs here, not in GitHub issues; a copy in Trilium is for safekeeping only.
+
+The "Last full check-up" line is set by each full check-up (343 Guilty Spark); a monthly run skips the project when it is 14 days old or less.
 
 Move a bug to "Fixed" when its fix is merged, and add one line on what fixed it.
 
