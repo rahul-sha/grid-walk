@@ -78,7 +78,7 @@ jobs:
         run: node scripts/capture-card-snapshots.mjs "${{ steps.season.outputs.season }}"
 
       - name: Commit snapshots
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5.2.0
         with:
           commit_message: "Update ${{ steps.season.outputs.season }} Grid Walk card snapshots"
           file_pattern: "public/card-snapshots/**"

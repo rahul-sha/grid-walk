@@ -1,4 +1,4 @@
-import { currentSeason, resolvePersistedSeason } from "@/lib/seasons";
+import { currentSeason, parseSeason, resolvePersistedSeason } from "@/lib/seasons";
 import { readSnapshotManifest, resolvePersistedVariant } from "@/lib/card-snapshots";
 import { buildRecapData } from "@/lib/recap";
 import DeskView from "@/components/desk/DeskView";
@@ -8,7 +8,7 @@ import DeskView from "@/components/desk/DeskView";
 // The previous presentation, the horizontal carousel, is kept at /carousel.
 export default async function Home({ searchParams }: { searchParams: Promise<{ season?: string }> }) {
   const params = await searchParams;
-  const year = Number(params.season) || (await resolvePersistedSeason()) || currentSeason();
+  const year = parseSeason(params.season) ?? (await resolvePersistedSeason()) ?? currentSeason();
   const [variant, recap] = await Promise.all([
     resolvePersistedVariant(),
     // The Latest Race card always shows the current season, whichever
