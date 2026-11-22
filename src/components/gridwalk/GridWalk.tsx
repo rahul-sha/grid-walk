@@ -23,6 +23,7 @@ import RecapCard from "@/components/RecapCard";
 import AboutCard from "@/components/AboutCard";
 import VersionBadge from "@/components/ui/VersionBadge";
 import type { RecapData } from "@/lib/recap";
+import type { SiteStats } from "@/lib/site-stats";
 import {
   ACCENTS,
   THEMES,
@@ -57,6 +58,8 @@ export interface GridWalkProps {
   // "grid-walk-recap-schedule-card" memory) — null for any season but the
   // current one, since there's no "latest race" or "up next" otherwise.
   recap: RecapData | null;
+  // The About card's live numbers (src/lib/site-stats.ts).
+  stats?: SiteStats | null;
 }
 
 type SectionDef = {
@@ -101,7 +104,7 @@ const DRAG_THRESHOLD = 6;
 // At k=1 the strip always settles with one card centred; each card is
 // fitted to the space between the top bar and the jump bar, never
 // enlarged past its natural size. See "grid-walk-carousel-mockup" memory.
-export default function GridWalk({ season, live, sizes, initialVariant, recap }: GridWalkProps) {
+export default function GridWalk({ season, live, sizes, initialVariant, recap, stats = null }: GridWalkProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLCanvasElement>(null);
@@ -225,7 +228,7 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
     // visitor's own time zone; the about card is plain text and links,
     // which a baked image would break).
     if (section.id === "recap") return <RecapCard data={recap} />;
-    if (section.id === "about") return <AboutCard />;
+    if (section.id === "about") return <AboutCard stats={stats} />;
     if (live) return section.render(live);
     if (section.snapshots.length === 1) return renderSnapshot(section.snapshots[0].name);
     return (
@@ -411,7 +414,7 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
         <VersionBadge />
       ),
       snapshots: [],
-      render: () => <AboutCard />,
+      render: () => <AboutCard stats={stats} />,
     },
   ];
   const count = sections.length;

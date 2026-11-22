@@ -4,8 +4,7 @@
 
 ## Now
 Being built this week or next. At most three items.
-- App version numbers on the About card (v1.0.0), raised in every pull request.
-- A livelier, tidier About card: mock-up first.
+- A livelier, tidier About card, matching the other cards' size, with the stack's logos (v1.1.0).
 
 ## Next
 Agreed and waiting for a slot.
@@ -19,6 +18,7 @@ Ideas worth keeping, not yet agreed.
 - Give the Driver/Constructor Podiums card the same `bakedTitle` fix the Evolution card got in PR #100.
 
 ## Done recently
+- 2026-11-22: App version numbers on the About card, raised in every pull request (PR #128).
 - 2026-11-04: Latest Race card moved off the table into a top-bar drop-down; card toggles became sliding switches (PR #118).
 - 2026-11-03: The desk ("clean table") became the home page; the carousel moved to `/carousel` (PR #112).
 - 2026-11-03: Desk performance tidy-up and design-system fourth edition (PR #117).

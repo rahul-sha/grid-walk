@@ -69,9 +69,13 @@ Podiums are shared cards — a driver half and a team half either stacked
 with a divider or toggled in place with a sliding two-way switch — and each card is
 the same real heatmap, chart, grid or podium bars that used to live on its
 own page, under the same title and subtitle. The last row, **About**,
-covers who built the site, how, the design and data credits, and the
+covers who built the site and how, live numbers worked out from the
+season files (seasons, races, and drivers on the table), how to get around
+(drag, zoom, jump tabs), the design inspiration credit, the stack the site
+is built with (with each tool's logo), the palettes' sources, and the
 unofficial-fan-site disclaimer F1's brand guidelines ask every fan site to
-carry on its landing page.
+carry on its landing page. It is laid out at the same size as the baked
+cards, so it sits at the same width and text size as the cards above it.
 
 The previous presentation — the same cards on one horizontal carousel
 strip, browsed one at a time — is kept at **`/carousel`** so the two can be
@@ -113,7 +117,9 @@ the table. Picking a different race from its flag strip calls a server action
 (`src/app/actions/recap.ts`) rather than shipping every race's results with
 the page. About is the other exception: it's plain text and links, so
 there's no snapshot to bake and no GPU cost to save by baking one.
-Its badge shows the site's version and the date of the live build (for
+Its numbers come from `src/lib/site-stats.ts`, and its logos are
+monochrome Simple Icons paths copied into `src/components/about/stackLogos.ts`
+(no extra package). Its badge shows the site's version and the date of the live build (for
 example "v1.0.0 · 22 Nov 2026"); hover or tap it to see the commit code.
 
 Drag anywhere on the table to pan, and scroll or pinch to zoom around the

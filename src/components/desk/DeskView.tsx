@@ -13,6 +13,7 @@ import { fitContent } from "./fitCard";
 import VersionBadge from "@/components/ui/VersionBadge";
 import { Island, Pill, IconPill, Divider, Logo, CardHeader, CardToggle } from "@/components/ui";
 import type { RecapData } from "@/lib/recap";
+import type { SiteStats } from "@/lib/site-stats";
 import {
   isAccent,
   isTheme,
@@ -26,6 +27,7 @@ interface DeskViewProps {
   year: number;
   sizes: Record<string, { w: number; h: number }> | null;
   recap: RecapData | null;
+  stats: SiteStats | null;
   initialVariant: { accent: Accent; theme: Theme | null };
 }
 
@@ -149,7 +151,7 @@ function clampNum(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
 }
 
-export default function DeskView({ year, sizes, recap, initialVariant }: DeskViewProps) {
+export default function DeskView({ year, sizes, recap, stats, initialVariant }: DeskViewProps) {
   // Remounted by the page (keyed on the year) whenever the season changes,
   // so these are fixed for the component's lifetime.
   const groups = GROUPS;
@@ -793,7 +795,7 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
         actions: (
           <VersionBadge />
         ),
-        body: <AboutCard />,
+        body: <AboutCard stats={stats} />,
       };
     if (def.id === "results") {
       const drivers = resultsView === "drivers";

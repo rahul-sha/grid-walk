@@ -967,52 +967,201 @@
   min-height: 360px;
 }
 
-/* ---- About card (see "grid-walk-about-card" memory) — the last card on
-   the strip, and, like the recap card, never a snapshot image: it's plain
-   text and links, which a baked image would break. A fixed width, since
-   it has no image of its own to size itself from (.gw-card is
-   width: max-content). Reuses the .credit-grid/.credit classes the old
-   /about route's credits section used — they're generic, not page-scoped. */
+/* ---- About card: the last card, and, like the recap card, never a
+   snapshot image (text and links, which a baked image would break). It
+   has no picture to size itself from, so it is laid out at the same
+   natural size as the baked cards (1298 x 1000, the Points Finishes and
+   Positions pictures): the table then scales it exactly as it scales
+   them, so its width and text size match the cards above it. */
 .about-card {
-  width: 820px;
+  width: 1298px;
+  height: 1000px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.about-card a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  pointer-events: auto;
+}
+.about-card-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.about-card-hello {
+  margin: 0 0 14px;
+  font-size: 34px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+.about-card-hello em {
+  font-style: normal;
+  color: var(--accent);
 }
 .about-card-intro {
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--text-secondary);
-  margin: 0 0 20px;
+  margin: 0 0 22px;
 }
-.about-card-cols {
+.about-card-how {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.about-card-how li {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px 6px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 500;
+}
+.about-card-how svg,
+.about-card-feature-icon svg {
+  width: 32px;
+  height: 32px;
+  padding: 7px;
+  border-radius: 50%;
+  background: var(--accent-container);
+  color: var(--on-accent-container);
+  flex: none;
+}
+.about-card-stats {
+  margin: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
-.about-card-col h2 {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+.about-card-stat {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: var(--radius-card);
+  background: var(--surface-2);
+}
+.about-card-stat dd {
+  margin: 0;
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.about-card-stat dt {
+  font-size: 14px;
   color: var(--text-muted);
-  margin: 0 0 10px;
 }
-@media (max-width: 640px) {
-  .about-card {
-    width: min(420px, 86vw);
-  }
-  .about-card-cols {
-    grid-template-columns: 1fr;
-  }
+.about-card-feature {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: var(--radius-card);
+  background: var(--accent-container);
+  color: var(--on-accent-container);
+}
+.about-card-feature p {
+  margin: 0;
+}
+.about-card-feature-icon svg {
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--surface-1);
+  color: var(--accent);
+}
+.about-card-eyebrow,
+.about-card-bottom h2 {
+  display: block;
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.about-card-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 40px;
+}
+.about-card-bottom h2 {
+  margin-bottom: 12px;
+  color: var(--text-muted);
+  opacity: 1;
+}
+.about-card-stack,
+.about-card-design {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.about-card-stack {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.about-card-stack li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px 12px 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+.about-card-stack b,
+.about-card-design b {
+  display: block;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+.about-card-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--accent-container);
+  color: var(--on-accent-container);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.about-card-logo svg {
+  width: 22px;
+  height: 22px;
+}
+.about-card-design li {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-hairline);
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.35;
 }
 .about-card-disclaimer {
-  background: var(--surface-1);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-card);
-  padding: 14px 16px;
-}
-.about-card-disclaimer p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.55;
+  margin: auto 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-hairline);
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--text-muted);
 }
