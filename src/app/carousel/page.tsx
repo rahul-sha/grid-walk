@@ -5,6 +5,7 @@ import { buildQualifyingPositionSummary } from "@/lib/qualifying-positions";
 import { currentSeason, parseSeason, resolvePersistedSeason } from "@/lib/seasons";
 import { readSnapshotManifest, resolvePersistedVariant } from "@/lib/card-snapshots";
 import { buildRecapData } from "@/lib/recap";
+import { getSiteStats } from "@/lib/site-stats";
 import GridWalk, { type GridWalkData } from "@/components/gridwalk/GridWalk";
 
 // The previous homepage — the horizontal carousel of cards — kept here,
@@ -51,6 +52,7 @@ export default async function Carousel({
       sizes={manifest?.sizes ?? null}
       initialVariant={variant}
       recap={recap}
+      stats={getSiteStats()}
     />
   );
 }

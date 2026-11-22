@@ -31,7 +31,7 @@ The site uses three shapes. An **island** floats on its own, a **pill** is a sma
 | Page plane | The flat background colour every page sits on | Layer | Everywhere |
 | Live grid | The canvas grid that bends and glows round the cursor or finger, and drifts with the camera | Layer | Behind the desk and the carousel |
 | Latest Race card | The one live card (not a picture): the race picker flag strip, the results, and session times in your own time zone | Card | Opens from the Latest race pill: under the top bar on desktop, above the zoom bar on phones (always the current season) |
-| About card | The live "About this site" card | Card | Last row of the desk |
+| About card | The live "About this site" card: opening line, live numbers, how-to chips, the featured design-inspiration credit, the stack with logos, palette sources, and the disclaimer. Laid out at 1298 x 1000 like the baked pictures, so it scales to the same width and text size | Card | Last row of the desk |
 
 ### The desk (home page)
 
@@ -211,7 +211,7 @@ The site has one main breakpoint: 640px and below is a phone, and 641px and up i
 | Tokens | `src/app/globals.css` (top) | `--island-h`, `--pill-h`, `--card-h`, `--radius-island`, `--radius-pill`, `--radius-card`, `--radius-table-card`, `--radius-menu`, `--radius-menu-option`, `--island-fill`, `--shadow-island`, `--shadow-card`, `--shadow-menu`, and the colour tokens per theme and palette |
 | Shapes | `src/styles/ui.css` | `.ui-island`, `.ui-pill` (`.active`, `--accent`), `.ui-icon-pill`, `.ui-logo`, `.ui-divider`, `.ui-tab-strip`, `.ui-card`, `.ui-card-header`, `.ui-card-head`, `.ui-card-toggle`, `.ui-card-views`, `.ui-card-view`, `.ui-subsection`, `.ui-menu-anchor`, `.ui-menu`, `.ui-menu-option`, `.ui-version-badge` |
 | Components | `src/components/ui/` | `Island`, `Pill` (accepts a `ref`), `IconPill`, `Divider`, `TabStrip`, `Logo`, `CardHeader`, `CardToggle`, `Menu`, `MenuAnchor`, `MenuOption`, `ThemeIcon`, `PaletteIcon`, `VersionBadge` (all exported from `index.ts`) |
-| Controls | `src/components/` | `ThemeToggle.tsx`, `AccentToggle.tsx`, `SeasonSelector.tsx`, built from the components above; `RecapCard.tsx` and `AboutCard.tsx` are the two live cards |
+| Controls | `src/components/` | `ThemeToggle.tsx`, `AccentToggle.tsx`, `SeasonSelector.tsx`, built from the components above; `RecapCard.tsx` and `AboutCard.tsx` are the two live cards (the About card's numbers from `src/lib/site-stats.ts`, its logos from `src/components/about/stackLogos.ts`) |
 | Desk (home page) | `src/app/page.tsx`, `src/components/desk/` | `page.tsx` reads the season, the picture cookies, and the manifest on the server; `DeskView.tsx` holds the rows, the camera, the start-up, the jump tabs, and the overview; `desk.css` adds only position and layout |
 | Carousel | `src/app/carousel/`, `src/components/gridwalk/` | `GridWalk.tsx` composes the carousel; `gridwalk.css` adds position and layout, and the card-fitting classes the desk reuses; `liveGrid.ts` is the canvas behind both |
 | Pictures | `src/lib/variant-constants.ts`, `src/lib/card-snapshots.ts`, `scripts/capture-card-snapshots.mjs`, `public/card-snapshots/<season>/<palette>-<theme>/` | The theme and palette keys and cookies, the server-side picture choice, and the capture script with its weekly workflow |

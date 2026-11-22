@@ -1,6 +1,7 @@
 import { currentSeason, parseSeason, resolvePersistedSeason } from "@/lib/seasons";
 import { readSnapshotManifest, resolvePersistedVariant } from "@/lib/card-snapshots";
 import { buildRecapData } from "@/lib/recap";
+import { getSiteStats } from "@/lib/site-stats";
 import DeskView from "@/components/desk/DeskView";
 
 // Grid Walk's home page: the season's cards laid out neatly in labelled
@@ -18,5 +19,5 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
   const manifest = readSnapshotManifest(year);
   // Keyed on the year so a season change remounts the table and re-measures
   // every sheet for that season's images.
-  return <DeskView key={year} year={year} sizes={manifest?.sizes ?? null} recap={recap} initialVariant={variant} />;
+  return <DeskView key={year} year={year} sizes={manifest?.sizes ?? null} recap={recap} stats={getSiteStats()} initialVariant={variant} />;
 }
