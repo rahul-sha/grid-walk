@@ -296,3 +296,34 @@
   color: var(--on-accent-container);
   font-weight: 700;
 }
+
+/* Version badge: the About card's "v1.0.0 · date" tag (.about-tag look).
+   The live commit code shows in a small tip below it on hover or focus. */
+.ui-version-badge {
+  position: relative;
+  cursor: default;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ui-version-badge::after {
+  content: attr(data-tip);
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--text-primary);
+  color: var(--page-plane);
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 2;
+}
+.ui-version-badge:hover::after,
+.ui-version-badge:focus::after {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-version-badge::after { transition: none; }
+}

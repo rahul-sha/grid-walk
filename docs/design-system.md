@@ -145,6 +145,7 @@ Each component below lists what it holds, how it reacts, and where its code live
 | Card toggle | Both view names; the one showing sits on the accent thumb | Hover brightens the other name; click slides the thumb (instant with reduced motion) and crossfades the two pictures | Top right of the card header | Same | `CardToggle` (`.ui-card-toggle`) in the header (`.ui-card-head`); the two pictures are `.ui-card-views` and `.ui-card-view` |
 | Subsection | Its own title and subtitle, then a graphic | None | A hairline and 1.6rem gap above | Same | `CardHeader subsection` (`.ui-subsection`) |
 | Card picture | A `.webp` of one graphic, captured weekly per theme and palette | Shows "Image unavailable" at the right size if a capture is missing | Chosen from the theme and palette cookies | Same | `card-snapshots.ts`, `variant-constants.ts`, `scripts/capture-card-snapshots.mjs` (photographs `/carousel`) |
+| Version badge | "v1.0.0 · 22 Nov 2026": version from `package.json`, date of the live build | Hover or focus shows a tip with the commit code | Top right of the About card header | Tap shows the tip | `VersionBadge` (`.about-tag` look plus `.ui-version-badge`); values from `src/lib/buildInfo.ts` |
 | Live grid | A canvas | Bends and glows round the pointer; a ring on each press; drops to 1x resolution while the camera moves and sharpens a beat after it stops | Behind everything | Same | `liveGrid.ts` |
 
 ### Desk
@@ -208,8 +209,8 @@ The site has one main breakpoint: 640px and below is a phone, and 641px and up i
 | Layer | File | What lives there |
 | --- | --- | --- |
 | Tokens | `src/app/globals.css` (top) | `--island-h`, `--pill-h`, `--card-h`, `--radius-island`, `--radius-pill`, `--radius-card`, `--radius-table-card`, `--radius-menu`, `--radius-menu-option`, `--island-fill`, `--shadow-island`, `--shadow-card`, `--shadow-menu`, and the colour tokens per theme and palette |
-| Shapes | `src/styles/ui.css` | `.ui-island`, `.ui-pill` (`.active`, `--accent`), `.ui-icon-pill`, `.ui-logo`, `.ui-divider`, `.ui-tab-strip`, `.ui-card`, `.ui-card-header`, `.ui-card-head`, `.ui-card-toggle`, `.ui-card-views`, `.ui-card-view`, `.ui-subsection`, `.ui-menu-anchor`, `.ui-menu`, `.ui-menu-option` |
-| Components | `src/components/ui/` | `Island`, `Pill` (accepts a `ref`), `IconPill`, `Divider`, `TabStrip`, `Logo`, `CardHeader`, `CardToggle`, `Menu`, `MenuAnchor`, `MenuOption`, `ThemeIcon`, `PaletteIcon` (all exported from `index.ts`) |
+| Shapes | `src/styles/ui.css` | `.ui-island`, `.ui-pill` (`.active`, `--accent`), `.ui-icon-pill`, `.ui-logo`, `.ui-divider`, `.ui-tab-strip`, `.ui-card`, `.ui-card-header`, `.ui-card-head`, `.ui-card-toggle`, `.ui-card-views`, `.ui-card-view`, `.ui-subsection`, `.ui-menu-anchor`, `.ui-menu`, `.ui-menu-option`, `.ui-version-badge` |
+| Components | `src/components/ui/` | `Island`, `Pill` (accepts a `ref`), `IconPill`, `Divider`, `TabStrip`, `Logo`, `CardHeader`, `CardToggle`, `Menu`, `MenuAnchor`, `MenuOption`, `ThemeIcon`, `PaletteIcon`, `VersionBadge` (all exported from `index.ts`) |
 | Controls | `src/components/` | `ThemeToggle.tsx`, `AccentToggle.tsx`, `SeasonSelector.tsx`, built from the components above; `RecapCard.tsx` and `AboutCard.tsx` are the two live cards |
 | Desk (home page) | `src/app/page.tsx`, `src/components/desk/` | `page.tsx` reads the season, the picture cookies, and the manifest on the server; `DeskView.tsx` holds the rows, the camera, the start-up, the jump tabs, and the overview; `desk.css` adds only position and layout |
 | Carousel | `src/app/carousel/`, `src/components/gridwalk/` | `GridWalk.tsx` composes the carousel; `gridwalk.css` adds position and layout, and the card-fitting classes the desk reuses; `liveGrid.ts` is the canvas behind both |

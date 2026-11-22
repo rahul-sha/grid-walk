@@ -10,7 +10,7 @@ import AccentToggle from "@/components/AccentToggle";
 import SeasonSelector from "@/components/SeasonSelector";
 import LatestRaceMenu from "./LatestRaceMenu";
 import { fitContent } from "./fitCard";
-import { buildId, buildDateLabel } from "@/lib/buildInfo";
+import VersionBadge from "@/components/ui/VersionBadge";
 import { Island, Pill, IconPill, Divider, Logo, CardHeader, CardToggle } from "@/components/ui";
 import type { RecapData } from "@/lib/recap";
 import {
@@ -788,13 +788,10 @@ export default function DeskView({ year, sizes, recap, initialVariant }: DeskVie
       return {
         title: def.title,
         subtitle: def.subtitle,
-        // The build badge, as on the carousel: derived from the deployed
-        // commit (next.config.ts / src/lib/buildInfo.ts).
+        // The version badge, as on the carousel: version from package.json,
+        // date and commit from the deployed build (src/lib/buildInfo.ts).
         actions: (
-          <span className="about-tag">
-            Build {buildId}
-            {buildDateLabel ? ` · ${buildDateLabel}` : ""}
-          </span>
+          <VersionBadge />
         ),
         body: <AboutCard />,
       };

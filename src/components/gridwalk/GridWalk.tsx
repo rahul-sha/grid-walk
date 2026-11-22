@@ -21,7 +21,7 @@ import PositionsGainedGrid from "@/components/PositionsGainedGrid";
 import PodiumBars from "@/components/PodiumBars";
 import RecapCard from "@/components/RecapCard";
 import AboutCard from "@/components/AboutCard";
-import { buildId, buildDateLabel } from "@/lib/buildInfo";
+import VersionBadge from "@/components/ui/VersionBadge";
 import type { RecapData } from "@/lib/recap";
 import {
   ACCENTS,
@@ -405,16 +405,10 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap }:
       id: "about",
       title: "About this site",
       subtitle: "Who built it, how, and what it runs on.",
-      // Continues the round numbering the old About-page timeline used to
-      // show (dropped in this same round — see "grid-walk-about-card"
-      // memory). Derived from the deployed commit (see next.config.ts /
-      // src/lib/buildInfo.ts) instead of being bumped by hand, since that
-      // kept going stale.
+      // The version badge: version from package.json, date and commit
+      // from the deployed build (src/lib/buildInfo.ts).
       headerActions: () => (
-        <span className="about-tag">
-          Build {buildId}
-          {buildDateLabel ? ` · ${buildDateLabel}` : ""}
-        </span>
+        <VersionBadge />
       ),
       snapshots: [],
       render: () => <AboutCard />,

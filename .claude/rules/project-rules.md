@@ -19,6 +19,7 @@ Rules the shared base does not cover.
 - [design] Keep the About card's credit to Mateusz Karmalski's "F1 Results Tracker" Tableau visualisation unchanged: it is the original design inspiration.
 - [workflow] Keep the old carousel working at `/carousel`: the weekly capture photographs the cards there.
 - [deploy] Leave `scripts/vercel-ignore-build.sh` skipping data-only and preview image-only deploys: each deploy stores about 48 MB of card images.
+- [workflow] Raise the version in `package.json` in every pull request that changes the site (fix: last number, feature: middle, redesign: first): the About card shows it, and the Check version workflow fails without it.
 - [workflow] Update the README in the same pull request when a page, card, or workflow changes: the README is the site's full description.
 - [workflow] Update `docs/design-system.md` and the About card in the same pull request as a change they describe: the About card tells visitors how the site works, and the design system names every part.
 
