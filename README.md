@@ -1,11 +1,51 @@
 # Grid Walk
 
-A personal Formula 1 results tracker built with Next.js, TypeScript, and
-Tailwind CSS. It reads race, sprint, and championship data from the
+Rahul's personal Formula 1 stats site: every card of a season (results,
+points evolution, podiums, positions, positions gained, and finish and
+qualifying frequency) laid out in labelled rows on one pannable, zoomable
+table, plus a Latest Race drop-down. Live at
+[thegridwalk.vercel.app](https://thegridwalk.vercel.app).
+
+Race, sprint, and championship data come from the
 [Jolpica F1 API](https://api.jolpi.ca/ergast/f1) (a community-run successor
-to the retired Ergast API) and presents it as a set of driver/constructor
-heatmaps and standings, styled after Google's Material 3 Expressive
+to the retired Ergast API); the look follows Google's Material 3 Expressive
 language.
+
+## Tech stack
+
+<table>
+  <tr>
+    <th width="190">Front-end</th>
+    <th width="130">Data</th>
+    <th width="130">Hosting</th>
+    <th width="150">Other</th>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/nextjs/nextjs-original.svg" height="36" alt="Next.js" title="Next.js">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/react/react-original.svg" height="36" alt="React" title="React">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/typescript/typescript-original.svg" height="36" alt="TypeScript" title="TypeScript">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/tailwindcss/tailwindcss-original.svg" height="36" alt="Tailwind CSS" title="Tailwind CSS">
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/json/json-original.svg" height="36" alt="JSON snapshots" title="JSON snapshots">
+    </td>
+    <td align="center">
+      <img src="https://cdn.simpleicons.org/vercel/000/fff" height="36" alt="Vercel" title="Vercel">
+      <img src="https://cdn.simpleicons.org/githubactions" height="36" alt="GitHub Actions" title="GitHub Actions">
+    </td>
+    <td align="center">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/playwright/playwright-original.svg" height="36" alt="Playwright" title="Playwright">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/nodejs/nodejs-original.svg" height="36" alt="Node.js" title="Node.js">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top"><sub>Next.js 16 (App Router)<br>React 19<br>TypeScript<br>Tailwind CSS v4<br>Installable as a PWA</sub></td>
+    <td align="center" valign="top"><sub>Jolpica F1 API<br>Season JSON files in <code>data/seasons/</code></sub></td>
+    <td align="center" valign="top"><sub>Vercel<br>GitHub Actions (weekly jobs)</sub></td>
+    <td align="center" valign="top"><sub>Playwright (card pictures)<br>sharp (WebP images)<br>Node.js scripts</sub></td>
+  </tr>
+</table>
 
 ## Pages
 
@@ -114,20 +154,50 @@ Grid Walk's own top bar is the only navigation — the whole site is this
 one table now. The carousel at `/carousel` keeps its own top bar and jump
 bar.
 
-## Getting started
+## Run it locally
+
+1. Install [Node.js](https://nodejs.org) (the current LTS version, 24).
+2. In a terminal, inside this folder, download the packages the site uses:
+
+   ```bash
+   npm install
+   ```
+
+3. Start the site on your computer:
+
+   ```bash
+   npm run dev
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+No settings or keys are needed.
+
+## Tests and checks
+
+There is no test suite yet. Before opening a pull request, run:
 
 ```bash
-npm install
-npm run dev
+npm test
 ```
 
-Then open [http://localhost:3000](http://localhost:3000).
+It runs the lint check (`npm run lint`, one known warning about `<img>`)
+and then the production build (`npm run build`), and takes a few minutes.
+Claude runs it automatically before every pull request. `npm run test:e2e`
+exists but has no tests to run.
 
-Before opening a pull request, run `npm test`. It runs the lint check
-(`npm run lint`) and then the production build (`npm run build`), and takes
-a few minutes. Claude runs it automatically before every pull request.
+## Deploy
+
+The site is hosted on Vercel (project `grid-walk`). Merging a pull request
+into `main` deploys it to production automatically; each pull request gets
+its own preview first. `main` is the live site, so changes always go
+through a branch and a pull request.
 
 ## Data source
+
+The site shows seasons from 2020 onwards. `data/seasons/` also holds every
+season back to 1950 (filled in by the `backfill-seasons.yml` workflow), but
+those older seasons are not offered on the site.
 
 Season data is snapshot-first: each season from 2020 onwards is saved as a
 JSON file in `data/seasons/<year>.json`, committed to the repo, so pages
@@ -192,11 +262,22 @@ once installed — a platform limitation — but on Android 13+ a
 "monochrome" variant lets the OS tint it to match the phone's system theme,
 the same as a native app's icon.
 
-## Tech stack
+## Where things live
 
-- Next.js (App Router) + TypeScript
-- Tailwind CSS v4
-- Server Components for data fetching, no client-side data store
+| Where | What |
+| --- | --- |
+| `src/components/desk/` | The home page table (the "desk") |
+| `src/components/gridwalk/` | The old carousel, kept at `/carousel` |
+| `src/components/ui/`, `src/styles/ui.css` | Shared parts: island, pill, card |
+| `src/lib/` | Data loading, Latest Race recap, season helpers |
+| `data/seasons/` | Saved season data, one JSON file per year |
+| `public/card-snapshots/` | Baked card pictures and their manifests |
+| `scripts/` | Season snapshot and card-picture capture scripts, Vercel skip rules |
+| `.github/workflows/` | Weekly season data, weekly card pictures, and backfill jobs |
+| `CLAUDE.md` | How Claude works in this project |
+| `docs/design-system.md` | The design system |
+| `docs/bugs.md` | The bug list |
+| `docs/roadmap.md` | The plan |
 
 ## Security
 
