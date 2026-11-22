@@ -210,4 +210,8 @@ committed to the repo. Its one server action (fetching a single race's
 recap for the Latest Race card's flag strip) takes a season and round
 number and reads from the same local, public season-snapshot data every
 page already renders from — no user input reaches a file path, a query, or
-an external request.
+an external request. Every season that comes from outside the app (a
+`?season=` address or the server action) is checked against the supported
+seasons first, and `/carousel`'s capture mode (`?noSnapshot=1`) only works on
+the capture job's own local server, never on Vercel. The workflows pin the
+third-party auto-commit action to an exact commit.

@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
-import { SEASON_COOKIE, currentSeason, availableSeasons } from "./season-constants";
+import { SEASON_COOKIE, currentSeason, availableSeasons, parseSeason } from "./season-constants";
 
-export { currentSeason, availableSeasons };
+export { currentSeason, availableSeasons, parseSeason };
 
 // The season selector lives in the global nav bar, so a season picked on
 // one page needs to carry over when navigating to another without a
