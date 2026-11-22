@@ -113,6 +113,8 @@ the table. Picking a different race from its flag strip calls a server action
 (`src/app/actions/recap.ts`) rather than shipping every race's results with
 the page. About is the other exception: it's plain text and links, so
 there's no snapshot to bake and no GPU cost to save by baking one.
+Its badge shows the site's version and the date of the live build (for
+example "v1.0.0 · 22 Nov 2026"); hover or tap it to see the commit code.
 
 Drag anywhere on the table to pan, and scroll or pinch to zoom around the
 pointer; the controls at the bottom (with the theme and palette toggles)
@@ -185,6 +187,24 @@ It runs the lint check (`npm run lint`, one known warning about `<img>`)
 and then the production build (`npm run build`), and takes a few minutes.
 Claude runs it automatically before every pull request. `npm run test:e2e`
 exists but has no tests to run.
+
+### Version numbers
+
+The site's version lives in `package.json` (`"version"`) and shows on the
+About card. Every pull request that changes the site raises it:
+
+| Change | Example |
+| --- | --- |
+| Fix or small tweak | 1.0.0 to 1.0.1 |
+| New card or feature | 1.0.1 to 1.1.0 |
+| Big redesign | 1.1.0 to 2.0.0 |
+
+Change it in `package.json` and `package-lock.json` together, or run
+`npm version patch --no-git-tag-version` (or `minor`, or `major`), which
+does both. Season data, card pictures, docs, workflows, and scripts do not
+need a new version. `npm run check:version` (also the first step of
+`npm test`) and the **Check version** workflow on every pull request stop
+one that forgets.
 
 ## Deploy
 

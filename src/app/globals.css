@@ -815,7 +815,7 @@ body {
   color: var(--text-muted);
 }
 
-/* A small accent-tinted pill: the About card's build-number badge, and
+/* A small accent-tinted pill: the About card's version badge, and
    available as a general-purpose tag. */
 .about-tag {
   display: inline-block;

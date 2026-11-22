@@ -1,13 +1,14 @@
 {
   "name": "grid-walk",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "npm run lint && npm run build",
+    "test": "node scripts/check-version-bump.mjs && npm run lint && npm run build",
+    "check:version": "node scripts/check-version-bump.mjs",
     "test:e2e": "playwright test",
     "snapshot:season": "node scripts/snapshot-season.mjs"
   },

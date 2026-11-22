@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 // Identify the commit actually being built, so the About card's build badge
 // (src/lib/buildInfo.ts) never needs a manual bump. VERCEL_GIT_COMMIT_SHA is
@@ -18,8 +19,14 @@ const commitSha = process.env.VERCEL_GIT_COMMIT_SHA || readGit("git rev-parse HE
 const buildId = commitSha ? commitSha.slice(0, 7) : "dev";
 const buildDate = commitSha ? readGit(`git log -1 --format=%cI ${commitSha}`) : null;
 
+// The app's version (v1.2.3 on the About card) lives in package.json and is
+// raised in every pull request that changes the site; the check in
+// scripts/check-version-bump.mjs stops one that forgets.
+const appVersion: string = JSON.parse(readFileSync("package.json", "utf8")).version;
+
 const nextConfig: NextConfig = {
   env: {
+    NEXT_PUBLIC_APP_VERSION: appVersion,
     NEXT_PUBLIC_BUILD_ID: buildId,
     NEXT_PUBLIC_BUILD_DATE: buildDate ?? "",
   },
