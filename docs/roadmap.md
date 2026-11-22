@@ -1,10 +1,11 @@
 # Roadmap: Grid Walk
 
-- **Updated:** 2026-11-16
+- **Updated:** 2026-11-22
 
 ## Now
 Being built this week or next. At most three items.
-- Nothing in progress. (Question for Rahul: what should come next?)
+- App version numbers on the About card (v1.0.0), raised in every pull request.
+- A livelier, tidier About card: mock-up first.
 
 ## Next
 Agreed and waiting for a slot.
@@ -25,6 +26,7 @@ Ideas worth keeping, not yet agreed.
 - 2026-11-03: Positions Gained card (PR #114) and ten-shade Positions card (PRs #113, #115).
 
 ## Decisions
+- 2026-11-22: Versions follow 1.2.3 (fix, feature, redesign) and are raised in each pull request, with a check that stops one that forgets: Rahul's choice over an automatic bump after each merge.
 - 2026-11-03: Old carousel kept at `/carousel`, unlinked: easy to compare or switch back, and the weekly capture uses it. Revert point: branch `milestone/pre-desk-home`.
 - 2026-11-03: Pit-lane starts show as PL on Positions Gained and are left out like retirements.
 - 2026-10-27: Latest Race is the one live card: session times must be in each visitor's own time zone.
