@@ -32,6 +32,7 @@ Move a bug to "Fixed" when its fix is merged, and add one line on what fixed it.
 
 | Fixed | Bug | What fixed it |
 | --- | --- | --- |
+| 2026-11-23 | The season data job failed with "403 Forbidden": Jolpica now refuses requests that do not name the calling app, so Las Vegas (Rd 21) did not arrive | A `GridWalk/<version>` user agent on every Jolpica request, in `scripts/snapshot-season.mjs` and `src/lib/ergast.ts` |
 | 2026-11-22 | The README lagged behind: old intro, no live link or full tech stack | README catch-up pull request: live link, tech stack panel, run steps, Tests and checks, Deploy, Where things live |
 | 2026-11-22 | Unchecked `?season=`, `?noSnapshot=1`, and Latest Race season and round input; auto-commit action pinned by tag; 7 moderate development-tool advisories | Security tidy-up pull request: one `parseSeason()` check (2020 to this year) on both pages and the server action, capture mode ignored on Vercel, action pinned to its v5.2.0 commit, `npm audit fix` |
 | 2026-11-22 | On phones (390 px wide) the top bar overflowed its island; `docs/design-system.md` disagreed | Checked in the 2026-11-22 check-up: at 390 px the logo, season, and About fit with no sideways scroll (the Latest Race pill moved to the bottom bar in PR #118), so `docs/design-system.md` is right |

@@ -238,7 +238,11 @@ don't hit the live API on every request. A weekly GitHub Action
 (`snapshot-season.yml`, also runnable by hand) refreshes the current
 season's snapshot. A live fetch from `https://api.jolpi.ca/ergast/f1` is
 used only as a fallback, when no snapshot exists yet for a season at all.
-No API key is required.
+No API key is required, but Jolpica refuses requests that do not name the
+app calling it, so every request carries a `GridWalk/<version>` user agent
+(the version comes from `package.json`), as its
+[guide](https://github.com/jolpica/jolpica-f1/blob/main/docs/README.md)
+asks.
 
 Vercel skips a deployment when a commit changes only season data, and
 skips branch previews for commits that change only the baked card images
