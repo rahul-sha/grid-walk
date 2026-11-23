@@ -111,8 +111,9 @@ loads, and the time of the capture, which is added to each image's address
 stored copy. Visitors never render those cards live. The images come from
 `scripts/capture-card-snapshots.mjs` (which photographs the cards rendered
 live on `/carousel`), which the `capture-card-snapshots.yml`
-workflow runs every Monday for the current season (pass a year, or `all`,
-to capture finished seasons by hand). The visitor's theme and palette are
+workflow runs for the current season straight after each successful data
+refresh, and only when that refresh brought new data (run it by hand with a
+year, or `all`, to capture finished seasons). The visitor's theme and palette are
 read from cookies so the server can pick the right image on first paint.
 The table loads only the pictures for the current colour combination;
 switching theme or palette fetches the new set then. (The carousel at
@@ -238,7 +239,9 @@ Season data is snapshot-first: each season from 2020 onwards is saved as a
 JSON file in `data/seasons/<year>.json`, committed to the repo, so pages
 don't hit the live API on every request. A weekly GitHub Action
 (`snapshot-season.yml`, also runnable by hand) refreshes the current
-season's snapshot. A live fetch from `https://api.jolpi.ca/ergast/f1` is
+season's snapshot twice each Monday, at 2:17 pm and 10:43 pm Singapore time
+(06:17 and 14:43 UTC; GitHub may start scheduled jobs late), and the
+picture job follows it. A live fetch from `https://api.jolpi.ca/ergast/f1` is
 used only as a fallback, when no snapshot exists yet for a season at all.
 No API key is required, but Jolpica refuses requests that do not name the
 app calling it, so every request carries a `GridWalk/<version>` user agent

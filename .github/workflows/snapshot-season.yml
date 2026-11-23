@@ -8,9 +8,14 @@ name: Snapshot season data
 # is a harmless no-op commit-wise (git-auto-commit-action only commits
 # when the file actually changed).
 #
-# Two scheduled runs each Monday: 10:00 UTC and a catch-up at 18:00 UTC,
-# in case the source API hasn't published a race weekend's results yet
-# by the morning run.
+# Two scheduled runs each Monday: 06:17 UTC (2:17 pm in Singapore) and a
+# catch-up at 14:43 UTC (10:43 pm), in case the source API hasn't published
+# a race weekend's results yet by the first run. The odd minutes are on
+# purpose: GitHub delays scheduled jobs most at the top of the hour, and
+# this job used to start about ten hours late.
+#
+# When a run on main succeeds, capture-card-snapshots.yml starts by itself
+# (its workflow_run trigger), so the pictures always follow the data.
 on:
   workflow_dispatch:
     inputs:
@@ -19,21 +24,27 @@ on:
         required: false
         type: string
   schedule:
-    - cron: "0 10 * * 1"
-    - cron: "0 18 * * 1"
+    - cron: "17 6 * * 1"
+    - cron: "43 14 * * 1"
 
 permissions:
   contents: write
+
+# Two data runs at once would both try to save to main and the later one
+# would be refused. Queue them instead.
+concurrency:
+  group: snapshot-season
+  cancel-in-progress: false
 
 jobs:
   snapshot:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Determine season
         id: season

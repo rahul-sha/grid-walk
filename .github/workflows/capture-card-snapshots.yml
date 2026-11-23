@@ -1,16 +1,14 @@
 name: Capture Grid Walk card snapshots
 
-# Runs manually or weekly, shortly after the season-data snapshot job (see
-# snapshot-season.yml) so a completed race weekend's results are already
-# committed by the time these images are captured from them. The weekly
-# run regenerates the current season only; finished seasons are captured
-# once, by hand ("all" or a year). Visitors only ever see these images —
-# see scripts/capture-card-snapshots.mjs and the "grid-walk-blur-gpu-cost"
-# project memory for why.
-#
-# Two scheduled runs each Monday, each 30 minutes after snapshot-season.yml's
-# own two runs (10:00/18:00 UTC), so the catch-up run also recaptures images
-# if the morning run's data was still missing that week's results.
+# Runs manually, or by itself straight after the season-data job (see
+# snapshot-season.yml) succeeds on main, so the pictures are always captured
+# from data that is already committed. It has no clock of its own: the two
+# jobs used to run on separate Monday schedules that GitHub fired hours
+# late and in either order, so pictures could be baked from last week's
+# data. A run started by the data job regenerates the current season only,
+# and only when that season's data is newer than its pictures; finished
+# seasons are captured once, by hand ("all" or a year). Visitors only ever
+# see these images: see scripts/capture-card-snapshots.mjs.
 on:
   workflow_dispatch:
     inputs:
@@ -18,9 +16,10 @@ on:
         description: "Season year to capture (e.g. 2024), or 'all' for every season from 2020. Leave blank for the current season."
         required: false
         type: string
-  schedule:
-    - cron: "30 10 * * 1"
-    - cron: "30 18 * * 1"
+  workflow_run:
+    workflows: ["Snapshot season data"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: write
@@ -34,32 +33,15 @@ concurrency:
 jobs:
   capture:
     runs-on: ubuntu-latest
+    # A manual run always goes ahead; a run started by the data job only
+    # when that job succeeded.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - run: npm ci
-
-      - run: npx playwright install --with-deps chromium
-
-      - run: npm run build
-
-      - name: Start server
-        run: npm run start -- -p 3100 &
-
-      - name: Wait for server
-        run: |
-          for i in $(seq 1 30); do
-            curl -sf http://localhost:3100 > /dev/null && exit 0
-            sleep 2
-          done
-          echo "Server did not come up in time" >&2
-          exit 1
+          # Full history, so the step below can compare commit times.
+          fetch-depth: 0
 
       - name: Determine season
         id: season
@@ -72,12 +54,66 @@ jobs:
           fi
           echo "season=$SEASON" >> "$GITHUB_OUTPUT"
 
+      # Started by the data job: skip the capture when the season's data has
+      # not changed since its pictures were last saved (the data job found
+      # nothing new, or refreshed a different season). Each picture commit
+      # is a full deployment, so this avoids one for no change.
+      - name: Check whether the data is newer than the pictures
+        id: fresh
+        env:
+          SEASON: ${{ steps.season.outputs.season }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" != "workflow_run" ]; then
+            echo "capture=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          DATA=$(git log -1 --format=%ct -- "data/seasons/${SEASON}.json")
+          PICS=$(git log -1 --format=%ct -- "public/card-snapshots/${SEASON}/manifest.json")
+          echo "Data last saved: ${DATA:-never}; pictures last saved: ${PICS:-never}"
+          if [ -n "$DATA" ] && { [ -z "$PICS" ] || [ "$DATA" -gt "$PICS" ]; }; then
+            echo "capture=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Pictures are already up to date with the data; nothing to capture."
+            echo "capture=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v7
+        if: steps.fresh.outputs.capture == 'true'
+        with:
+          node-version: 22
+
+      - run: npm ci
+        if: steps.fresh.outputs.capture == 'true'
+
+      - run: npx playwright install --with-deps chromium
+        if: steps.fresh.outputs.capture == 'true'
+
+      - run: npm run build
+        if: steps.fresh.outputs.capture == 'true'
+
+      - name: Start server
+        if: steps.fresh.outputs.capture == 'true'
+        run: npm run start -- -p 3100 &
+
+      - name: Wait for server
+        if: steps.fresh.outputs.capture == 'true'
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3100 > /dev/null && exit 0
+            sleep 2
+          done
+          echo "Server did not come up in time" >&2
+          exit 1
+
       - name: Capture card snapshots
+        if: steps.fresh.outputs.capture == 'true'
         env:
           SNAPSHOT_PORT: 3100
         run: node scripts/capture-card-snapshots.mjs "${{ steps.season.outputs.season }}"
 
       - name: Commit snapshots
+        if: steps.fresh.outputs.capture == 'true'
         uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5.2.0
         with:
           commit_message: "Update ${{ steps.season.outputs.season }} Grid Walk card snapshots"
