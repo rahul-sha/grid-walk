@@ -5,6 +5,13 @@ import { loadSeasonSnapshot } from "./season-snapshot";
 
 const BASE_URL = "https://api.jolpi.ca/ergast/f1";
 
+// Jolpica requires every caller to name itself and its version (requests
+// without a custom user agent get 403 Forbidden), so it can block one bad
+// release instead of the whole app. The format (app name, then version)
+// follows https://github.com/jolpica/jolpica-f1/blob/main/docs/README.md.
+// Keep this in step with the same header in scripts/snapshot-season.mjs.
+const USER_AGENT = `GridWalk/${process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"}`;
+
 const ONE_HOUR = 60 * 60;
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
@@ -20,6 +27,7 @@ function revalidateFor(season: number): number {
 // concurrent requests — retry a 429 with backoff instead of failing the page.
 async function ergastFetch<T>(path: string, revalidateSeconds = ONE_HOUR, attempt = 1): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
+    headers: { "User-Agent": USER_AGENT },
     next: { revalidate: revalidateSeconds },
   });
   if (res.status === 429 && attempt <= 3) {

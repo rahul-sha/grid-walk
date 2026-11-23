@@ -4,11 +4,21 @@
 // Run once per completed season (npm run snapshot:season -- 2020) so the app
 // can serve that season from the repo instead of the live API, which
 // rate-limits hard under the ~50 concurrent requests a full season needs.
-import { writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 
 const BASE_URL = "https://api.jolpi.ca/ergast/f1";
 const season = Number(process.argv[2]);
+
+// Jolpica requires every caller to name itself and its version (requests
+// without a custom user agent get 403 Forbidden), so it can block one bad
+// release instead of the whole app. The format follows Jolpica's guide
+// (https://github.com/jolpica/jolpica-f1/blob/main/docs/README.md): app name
+// and version, then other relevant software. That guide also sets the limits
+// this script keeps to: at most 4 requests a second, 500 an hour, and
+// `limit` no higher than 100. Keep this in step with src/lib/ergast.ts.
+const { version } = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+const USER_AGENT = `GridWalk/${version} node/${process.versions.node}`;
 
 // A courtesy gap between requests to this free, unauthenticated community
 // API — keeps a multi-season backfill (dozens of seasons, each with a
@@ -31,7 +41,9 @@ if (!season || Number.isNaN(season)) {
 // on that one request.
 const MAX_ATTEMPTS = 8;
 async function getJson(pathSuffix, attempt = 1) {
-  const res = await fetch(`${BASE_URL}${pathSuffix}`);
+  const res = await fetch(`${BASE_URL}${pathSuffix}`, {
+    headers: { "User-Agent": USER_AGENT },
+  });
   if (res.status === 429 && attempt <= MAX_ATTEMPTS) {
     const wait = Math.min(2 ** attempt * 1000, 20000);
     console.log(`Rate limited on ${pathSuffix}, retrying in ${wait}ms (attempt ${attempt}/${MAX_ATTEMPTS})...`);
