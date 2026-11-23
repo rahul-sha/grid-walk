@@ -1,13 +1,13 @@
 # Grid Walk
 
 ## What this project does
-Grid Walk is Rahul's personal Formula 1 stats site: every card of a season (results, points evolution, podiums, positions, positions gained, finish and qualifying frequency) laid out in labelled rows on one pannable, zoomable table, plus a live Latest Race drop-down. It is live at https://thegridwalk.vercel.app. The README describes every page and card in full.
+Grid Walk is Rahul's personal Formula 1 stats site: every card of a season (results, points evolution, podiums, positions, positions gained, finish and qualifying frequency) laid out in labelled rows on one pannable, zoomable table, plus a live Latest Race drop-down. It is live at https://thegridwalk.vercel.app. The README gives the overview: what the site does, how it works, and where things live.
 
 ## Tech stack
 - Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4. Server Components for data; no client-side data store.
 - Hosted on Vercel (project `grid-walk`); production deploys from `main`.
 - Race data from the Jolpica F1 API, saved as JSON snapshots in `data/seasons/`.
-- GitHub Actions: `snapshot-season.yml` (weekly season data), `capture-card-snapshots.yml` (weekly card pictures), `backfill-seasons.yml`.
+- GitHub Actions: `snapshot-season.yml` (weekly season data), `capture-card-snapshots.yml` (card pictures, started by the data job), `backfill-seasons.yml`.
 - Playwright (used by the card-picture capture script) and `sharp`.
 
 ## Run commands
