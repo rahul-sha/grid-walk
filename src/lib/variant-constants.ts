@@ -53,6 +53,11 @@ export const SNAPSHOT_NAMES = [
 
 export type SnapshotName = (typeof SNAPSHOT_NAMES)[number];
 
-export function snapshotPath(season: number, accent: Accent, theme: Theme, name: string) {
-  return `/card-snapshots/${season}/${accent}-${theme}/${name}.webp`;
+// `version` is the manifest's capture time. A re-baked picture keeps its
+// file name, so without it a browser can go on showing its stored copy of
+// the old one; with it, every new capture has a new address and is fetched
+// fresh.
+export function snapshotPath(season: number, accent: Accent, theme: Theme, name: string, version?: string | null) {
+  const query = version ? `?v=${version.replace(/\D/g, "")}` : "";
+  return `/card-snapshots/${season}/${accent}-${theme}/${name}.webp${query}`;
 }

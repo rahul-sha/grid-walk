@@ -106,7 +106,9 @@ Every card but Latest Race is pre-rendered: for each season, every
 theme/palette combination is saved as a lossless WebP image under
 `public/card-snapshots/<season>/<palette>-<theme>/`, with a `manifest.json`
 recording each image's natural size so the layout is known before anything
-loads. Visitors never render those cards live. The images come from
+loads, and the time of the capture, which is added to each image's address
+(`?v=...`) so a browser fetches a re-baked picture instead of showing its
+stored copy. Visitors never render those cards live. The images come from
 `scripts/capture-card-snapshots.mjs` (which photographs the cards rendered
 live on `/carousel`), which the `capture-card-snapshots.yml`
 workflow runs every Monday for the current season (pass a year, or `all`,

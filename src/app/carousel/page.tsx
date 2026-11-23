@@ -50,6 +50,7 @@ export default async function Carousel({
       season={season}
       live={live}
       sizes={manifest?.sizes ?? null}
+      snapshotVersion={manifest?.capturedAt ?? null}
       initialVariant={variant}
       recap={recap}
       stats={getSiteStats()}

@@ -51,6 +51,8 @@ export interface GridWalkProps {
   // Natural CSS-pixel size of each snapshot image, from the season's
   // manifest; null when the season has never been captured.
   sizes: Record<string, { w: number; h: number }> | null;
+  // The manifest's capture time, added to each picture address.
+  snapshotVersion?: string | null;
   // The visitor's persisted theme/palette, read from cookies on the
   // server. Theme null = nothing chosen yet, follow the device.
   initialVariant: { accent: Accent; theme: Theme | null };
@@ -128,7 +130,7 @@ const DRAG_THRESHOLD = 6;
 // At k=1 the strip always settles with one card centred; each card is
 // fitted to the space between the top bar and the jump bar, never
 // enlarged past its natural size. See "grid-walk-carousel-mockup" memory.
-export default function GridWalk({ season, live, sizes, initialVariant, recap, stats = null }: GridWalkProps) {
+export default function GridWalk({ season, live, sizes, snapshotVersion = null, initialVariant, recap, stats = null }: GridWalkProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLCanvasElement>(null);
@@ -192,13 +194,13 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap, s
           for (const name of SNAPSHOT_NAMES) {
             if (!sizes[name]) continue;
             const img = new Image();
-            img.src = snapshotPath(season, accent, theme, name);
+            img.src = snapshotPath(season, accent, theme, name, snapshotVersion);
           }
         }
       }
     });
     return () => cancel(handle);
-  }, [season, sizes, forceLive]);
+  }, [season, sizes, snapshotVersion, forceLive]);
 
   // An image that fails to load (a combination not captured yet) shows a
   // quiet placeholder at the card's size rather than a broken image.
@@ -214,9 +216,9 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap, s
         </div>
       );
     }
-    const light = snapshotPath(season, variant.accent, "light", name);
-    const dark = snapshotPath(season, variant.accent, "dark", name);
-    const chosen = variant.theme ? snapshotPath(season, variant.accent, variant.theme, name) : light;
+    const light = snapshotPath(season, variant.accent, "light", name, snapshotVersion);
+    const dark = snapshotPath(season, variant.accent, "dark", name, snapshotVersion);
+    const chosen = variant.theme ? snapshotPath(season, variant.accent, variant.theme, name, snapshotVersion) : light;
     if (failedSnapshots.has(chosen)) {
       return (
         <div className="gw-snap-missing" style={{ width: size.w, height: size.h }}>
@@ -645,7 +647,7 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap, s
     stripRef.current?.classList.remove("pending");
     stripRef.current?.classList.add("entered");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [season, freqView, resultsView, evoWho, evoMode, forceLive, sizes, failedSnapshots]);
+  }, [season, freqView, resultsView, evoWho, evoMode, forceLive, sizes, snapshotVersion, failedSnapshots]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
