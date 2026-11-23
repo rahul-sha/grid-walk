@@ -1,59 +1,11 @@
-import { buildPointsGrid } from "@/lib/points-grid";
-import { buildConstructorPointsGrid } from "@/lib/constructor-points-grid";
-import { buildFinishPositionSummary } from "@/lib/finish-positions";
-import { buildQualifyingPositionSummary } from "@/lib/qualifying-positions";
-import { currentSeason, parseSeason, resolvePersistedSeason } from "@/lib/seasons";
-import { readSnapshotManifest, resolvePersistedVariant } from "@/lib/card-snapshots";
-import { buildRecapData } from "@/lib/recap";
-import { getSiteStats } from "@/lib/site-stats";
-import GridWalk, { type GridWalkData } from "@/components/gridwalk/GridWalk";
+import CarouselView from "@/components/gridwalk/CarouselView";
 
-// The previous homepage — the horizontal carousel of cards — kept here,
-// reachable at /carousel, after the desk table became the home page
-// (2026-11-03) so the two can be compared live and the switch reverted
-// easily. The snapshot capture script also renders its cards from here.
+// The carousel, also at /carousel: the snapshot capture script renders its
+// cards from here (?noSnapshot=1), whichever view a visitor picked.
 export default async function Carousel({
   searchParams,
 }: {
   searchParams: Promise<{ season?: string; noSnapshot?: string }>;
 }) {
-  const params = await searchParams;
-  const season = parseSeason(params.season) ?? (await resolvePersistedSeason()) ?? currentSeason();
-
-  // Visitors only ever get the pre-rendered card images, so the season's
-  // data grids are neither built nor sent to the browser. The one
-  // exception is capture mode (?noSnapshot=1), used by
-  // scripts/capture-card-snapshots.mjs to render the cards live so it can
-  // photograph them — the only place live rendering still happens. The
-  // capture script runs its own local server, never Vercel, so on Vercel
-  // (VERCEL=1) the flag is ignored and visitors cannot force live rendering.
-  const captureMode = params.noSnapshot === "1" && process.env.VERCEL !== "1";
-  let live: GridWalkData | null = null;
-  if (captureMode) {
-    const [pointsGrid, constructorGrid, finishSummary, qualifyingSummary] = await Promise.all([
-      buildPointsGrid(season),
-      buildConstructorPointsGrid(season),
-      buildFinishPositionSummary(season),
-      buildQualifyingPositionSummary(season),
-    ]);
-    live = { pointsGrid, constructorGrid, finishSummary, qualifyingSummary };
-  }
-
-  const [manifest, variant, recap] = await Promise.all([
-    readSnapshotManifest(season),
-    resolvePersistedVariant(),
-    season === currentSeason() ? buildRecapData(season) : Promise.resolve(null),
-  ]);
-
-  return (
-    <GridWalk
-      season={season}
-      live={live}
-      sizes={manifest?.sizes ?? null}
-      snapshotVersion={manifest?.capturedAt ?? null}
-      initialVariant={variant}
-      recap={recap}
-      stats={getSiteStats()}
-    />
-  );
+  return <CarouselView params={await searchParams} />;
 }

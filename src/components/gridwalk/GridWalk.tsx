@@ -2,11 +2,14 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./gridwalk.css";
+import "@/components/desk/desk.css";
 import { createLiveGrid } from "./liveGrid";
 import SeasonSelector from "@/components/SeasonSelector";
 import ThemeToggle from "@/components/ThemeToggle";
 import AccentToggle from "@/components/AccentToggle";
-import { Island, Pill, IconPill, Divider, TabStrip, Logo, CardHeader, CardToggle } from "@/components/ui";
+import ViewToggle from "@/components/ViewToggle";
+import LatestRaceMenu from "@/components/desk/LatestRaceMenu";
+import { Island, Pill, IconPill, Divider, Logo, CardHeader, CardToggle } from "@/components/ui";
 import type { PointsGrid } from "@/lib/points-grid";
 import type { ConstructorPointsGrid } from "@/lib/constructor-points-grid";
 import type { FinishPositionSummary } from "@/lib/finish-positions";
@@ -277,29 +280,6 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
   // prop change already re-triggers layout()'s re-measure below, unlike
   // the card's own internal clicks, which don't.
   const sections: SectionDef[] = [
-    ...(recap
-      ? [
-          {
-            id: "recap",
-            title: "Latest Race",
-            // Named from the schedule, not lastRace: lastRace is null while
-            // the latest round's results are still pending, and the longer
-            // generic line it used to fall back to then set the card's
-            // max-content width (this card's body scales down to ~320px, so
-            // the header is the widest thing in it), leaving a blank band
-            // down the card's right-hand side.
-            subtitle: (() => {
-              const latest = recap.raceList.find((r) => r.round === recap.latestRound);
-              return latest
-                ? `Round ${latest.round} · ${latest.name}, ${recap.season}`
-                : "The most recent race, in your own time zone.";
-            })(),
-            navLabel: "Latest Race",
-            snapshots: [],
-            render: () => <RecapCard data={recap} />,
-          } satisfies SectionDef,
-        ]
-      : []),
     {
       id: "results",
       title: resultsView === "drivers" ? "Drivers Results" : "Team Results",
@@ -602,6 +582,27 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
     .filter(({ i }) => sections[i].id !== "about");
   const navLabels = navEntries.map((entry) => entry.label);
   const navActive = navEntries.findIndex((entry) => entry.i === focus);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [marker, setMarker] = useState<{ left: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    function place() {
+      const el = tabRefs.current[navActive];
+      setMarker(el ? { left: el.offsetLeft, width: el.offsetWidth } : null);
+    }
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [navActive]);
+  // Phones put the Latest Race pill in the bottom island (the top bar is
+  // full); unknown until mounted, so the pill renders once, in one place.
+  const [narrow, setNarrow] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const read = () => setNarrow(mq.matches);
+    read();
+    mq.addEventListener("change", read);
+    return () => mq.removeEventListener("change", read);
+  }, []);
   function jump(tabIndex: number) {
     goTo(navEntries[tabIndex].i);
     dismissHint();
@@ -688,7 +689,7 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
     function onChrome(e: Event) {
       return (
         e.target instanceof Element &&
-        !!e.target.closest(".gw-topbar, .gw-jumpbar, .gw-arrow, .recap-table, .recap-picker-strip")
+        !!e.target.closest(".dk-topbar, .dk-ctl, .dk-lr-panel, .gw-arrow, .recap-table, .recap-picker-strip")
       );
     }
 
@@ -775,7 +776,7 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
         // race-picker strip are the things on/over the carousel that scroll
         // themselves; the browser must keep that wheel rather than have it
         // zoom the card.
-        if (e.target instanceof Element && e.target.closest(".ui-menu, .recap-table, .recap-picker-strip")) return;
+        if (e.target instanceof Element && e.target.closest(".ui-menu, .dk-lr-panel, .recap-table, .recap-picker-strip")) return;
         e.preventDefault();
         return;
       }
@@ -949,47 +950,46 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
         ))}
       </div>
 
-      <div className="gw-topbar">
+      <div className="dk-topbar">
         {/* The logo is its own island, and takes you back to the first card. */}
         <Logo
-          className="gw-brand"
           label="Grid Walk: back to the first card"
           onClick={() => {
             goTo(0);
             dismissHint();
           }}
         />
-        {/* On desktop this is one nav bar island: the jump tabs, then About
-            and the toggles. On phones it dissolves (display: contents), the
-            tabs are hidden, and the controls sit on their own as before. */}
-        <Island className="gw-navpill">
-          <nav className="gw-toptabs" aria-label="Jump to">
-            <TabStrip className="gw-toptabs-track" items={navLabels} active={navActive} onSelect={jump} />
+        <Island className="dk-navpill">
+          <nav className="dk-tabs" aria-label="Jump to">
+            {marker ? <span className="dk-tab-marker" style={{ left: marker.left, width: marker.width }} aria-hidden="true" /> : null}
+            {navLabels.map((label, t) => (
+              <Pill
+                key={label}
+                className={"dk-tab" + (t === navActive ? " on" : "")}
+                aria-current={t === navActive ? "true" : undefined}
+                ref={(el: HTMLButtonElement | null) => {
+                  tabRefs.current[t] = el;
+                }}
+                onClick={() => jump(t)}
+              >
+                {label}
+              </Pill>
+            ))}
           </nav>
-          <Divider className="gw-navpill-divider" />
-          <div className="gw-topbar-right">
-            <Pill
-              accent
-              className="gw-about-link"
-              onClick={() => {
-                goTo(count - 1);
-                dismissHint();
-              }}
-            >
-              About
-            </Pill>
-            <ThemeToggle />
-            <AccentToggle />
-            <SeasonSelector initialSeason={season} />
-          </div>
+          <Divider className="dk-navpill-divider" />
+          {recap && narrow === false ? <LatestRaceMenu data={recap} placement="top" /> : null}
+          <SeasonSelector initialSeason={season} />
+          <Pill
+            accent
+            className="dk-about-link"
+            onClick={() => {
+              goTo(count - 1);
+              dismissHint();
+            }}
+          >
+            About
+          </Pill>
         </Island>
-      </div>
-
-      <div className={"gw-hint" + (hintGone ? " gone" : "")} aria-hidden="true">
-        <span className="gw-hint-wide">
-          {season} season · drag or use ← → to browse · scroll or pinch to zoom · click a card for full size
-        </span>
-        <span className="gw-hint-narrow">Swipe to browse · pinch to zoom · tap for full size</span>
       </div>
 
       <button
@@ -1021,25 +1021,29 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
         </svg>
       </button>
 
-      <div className="gw-jumpbar">
-        <Island className="gw-jumpbar-island">
-          <TabStrip className="gw-jumpbar-pills" items={navLabels} active={navActive} onSelect={jump} />
-          <Divider className="gw-jumpbar-divider" />
-          <div className="gw-zoomctl">
-            <IconPill className="gw-zoom-icon" aria-label="Zoom out" onClick={() => zoomCentre(0.8)}>
-              −
-            </IconPill>
-            <span className="gw-zoom-level" ref={zoomLevelRef}>
-              Fit
-            </span>
-            <IconPill className="gw-zoom-icon" aria-label="Zoom in" onClick={() => zoomCentre(1.25)}>
-              +
-            </IconPill>
-            <Pill accent onClick={() => goTo(focusRef.current)}>
-              Fit
-            </Pill>
-          </div>
-        </Island>
+      <div className="dk-ctl">
+        {recap && narrow === true ? (
+          <>
+            <LatestRaceMenu data={recap} placement="bottom" />
+            <Divider />
+          </>
+        ) : null}
+        <ThemeToggle />
+        <AccentToggle />
+        <ViewToggle value="carousel" />
+        <Divider />
+        <IconPill className="dk-zoom-step" aria-label="Zoom out" onClick={() => zoomCentre(0.8)}>
+          −
+        </IconPill>
+        <span className="dk-zoom-level" ref={zoomLevelRef}>
+          Fit
+        </span>
+        <IconPill className="dk-zoom-step" aria-label="Zoom in" onClick={() => zoomCentre(1.25)}>
+          +
+        </IconPill>
+        <Pill accent onClick={() => goTo(focusRef.current)}>
+          Fit
+        </Pill>
       </div>
     </div>
   );

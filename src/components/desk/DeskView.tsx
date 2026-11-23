@@ -7,6 +7,7 @@ import { createLiveGrid } from "@/components/gridwalk/liveGrid";
 import AboutCard from "@/components/AboutCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import AccentToggle from "@/components/AccentToggle";
+import ViewToggle from "@/components/ViewToggle";
 import SeasonSelector from "@/components/SeasonSelector";
 import LatestRaceMenu from "./LatestRaceMenu";
 import { fitContent } from "./fitCard";
@@ -1041,6 +1042,7 @@ export default function DeskView({ year, sizes, snapshotVersion = null, recap, s
         ) : null}
         <ThemeToggle />
         <AccentToggle />
+        <ViewToggle value="table" />
         <Divider />
         <IconPill className="dk-zoom-step" aria-label="Zoom out" onClick={() => zoomCentre(0.8)}>
           −
