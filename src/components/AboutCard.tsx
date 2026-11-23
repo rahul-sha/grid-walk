@@ -85,7 +85,7 @@ export default function AboutCard({ stats }: { stats: SiteStats | null }) {
           </p>
           <p className="about-card-intro">
             Every design is reviewed and approved before it goes live, with Claude (Anthropic&rsquo;s AI
-            coding assistant) doing the building: the heatmaps, charts, theming, and this table itself.
+            coding assistant) doing the building: the heatmaps, charts, theming, and both views, carousel and table.
             An independent fan project, not affiliated with Formula 1, the FIA, or any team.
           </p>
           <ul className="about-card-how" aria-label="How to get around">

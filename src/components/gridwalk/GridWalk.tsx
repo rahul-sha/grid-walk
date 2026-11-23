@@ -22,7 +22,6 @@ import FinishPositionsGrid from "@/components/FinishPositionsGrid";
 import QualifyingPositionsGrid from "@/components/QualifyingPositionsGrid";
 import PositionsGainedGrid from "@/components/PositionsGainedGrid";
 import PodiumBars from "@/components/PodiumBars";
-import RecapCard from "@/components/RecapCard";
 import AboutCard from "@/components/AboutCard";
 import VersionBadge from "@/components/ui/VersionBadge";
 import type { RecapData } from "@/lib/recap";
@@ -149,7 +148,6 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
   const moved = useRef(false);
 
   const [focus, setFocus] = useState(0);
-  const [hintGone, setHintGone] = useState(false);
   const [freqView, setFreqView] = useState<"finish" | "quali">("finish");
   const [resultsView, setResultsView] = useState<"drivers" | "teams">("drivers");
   const [evoWho, setEvoWho] = useState<"drivers" | "teams">("drivers");
@@ -258,7 +256,6 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
     // files for why (the recap's schedule half has to convert to each
     // visitor's own time zone; the about card is plain text and links,
     // which a baked image would break).
-    if (section.id === "recap") return <RecapCard data={recap} />;
     if (section.id === "about") return <AboutCard stats={stats} />;
     if (live) return section.render(live);
     if (section.snapshots.length === 1) return renderSnapshot(section.snapshots[0].name);
@@ -363,6 +360,36 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
       },
     },
     {
+      id: "podiumsD",
+      title: "Driver Podiums",
+      subtitle: "1st/2nd/3rd place finishes per driver.",
+      bakedTitle: true,
+      snapshots: [{ name: "podiumsD", active: true }],
+      render: ({ finishSummary }) => (
+        <>
+          <CardHeader title="Driver Podiums" subtitle="1st/2nd/3rd place finishes per driver." />
+          <PodiumBars
+            drivers={finishSummary.driverPodiums.map((d) => ({
+              label: d.code,
+              team: d.constructorName,
+              color: d.color,
+              podiums: d.podiums,
+            }))}
+            teams={[]}
+          />
+          <CardHeader subsection title="Constructor Podiums" subtitle="1st/2nd/3rd place finishes per team." />
+          <PodiumBars
+            drivers={[]}
+            teams={finishSummary.teamPodiums.map((t) => ({
+              label: t.constructorName,
+              color: t.color,
+              podiums: t.podiums,
+            }))}
+          />
+        </>
+      ),
+    },
+    {
       id: "positions",
       title: "Positions",
       subtitle: "Where each driver finished in every Grand Prix.",
@@ -412,36 +439,6 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
             <QualifyingPositionsGrid summary={qualifyingSummary} />
           </div>
         </div>
-      ),
-    },
-    {
-      id: "podiumsD",
-      title: "Driver Podiums",
-      subtitle: "1st/2nd/3rd place finishes per driver.",
-      bakedTitle: true,
-      snapshots: [{ name: "podiumsD", active: true }],
-      render: ({ finishSummary }) => (
-        <>
-          <CardHeader title="Driver Podiums" subtitle="1st/2nd/3rd place finishes per driver." />
-          <PodiumBars
-            drivers={finishSummary.driverPodiums.map((d) => ({
-              label: d.code,
-              team: d.constructorName,
-              color: d.color,
-              podiums: d.podiums,
-            }))}
-            teams={[]}
-          />
-          <CardHeader subsection title="Constructor Podiums" subtitle="1st/2nd/3rd place finishes per team." />
-          <PodiumBars
-            drivers={[]}
-            teams={finishSummary.teamPodiums.map((t) => ({
-              label: t.constructorName,
-              color: t.color,
-              podiums: t.podiums,
-            }))}
-          />
-        </>
       ),
     },
     {
@@ -605,11 +602,6 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
   }, []);
   function jump(tabIndex: number) {
     goTo(navEntries[tabIndex].i);
-    dismissHint();
-  }
-
-  function dismissHint() {
-    setHintGone(true);
   }
 
   // Clicking a side card brings it to the centre; clicking the centred
@@ -617,7 +609,6 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
   // zooming around the click point.
   function onCardClick(i: number, e: React.MouseEvent) {
     if (moved.current) return;
-    dismissHint();
     if (i !== focusRef.current || view.current.k > 1.02) {
       goTo(i);
       return;
@@ -733,10 +724,7 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
       const dy = e.clientY - lastY;
       lastX = e.clientX;
       lastY = e.clientY;
-      if (Math.abs(e.clientX - downX) > DRAG_THRESHOLD) {
-        moved.current = true;
-        setHintGone(true);
-      }
+      if (Math.abs(e.clientX - downX) > DRAG_THRESHOLD) moved.current = true;
       const zoomed = view.current.k > 1.02;
       view.current.tx += dx;
       if (zoomed) view.current.ty += dy;
@@ -781,7 +769,6 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
         return;
       }
       e.preventDefault();
-      setHintGone(true);
       const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1;
       let dx = e.deltaX * unit;
       let dy = e.deltaY * unit;
@@ -827,8 +814,6 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
       else if (e.key === "+" || e.key === "=") zoomCentre(1.25);
       else if (e.key === "-") zoomCentre(0.8);
       else if (e.key === "0" || e.key === "Escape") goTo(focusRef.current);
-      else return;
-      setHintGone(true);
     }
 
     function onResize() {
@@ -956,7 +941,6 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
           label="Grid Walk: back to the first card"
           onClick={() => {
             goTo(0);
-            dismissHint();
           }}
         />
         <Island className="dk-navpill">
@@ -984,7 +968,6 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
             className="dk-about-link"
             onClick={() => {
               goTo(count - 1);
-              dismissHint();
             }}
           >
             About
@@ -999,7 +982,6 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
         disabled={focus === 0}
         onClick={() => {
           goTo(focus - 1);
-          dismissHint();
         }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1013,7 +995,6 @@ export default function GridWalk({ season, live, sizes, snapshotVersion = null, 
         disabled={focus === count - 1}
         onClick={() => {
           goTo(focus + 1);
-          dismissHint();
         }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
