@@ -1,7 +1,5 @@
-"use client";
-
 import type { ConstructorPointsGrid } from "@/lib/constructor-points-grid";
-import PointsEvolutionChart from "./PointsEvolutionChart";
+import PointsEvolutionChart, { type EvolutionMode } from "./PointsEvolutionChart";
 
 // Constructors have no short code in the data (unlike drivers, which carry
 // one from the API). These mirror the three-letter codes used in official
@@ -31,14 +29,21 @@ function constructorCode(constructorId: string): string {
   return CONSTRUCTOR_CODES[constructorId] ?? constructorId.slice(0, 3).toUpperCase();
 }
 
-export default function ConstructorPointsEvolutionChart({ grid }: { grid: ConstructorPointsGrid }) {
+export default function ConstructorPointsEvolutionChart({
+  grid,
+  mode,
+  plotHeight,
+}: {
+  grid: ConstructorPointsGrid;
+  mode: EvolutionMode;
+  plotHeight?: number;
+}) {
   const series = grid.rows.map((row) => ({
     id: row.constructorId,
-    label: row.name,
     code: constructorCode(row.constructorId),
     color: row.color,
-    pointsByRound: row.pointsByRound.map((cell) => cell?.points ?? null),
+    pointsByRound: row.pointsByRound.map((cell) => (cell ? cell.points : null)),
   }));
 
-  return <PointsEvolutionChart columns={grid.columns} series={series} />;
+  return <PointsEvolutionChart columns={grid.columns} series={series} mode={mode} plotHeight={plotHeight} />;
 }

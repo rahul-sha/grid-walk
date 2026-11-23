@@ -1,6 +1,6 @@
 # Roadmap: Grid Walk
 
-- **Updated:** 2026-11-22
+- **Updated:** 2026-11-23
 
 ## Now
 Being built this week or next. At most three items.
@@ -12,12 +12,12 @@ Agreed and waiting for a slot.
 
 ## Later
 Ideas worth keeping, not yet agreed.
-- 3D-style Points Evolution chart: mock-up waiting for Rahul's reaction.
 - Season Map/Calendar card and a Season Globe: mock-ups waiting for Rahul's reaction.
 - Fix the carousel's clipped "Driver Podiums" tab (see `docs/bugs.md`).
-- Give the Driver/Constructor Podiums card the same `bakedTitle` fix the Evolution card got in PR #100.
+- Give the Driver/Constructor Podiums card a Drivers/Teams switch like the other shared cards, in place of its baked title and subsection.
 
 ## Done recently
+- 2026-11-23: Points Evolution card redrawn as a flat race chart with Drivers/Teams and Place/Points switches (v1.2.0).
 - 2026-11-22: App version numbers on the About card, raised in every pull request (PR #128).
 - 2026-11-04: Latest Race card moved off the table into a top-bar drop-down; card toggles became sliding switches (PR #118).
 - 2026-11-03: The desk ("clean table") became the home page; the carousel moved to `/carousel` (PR #112).
@@ -26,6 +26,7 @@ Ideas worth keeping, not yet agreed.
 - 2026-11-03: Positions Gained card (PR #114) and ten-shade Positions card (PRs #113, #115).
 
 ## Decisions
+- 2026-11-23: Points Evolution stays 2D. Rahul was not satisfied with the 3D mock-ups and chose the standings race (Place) together with the points line chart in the same style (Points), with a faint grid on both.
 - 2026-11-22: Versions follow 1.2.3 (fix, feature, redesign) and are raised in each pull request, with a check that stops one that forgets: Rahul's choice over an automatic bump after each merge.
 - 2026-11-03: Old carousel kept at `/carousel`, unlinked: easy to compare or switch back, and the weekly capture uses it. Revert point: branch `milestone/pre-desk-home`.
 - 2026-11-03: Pit-lane starts show as PL on Positions Gained and are left out like retirements.

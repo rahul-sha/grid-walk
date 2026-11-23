@@ -1,357 +1,328 @@
-"use client";
-
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { PointsGridColumn } from "@/lib/points-grid";
-import { useTooltip, useDragPan, Tooltip } from "./PointsHeatmap";
+
+export type EvolutionMode = "place" | "points";
 
 export interface EvolutionSeriesInput {
   id: string;
-  label: string;
   code: string;
   color: string;
+  // Series sharing a group are team-mates: the second one in standings
+  // order is drawn dashed, since both carry the same team colour.
+  group?: string;
+  // null means the driver did not take part in that round.
   pointsByRound: (number | null)[];
 }
 
-const PAD_LEFT = 20;
-const PAD_TOP = 14;
-const PAD_BOTTOM = 14;
-const FLAG_ROW_HEIGHT = 24;
-const AREA_OPACITY = 0.14;
+// The card is baked to a picture, so nothing here can rely on hover: every
+// name, place and total is drawn. Sizes are fixed so the picture's natural
+// size is the same for every palette and theme.
+const WIDTH = 1120;
+const HEAD_H = 62; // flags, abbreviations and sprint bars
+const PAD_BOTTOM = 10;
+const ROW_H = 30;
+const MAX_ROW_H = 64;
+const PILL_W = 116;
+const PILL_H = 20;
 
-// The plot's width stretches to fill whatever space is actually available
-// next to the bubble column (see useAvailableWidth below) rather than
-// using a fixed per-round pixel width — that fixed width is what left a
-// big empty gap between the plotted lines and the points column on a wide
-// screen. Below this floor (many rounds on a narrow phone), spacing stays
-// at the floor and the plot scrolls horizontally instead of cramming.
-const MIN_ROUND_WIDTH = 22;
-const FALLBACK_ROUND_WIDTH = 36;
-
-// The end-of-line totals column, outside the horizontal scroller so it
-// keeps showing the latest standings even when the plot itself is
-// scrolled back to an earlier round. Every series gets a row — the chart
-// grows tall enough to fit all of them (see chartHeight below) rather
-// than cropping the field to whatever a fixed height could show.
-const BUBBLE_COL_WIDTH = 104;
-const BUBBLE_WIDTH = 92;
-const BUBBLE_HEIGHT = 22;
-const BUBBLE_FILL_OPACITY = 0.16;
-const BUBBLE_ROW_SPACING = 26;
-const MIN_CHART_HEIGHT = 160;
-
-function computeAxisMax(maxValue: number): number {
-  // Headroom only — there's no numeric y-axis to round a "nice number" to.
-  return Math.max(1, maxValue) * 1.08;
-}
-
-// Measures the row's own rendered width so the plot can be sized to fill
-// it exactly, instead of a fixed pixel-per-round width that leaves a gap
-// on a wide screen or overflows a narrow one.
-function useAvailableWidth<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
-  const [width, setWidth] = useState<number | null>(null);
-
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const update = () => setWidth(el.clientWidth);
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return { ref, width };
-}
-
-// A smooth curve through the given points (Catmull-Rom converted to
-// cubic Bezier segments) instead of straight point-to-point lines.
-function smoothPath(points: { x: number; y: number }[]): string {
-  if (points.length === 0) return "";
-  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
-  let d = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i - 1] ?? points[i];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[i + 2] ?? p2;
-    const cp1x = p1.x + (p2.x - p0.x) / 6;
-    const cp1y = p1.y + (p2.y - p0.y) / 6;
-    const cp2x = p2.x - (p3.x - p1.x) / 6;
-    const cp2y = p2.y - (p3.y - p1.y) / 6;
-    d += ` C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`;
+// Smooth step between two places: flat at each race, eased in between.
+function stepPath(points: [number, number][]): string {
+  let d = `M${points[0][0]} ${points[0][1]}`;
+  for (let i = 1; i < points.length; i++) {
+    const [x0, y0] = points[i - 1];
+    const [x1, y1] = points[i];
+    const mid = (x0 + x1) / 2;
+    d += ` C${mid} ${y0} ${mid} ${y1} ${x1} ${y1}`;
   }
   return d;
 }
 
+// A smooth curve through the points that never overshoots them (monotone
+// cubic, Fritsch-Carlson): a running total must not appear to dip after a
+// weekend without points.
+function curvePath(points: [number, number][]): string {
+  const n = points.length;
+  const slope: number[] = [];
+  for (let i = 0; i < n - 1; i++) slope.push((points[i + 1][1] - points[i][1]) / (points[i + 1][0] - points[i][0]));
+  const m: number[] = points.map((_, i) => {
+    if (i === 0) return slope[0];
+    if (i === n - 1) return slope[n - 2];
+    return slope[i - 1] * slope[i] <= 0 ? 0 : (slope[i - 1] + slope[i]) / 2;
+  });
+  for (let i = 0; i < n - 1; i++) {
+    if (slope[i] === 0) {
+      m[i] = 0;
+      m[i + 1] = 0;
+      continue;
+    }
+    const a = m[i] / slope[i];
+    const b = m[i + 1] / slope[i];
+    const s = a * a + b * b;
+    if (s > 9) {
+      const t = 3 / Math.sqrt(s);
+      m[i] = t * a * slope[i];
+      m[i + 1] = t * b * slope[i];
+    }
+  }
+  let d = `M${points[0][0]} ${points[0][1]}`;
+  for (let i = 0; i < n - 1; i++) {
+    const [xa, ya] = points[i];
+    const [xb, yb] = points[i + 1];
+    const h = (xb - xa) / 3;
+    d += ` C${(xa + h).toFixed(1)} ${(ya + m[i] * h).toFixed(1)} ${(xb - h).toFixed(1)} ${(yb - m[i + 1] * h).toFixed(1)} ${xb} ${yb}`;
+  }
+  return d;
+}
+
+function niceStep(max: number): number {
+  if (max > 450) return 100;
+  if (max > 200) return 50;
+  if (max > 80) return 25;
+  if (max > 30) return 10;
+  return 5;
+}
+
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
 export default function PointsEvolutionChart({
-  columns,
+  columns: allColumns,
   series: rawSeries,
+  mode,
+  plotHeight,
 }: {
   columns: PointsGridColumn[];
   series: EvolutionSeriesInput[];
+  mode: EvolutionMode;
+  // The height the rows should fill, so a card's Drivers and Teams views
+  // come out the same size; rows grow (up to a cap) to fill it.
+  plotHeight?: number;
 }) {
-  const { tooltip, show, hide } = useTooltip();
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const dragPan = useDragPan(scrollerRef);
-  const { ref: rowRef, width: rowWidth } = useAvailableWidth<HTMLDivElement>();
+  const n = rawSeries.length;
+  // A race that is on the calendar but has no results yet (the data job
+  // has not run since) would only repeat the previous standings: leave it
+  // off until its results arrive.
+  let rounds = allColumns.length;
+  while (rounds > 0 && rawSeries.every((s) => s.pointsByRound[rounds - 1] == null)) rounds--;
+  const columns = allColumns.slice(0, rounds);
+  if (n === 0 || rounds === 0) return <div className="evo-chart" style={{ width: WIDTH }} />;
 
-  const series = useMemo(
-    () =>
-      rawSeries.map((s) => {
-        let total = 0;
-        const cumulative = s.pointsByRound.map((points) => {
-          total += points ?? 0;
-          return total;
+  const seenGroup = new Set<string>();
+  const series = rawSeries.map((s, idx) => {
+    let total = 0;
+    const cumulative = s.pointsByRound.slice(0, rounds).map((p) => (total += p ?? 0));
+    const firstRaced = s.pointsByRound.findIndex((p) => p !== null);
+    const first = firstRaced < 0 || firstRaced >= rounds ? rounds - 1 : firstRaced;
+    const second = s.group !== undefined && seenGroup.has(s.group);
+    if (s.group !== undefined) seenGroup.add(s.group);
+    return { ...s, idx, cumulative, total, first, second };
+  });
+
+  const rowH = Math.min(MAX_ROW_H, Math.max(ROW_H, (plotHeight ?? 0) / n));
+  const height = HEAD_H + n * rowH + PAD_BOTTOM;
+  const rowY = (k: number) => HEAD_H + k * rowH + rowH / 2;
+
+  const isPlace = mode === "place";
+  const x0 = isPlace ? 150 : 64;
+  const x1 = isPlace ? 945 : 925;
+  const x = (i: number) => (rounds === 1 ? (x0 + x1) / 2 : round1(x0 + (i * (x1 - x0)) / (rounds - 1)));
+  const pillX = x1 + (isPlace ? 42 : 46);
+
+  // Place after each round: by points, ties in final standings order;
+  // anyone yet to race sits below everyone who has.
+  const place: number[][] = series.map(() => []);
+  if (isPlace) {
+    for (let i = 0; i < rounds; i++) {
+      const order = series
+        .map((s) => s.idx)
+        .sort((a, b) => {
+          const sa = series[a].first <= i;
+          const sb = series[b].first <= i;
+          if (sa !== sb) return sa ? -1 : 1;
+          return series[b].cumulative[i] - series[a].cumulative[i] || a - b;
         });
-        return { ...s, cumulative };
-      }),
-    [rawSeries]
-  );
-
-  const maxCumulative = Math.max(1, ...series.map((s) => s.cumulative[s.cumulative.length - 1] ?? 0));
-  const axisMax = computeAxisMax(maxCumulative);
-
-  // Tall enough for every series to get its own, clearly separate bubble
-  // row — the whole field, not just whoever fits a fixed height.
-  const chartHeight = Math.max(
-    MIN_CHART_HEIGHT,
-    PAD_TOP + PAD_BOTTOM + BUBBLE_HEIGHT + Math.max(0, series.length - 1) * BUBBLE_ROW_SPACING
-  );
-  const plotHeight = chartHeight - PAD_TOP - PAD_BOTTOM;
-
-  const roundCount = Math.max(1, columns.length - 1);
-  const availableForPlot = rowWidth != null ? Math.max(0, rowWidth - BUBBLE_COL_WIDTH) : null;
-  const idealRoundWidth = availableForPlot != null ? (availableForPlot - PAD_LEFT) / roundCount : FALLBACK_ROUND_WIDTH;
-  const roundWidth = Math.max(MIN_ROUND_WIDTH, idealRoundWidth);
-  const plotWidth = roundCount * roundWidth + PAD_LEFT;
-
-  const x = (roundIndex: number) => PAD_LEFT / 2 + roundIndex * roundWidth;
-  const y = (value: number) => PAD_TOP + plotHeight - (value / axisMax) * plotHeight;
-
-  // Draw the strongest season so far on top, so a tight leading battle
-  // doesn't get visually buried under the midfield lines beneath it.
-  const drawOrder = [...series].sort(
-    (a, b) => (a.cumulative[a.cumulative.length - 1] ?? 0) - (b.cumulative[b.cumulative.length - 1] ?? 0)
-  );
-
-  // End-of-line totals, one evenly-spaced row per series ranked by value —
-  // every driver/team gets a bubble, with a dotted leader line back to
-  // where its line actually ends whenever rank order and value spacing
-  // don't line up exactly (common once the field is bunched together).
-  const bubbleTopY = PAD_TOP + BUBBLE_HEIGHT / 2;
-  const bubbles = useMemo(() => {
-    const byValueDesc = [...series].sort(
-      (a, b) => (b.cumulative[b.cumulative.length - 1] ?? 0) - (a.cumulative[a.cumulative.length - 1] ?? 0)
-    );
-    return byValueDesc.map((s, idx) => {
-      const value = s.cumulative[s.cumulative.length - 1] ?? 0;
-      return {
-        id: s.id,
-        code: s.code,
-        color: s.color,
-        value,
-        lineY: y(value),
-        bubbleY: bubbleTopY + idx * BUBBLE_ROW_SPACING,
-      };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- y() is a pure function of axisMax/chartHeight, already deps
-  }, [series, axisMax, chartHeight, bubbleTopY]);
-
-  // One hover listener over the whole plot instead of an invisible hit
-  // circle on every point (every driver/constructor × every round) — that
-  // used to add hundreds of extra SVG shapes to this chart alone, which
-  // got expensive to repaint as Grid Walk scales the card in and out.
-  // Finds the nearest round from the pointer's x, then whichever series'
-  // point is closest to its y, same result as the old per-point targets.
-  function handlePlotHover(e: React.MouseEvent<SVGRectElement>) {
-    const svg = e.currentTarget.ownerSVGElement;
-    const rect = svg?.getBoundingClientRect();
-    if (!rect || rect.width === 0 || rect.height === 0) return;
-    const scaleX = plotWidth / rect.width;
-    const scaleY = chartHeight / rect.height;
-    const mx = (e.clientX - rect.left) * scaleX;
-    const my = (e.clientY - rect.top) * scaleY;
-    const roundIndex = Math.max(0, Math.min(roundCount, Math.round((mx - PAD_LEFT / 2) / roundWidth)));
-
-    let bestSeries: EvolutionSeriesInput | null = null;
-    let bestValue = 0;
-    let bestDist = Infinity;
-    for (const s of series) {
-      const value = s.cumulative[roundIndex];
-      if (value == null) continue;
-      const dist = Math.abs(y(value) - my);
-      if (dist < bestDist) {
-        bestDist = dist;
-        bestSeries = s;
-        bestValue = value;
-      }
+      order.forEach((id, p) => (place[id][i] = p));
     }
-    if (!bestSeries || bestDist > 24) {
-      hide();
-      return;
-    }
-    const col = columns[roundIndex];
-    show(
-      e,
-      <>
-        <div className="heatmap-tooltip-title">{bestSeries.label}</div>
-        <div className="heatmap-tooltip-row">
-          <span>Round {col.round}</span>
-          <b>{col.abbreviation}</b>
-        </div>
-        <div className="heatmap-tooltip-row">
-          <span>Cumulative points</span>
-          <b>{bestValue}</b>
-        </div>
-      </>
-    );
   }
 
+  // Points scale.
+  const max = Math.max(1, ...series.map((s) => s.total));
+  const step = niceStep(max);
+  const top = Math.ceil(max / step) * step;
+  const yBase = height - 22;
+  const yTop = HEAD_H + rowH / 2;
+  const yValue = (v: number) => round1(yBase - (v / top) * (yBase - yTop));
+  const ticks: number[] = [];
+  for (let v = 0; v <= top; v += step) ticks.push(v);
+
+  const gridTop = HEAD_H - 6;
+  const gridBottom = isPlace ? height - PAD_BOTTOM : yBase;
+
+  // Lower places first, so the leaders' lines sit on top.
+  const drawOrder = [...series].reverse();
+
   return (
-    <div className="table-card">
-      <div className="flex" ref={rowRef}>
-        <div className="overflow-x-auto min-w-0" ref={scrollerRef} {...dragPan}>
-          <svg width={plotWidth} height={chartHeight}>
-            <line
-              x1={0}
-              x2={plotWidth}
-              y1={y(0)}
-              y2={y(0)}
-              stroke="var(--baseline)"
-              strokeWidth={1}
-              strokeDasharray="2 3"
-            />
-
-            {drawOrder.map((s) => {
-              const points = s.cumulative.map((value, i) => ({ x: x(i), y: y(value) }));
-              const lineD = smoothPath(points);
-              const baseline = y(0);
-              const lastPointX = x(s.cumulative.length - 1);
-              const areaD = `${lineD} L ${lastPointX} ${baseline} L ${x(0)} ${baseline} Z`;
-              return (
-                <g key={s.id}>
-                  {/* Material 3 tonal fill — a soft wash of the line's own
-                      colour under it, the same "tonal container" idea used
-                      for surfaces elsewhere in the app, not just a bare
-                      stroke on a blank plot. */}
-                  <path d={areaD} fill={s.color} fillOpacity={AREA_OPACITY} stroke="none" />
-                  <path
-                    d={lineD}
-                    fill="none"
-                    stroke={s.color}
-                    strokeWidth={3}
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                </g>
-              );
-            })}
-
-            {drawOrder.map((s) =>
-              s.cumulative.map((value, i) => (
-                <circle
-                  key={`${s.id}-${i}-dot`}
-                  cx={x(i)}
-                  cy={y(value)}
-                  r={i === s.cumulative.length - 1 ? 4.5 : 2.5}
-                  fill={s.color}
-                />
-              ))
-            )}
-
-            <rect
-              x={0}
-              y={0}
-              width={plotWidth}
-              height={chartHeight}
-              fill="transparent"
-              onMouseMove={handlePlotHover}
-              onMouseLeave={hide}
-            />
-          </svg>
-
-          <div style={{ position: "relative", width: plotWidth, height: FLAG_ROW_HEIGHT }}>
-            {columns.map((col, idx) =>
-              col.flagIso ? (
-                <span
-                  key={col.round}
-                  className={`fi fi-${col.flagIso} round-flag`}
-                  style={{ position: "absolute", left: x(idx) - 11, top: 2 }}
-                  onMouseEnter={(e) =>
-                    show(
-                      e,
-                      <div className="heatmap-tooltip-title">
-                        Round {col.round} &middot; {col.raceName}
-                      </div>
-                    )
-                  }
-                  onMouseLeave={hide}
+    <div className="evo-chart" style={{ position: "relative", width: WIDTH, height }}>
+      <svg width={WIDTH} height={height} role="img" aria-label={isPlace ? "Championship place after each race" : "Running points total after each race"}>
+        {/* Bands: one per place, or one per step of the points scale. */}
+        {isPlace
+          ? series.map((_, p) =>
+              p % 2 === 0 ? (
+                <rect key={p} x={8} y={HEAD_H + p * rowH} width={WIDTH - 16} height={rowH} rx={6} fill="var(--surface-1)" />
+              ) : null
+            )
+          : ticks.slice(0, -1).map((v, b) =>
+              b % 2 === 0 ? (
+                <rect
+                  key={v}
+                  x={x0 - 14}
+                  y={yValue(v + step)}
+                  width={x1 - x0 + 28}
+                  height={yValue(v) - yValue(v + step)}
+                  rx={6}
+                  fill="var(--surface-1)"
                 />
               ) : null
             )}
-          </div>
-        </div>
 
-        <svg width={BUBBLE_COL_WIDTH} height={chartHeight} className="shrink-0" style={{ overflow: "visible" }}>
-          {bubbles.map((b) => {
-            return (
-              <g key={b.id}>
-                {/* Every bubble gets a leader line back to its own colour, not
-                    just the ones whose rank order nudges them off their line's
-                    actual value — a line that happens to land exactly on its
-                    row's y still reads as "connected to this bubble" rather
-                    than stopping dead at the plot's edge. Drawn in the
-                    series' own colour (was a flat muted grey) so a bunched
-                    field of close values stays traceable to the right name
-                    instead of blurring into one grey smudge. */}
-                <line
-                  x1={-8}
-                  y1={b.lineY}
-                  x2={10}
-                  y2={b.bubbleY}
-                  stroke={b.color}
+        {/* Subtle grid: a line down from every race, and across at every
+            step of the points scale, so a dot can be traced to its race
+            and its value. */}
+        {columns.map((col, i) => (
+          <line key={col.round} x1={x(i)} x2={x(i)} y1={gridTop} y2={gridBottom} stroke="var(--gridline)" strokeWidth={1} />
+        ))}
+        {!isPlace &&
+          ticks.map((v) => (
+            <line key={v} x1={x0 - 14} x2={x1 + 14} y1={yValue(v)} y2={yValue(v)} stroke="var(--gridline)" strokeWidth={1} />
+          ))}
+
+        {/* Race abbreviations and sprint bars; the flags are HTML, below. */}
+        {columns.map((col, i) => (
+          <g key={col.round}>
+            <text x={x(i)} y={35} textAnchor="middle" fontSize={10.5} fontWeight={700} fill="var(--text-secondary)">
+              {col.abbreviation}
+            </text>
+            {col.hasSprint && <rect x={x(i) - 11} y={40} width={22} height={2.5} rx={1.25} fill="var(--accent)" />}
+          </g>
+        ))}
+
+        {/* Scale labels down the left: places, or points. */}
+        {isPlace
+          ? series.map((_, p) => (
+              <text key={p} x={34} y={rowY(p)} dy="0.34em" textAnchor="end" fontSize={11.5} fill="var(--text-muted)">
+                {p + 1}
+              </text>
+            ))
+          : ticks.map((v) => (
+              <text key={v} x={x0 - 22} y={yValue(v)} dy="0.34em" textAnchor="end" fontSize={11.5} fill="var(--text-muted)">
+                {v}
+              </text>
+            ))}
+
+        {drawOrder.map((s) => {
+          const points: [number, number][] = [];
+          for (let i = s.first; i < rounds; i++) points.push([x(i), isPlace ? rowY(place[s.idx][i]) : yValue(s.cumulative[i])]);
+          const d = points.length > 1 ? (isPlace ? stepPath(points) : curvePath(points)) : null;
+          const [startX, startY] = points[0];
+          const [endX, endY] = points[points.length - 1];
+          const endRow = isPlace ? place[s.idx][rounds - 1] : s.idx;
+          const pillY = rowY(endRow);
+          return (
+            <g key={s.id}>
+              {/* Points view: the name pills are evenly spaced by rank, so a
+                  thin line in the team colour joins each line's end to its pill. */}
+              {!isPlace && (
+                <path
+                  d={`M${endX + 6} ${endY} C${endX + 28} ${endY} ${pillX - 24} ${pillY} ${pillX - 2} ${pillY}`}
+                  fill="none"
+                  stroke={s.color}
                   strokeWidth={1.25}
-                  strokeOpacity={0.6}
-                  strokeDasharray="1.5 2.5"
+                  strokeOpacity={0.7}
                 />
-                <rect
-                  x={10}
-                  y={b.bubbleY - BUBBLE_HEIGHT / 2}
-                  width={BUBBLE_WIDTH}
-                  height={BUBBLE_HEIGHT}
-                  rx={BUBBLE_HEIGHT / 2}
-                  fill={b.color}
-                  fillOpacity={BUBBLE_FILL_OPACITY}
+              )}
+              {d && (
+                <>
+                  {/* A halo in the card colour keeps crossing lines apart. */}
+                  <path d={d} fill="none" stroke="var(--surface-2)" strokeWidth={6} strokeLinecap="round" />
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke={s.color}
+                    strokeWidth={2.75}
+                    strokeLinecap="round"
+                    strokeDasharray={s.second ? "7 5" : undefined}
+                  />
+                </>
+              )}
+              {points.map(([px, py], j) => (
+                <circle
+                  key={j}
+                  cx={px}
+                  cy={py}
+                  r={j === points.length - 1 ? 4.5 : 3}
+                  fill={s.color}
+                  stroke="var(--surface-2)"
+                  strokeWidth={1.25}
                 />
-                <circle cx={22} cy={b.bubbleY} r={3.5} fill={b.color} />
-                <text
-                  x={31}
-                  y={b.bubbleY}
-                  dy="0.32em"
-                  fontSize={11}
-                  fontWeight={700}
-                  fill="var(--text-secondary)"
-                >
-                  {b.code}
+              ))}
+
+              {/* Place view: a name where each line starts. */}
+              {isPlace &&
+                (s.first === 0 ? (
+                  <>
+                    <rect x={x0 - 88} y={startY - PILL_H / 2} width={66} height={PILL_H} rx={PILL_H / 2} fill={s.color} fillOpacity={0.18} />
+                    <circle cx={x0 - 76} cy={startY} r={3.5} fill={s.color} />
+                    <text x={x0 - 66} y={startY} dy="0.34em" fontSize={11.5} fontWeight={700} fill="var(--text-primary)">
+                      {s.code}
+                    </text>
+                  </>
+                ) : (
+                  <text
+                    x={startX - 9}
+                    y={startY}
+                    dy="0.34em"
+                    textAnchor="end"
+                    fontSize={10.5}
+                    fontWeight={700}
+                    fill="var(--text-secondary)"
+                    stroke="var(--surface-2)"
+                    strokeWidth={3}
+                    paintOrder="stroke"
+                  >
+                    {s.code}
+                  </text>
+                ))}
+
+              {/* The name pill at the right: code and season total. */}
+              <rect x={pillX} y={pillY - PILL_H / 2} width={PILL_W} height={PILL_H} rx={PILL_H / 2} fill={s.color} fillOpacity={0.18} />
+              <circle cx={pillX + 12} cy={pillY} r={3.5} fill={s.color} />
+              <text x={pillX + 22} y={pillY} dy="0.34em" fontSize={11.5} fontWeight={700} fill="var(--text-primary)">
+                {s.code}
+              </text>
+              <text x={pillX + 108} y={pillY} dy="0.34em" textAnchor="end" fontSize={11.5} fontWeight={700} fill="var(--text-primary)">
+                {s.total}
+              </text>
+              {isPlace ? (
+                <text x={pillX - 8} y={pillY} dy="0.34em" textAnchor="end" fontSize={11.5} fill="var(--text-muted)">
+                  {endRow + 1}
                 </text>
-                <text
-                  x={92}
-                  y={b.bubbleY}
-                  dy="0.32em"
-                  textAnchor="end"
-                  fontSize={11}
-                  fontWeight={700}
-                  fill="var(--text-primary)"
-                >
-                  {b.value}
+              ) : (
+                <text x={pillX + 142} y={pillY} dy="0.34em" textAnchor="end" fontSize={11.5} fill="var(--text-muted)">
+                  {endRow + 1}
                 </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-      <Tooltip tooltip={tooltip} />
+              )}
+            </g>
+          );
+        })}
+      </svg>
+
+      {columns.map((col, i) =>
+        col.flagIso ? (
+          <span
+            key={col.round}
+            className={`fi fi-${col.flagIso} round-flag`}
+            style={{ position: "absolute", left: x(i) - 11, top: 6, width: 22, height: 15 }}
+          />
+        ) : null
+      )}
     </div>
   );
 }

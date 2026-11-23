@@ -43,6 +43,30 @@ type SheetDef = {
   bakedTitle?: boolean;
 };
 
+// Points Evolution has two switches: whose lines (Drivers or Teams) and
+// what height means (championship Place, or Points).
+const EVO_VIEWS = [
+  { who: "drivers", mode: "place", name: "evolution-drivers-place" },
+  { who: "drivers", mode: "points", name: "evolution-drivers-points" },
+  { who: "teams", mode: "place", name: "evolution-teams-place" },
+  { who: "teams", mode: "points", name: "evolution-teams-points" },
+] as const;
+
+function evolutionText(who: "drivers" | "teams", mode: "place" | "points") {
+  const drivers = who === "drivers";
+  return {
+    title: drivers ? "Driver Points Evolution" : "Constructor Points Evolution",
+    subtitle:
+      mode === "place"
+        ? drivers
+          ? "Championship place after each race. A dashed line marks a team's second driver."
+          : "Championship place after each race."
+        : drivers
+          ? "Running points total after each race. A dashed line marks a team's second driver."
+          : "Running points total after each race.",
+  };
+}
+
 type Group = { id: string; label: string; sheets: SheetDef[] };
 type Geom = { w: number; h: number };
 type Pose = { x: number; y: number };
@@ -82,10 +106,9 @@ const GROUPS: Group[] = [
         id: "evolution",
         navLabel: "Points Evolution",
         title: "Driver Points Evolution",
-        subtitle: "Cumulative points scored by each driver across the season.",
+        subtitle: "Championship place after each race.",
         kind: "snapshot",
-        snapshotName: "evolution",
-        bakedTitle: true,
+        snapshotName: "evolution-drivers-place",
       },
       {
         id: "podiumsD",
@@ -218,6 +241,8 @@ export default function DeskView({ year, sizes, recap, stats, initialVariant }: 
   // and crossfade, so the sheet keeps one measured size.
   const [resultsView, setResultsView] = useState<"drivers" | "teams">("drivers");
   const [freqView, setFreqView] = useState<"finish" | "quali">("finish");
+  const [evoWho, setEvoWho] = useState<"drivers" | "teams">("drivers");
+  const [evoMode, setEvoMode] = useState<"place" | "points">("place");
 
   // Measured sheet sizes drive the sheet elements' width/height (React);
   // positions are imperative (refs + style.transform), set by layout().
@@ -819,6 +844,34 @@ export default function DeskView({ year, sizes, recap, stats, initialVariant }: 
         ]),
       };
     }
+    if (def.id === "evolution") {
+      return {
+        ...evolutionText(evoWho, evoMode),
+        actions: (
+        <div className="ui-card-toggles">
+          <CardToggle
+            name="evolution-who"
+            options={[
+              { value: "drivers", label: "Drivers" },
+              { value: "teams", label: "Teams" },
+            ]}
+            value={evoWho}
+            onChange={setEvoWho}
+          />
+          <CardToggle
+            name="evolution-mode"
+            options={[
+              { value: "place", label: "Place" },
+              { value: "points", label: "Points" },
+            ]}
+            value={evoMode}
+            onChange={setEvoMode}
+          />
+        </div>
+        ),
+        body: renderViews(EVO_VIEWS.map((v) => ({ name: v.name, active: v.who === evoWho && v.mode === evoMode }))),
+      };
+    }
     if (def.id === "freq") {
       const finish = freqView === "finish";
       return {
@@ -885,7 +938,7 @@ export default function DeskView({ year, sizes, recap, stats, initialVariant }: 
       }),
     // sheetChrome reads only these; the season's data is fixed per mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [geom, variant, failedSnapshots, resultsView, freqView],
+    [geom, variant, failedSnapshots, resultsView, freqView, evoWho, evoMode],
   );
 
   return (

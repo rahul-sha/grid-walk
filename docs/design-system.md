@@ -23,9 +23,10 @@ The site uses three shapes. An **island** floats on its own, a **pill** is a sma
 | Logo island | The island holding the Grid Walk mark and name. On the desk it glides back to the opening view | Island | Top left |
 | Controls | About, theme, palette, and season, grouped together at the right of the top bar | Group | Top bar |
 | Accent pill | A pill tinted with the accent colour, for the one action that leaves or resets the view | Pill | About, Fit all |
-| Card toggle | A segmented switch at the top right of a card that has two views: both names in one rounded track, with an accent thumb that slides under the one showing. It crossfades between the views | Pill | Results (Drivers/Teams), Frequency (Finish/Qualifying) |
-| Subsection | A second graphic lower in the same card, under its own header and a hairline | Part | Evolution (Constructors), Podiums (Teams) |
-| Baked title | A card whose picture already carries its own title (because it also has a subsection), so the card shows no header of its own | Part | Evolution, Podiums |
+| Card toggle | A segmented switch at the top right of a card that has two views: both names in one rounded track, with an accent thumb that slides under the one showing. It crossfades between the views | Pill | Results (Drivers/Teams), Frequency (Finish/Qualifying), Evolution (Drivers/Teams and Place/Points) |
+| Subsection | A second graphic lower in the same card, under its own header and a hairline | Part | Podiums (Teams) |
+| Baked title | A card whose picture already carries its own title (because it also has a subsection), so the card shows no header of its own | Part | Podiums |
+| Race chart | The Points Evolution graphic: one line per driver or team in the team colour over alternating bands, a faint gridline down from each race, a dot at every race, and a name pill with the season total at the end of each line. A team's second driver is dashed. Place view: height is championship place, with a name pill at the start too. Points view: height is the running total, with a points scale and gridlines across, and a thin line joining each line's end to its pill | Part | Evolution |
 | Divider | A 1 × 22px hairline between groups inside an island | Part | Top bar |
 | Menu | A floating panel of options that opens from a pill | Surface | Season picker |
 | Page plane | The flat background colour every page sits on | Layer | Everywhere |
@@ -187,7 +188,7 @@ The site has one main breakpoint: 640px and below is a phone, and 641px and up i
 
 1. Things that sit side by side share a height: islands are 48px, pills inside them are 36px, every card is measured at 900px, and every sheet on the desk is 430px.
 2. One active state everywhere: the accent container fill with on-accent-container text. The tab marker and card toggles use it too.
-3. Only one accent pill per island, for the action that leaves or resets the view, and at most one card toggle per card.
+3. Only one accent pill per island, for the action that leaves or resets the view, and at most one card toggle per card, except Points Evolution, which has two (whose lines, and what height means) side by side.
 4. No borders on pills inside an island; hover uses `--surface-3` instead.
 5. No blur. Translucency on desktop comes from opacity alone.
 6. Every card looks like the others: the same card style, widths, and gaps, with no one-off treatments.

@@ -2,10 +2,6 @@
   "season": 2020,
   "capturedAt": "2026-11-03T01:56:13.261Z",
   "sizes": {
-    "evolution": {
-      "w": 720,
-      "h": 1146
-    },
     "positions": {
       "w": 1150,
       "h": 928
@@ -33,6 +29,22 @@
     "freq-quali": {
       "w": 1176,
       "h": 916
+    },
+    "evolution-drivers-place": {
+      "w": 1120,
+      "h": 762
+    },
+    "evolution-drivers-points": {
+      "w": 1120,
+      "h": 762
+    },
+    "evolution-teams-place": {
+      "w": 1120,
+      "h": 762
+    },
+    "evolution-teams-points": {
+      "w": 1120,
+      "h": 762
     }
   }
 }

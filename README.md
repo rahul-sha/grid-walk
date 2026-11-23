@@ -64,7 +64,14 @@ other one is fetched on demand when picked. A race that hasn't happened yet
 shows a plain "race yet to be held" message instead. **Championship** holds
 Drivers/Team Results, Driver/Constructor Points Evolution and
 Driver/Constructor Podiums; **Race by race** holds Positions, Positions
-Gained and Finish/Qualifying Frequency. Results, Evolution, Frequency and
+Gained and Finish/Qualifying Frequency. Points Evolution has two sliding
+switches: Drivers or Teams, and Place or Points. Place shows each
+championship place after every race, so an overtake in the standings is a
+visible crossing; Points shows the running points total, so the size of
+every gap is visible. Both draw one line per driver or team in the team's
+colour (dashed for a team's second driver), with a faint grid down from
+each race and a name pill with the season total at the end of every line.
+Results, Evolution, Frequency and
 Podiums are shared cards — a driver half and a team half either stacked
 with a divider or toggled in place with a sliding two-way switch — and each card is
 the same real heatmap, chart, grid or podium bars that used to live on its

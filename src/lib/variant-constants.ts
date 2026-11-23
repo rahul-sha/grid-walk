@@ -35,11 +35,15 @@ export function persistCookie(name: string, value: string) {
 }
 
 // Snapshot image names GridWalk shows, one per card view. Toggled cards
-// (Drivers/Teams, Finish/Qualifying) have one per view.
+// (Drivers/Teams, Finish/Qualifying) have one per view; Points Evolution
+// has two switches (Drivers/Teams and Place/Points), so four.
 export const SNAPSHOT_NAMES = [
   "results-drivers",
   "results-teams",
-  "evolution",
+  "evolution-drivers-place",
+  "evolution-drivers-points",
+  "evolution-teams-place",
+  "evolution-teams-points",
   "positions",
   "gained",
   "freq-finish",

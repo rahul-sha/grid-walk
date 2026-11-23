@@ -45,7 +45,6 @@ const THEMES = ["light", "dark"];
 // capture at the wrong card. "recap" (Latest Race) and "about" are never
 // snapshots: plain text and links, nothing to bake.
 const PLAIN_SECTIONS = [
-  { id: "evolution", tab: "Points Evolution" },
   { id: "positions", tab: "Positions" },
   { id: "gained", tab: "Positions Gained" },
   { id: "podiumsD", tab: "Driver Podiums" },
@@ -54,6 +53,19 @@ const PLAIN_SECTIONS = [
 const TOGGLED_SECTIONS = [
   { id: "results", tab: "Points Finishes", views: ["drivers", "teams"] },
   { id: "freq", tab: "Position Frequency", views: ["finish", "quali"] },
+];
+// A card with two toggles: every combination captured, one image each,
+// named <id>-<first value>-<second value>. Each toggle is found by its
+// data-toggle name and each view by its button label.
+const MULTI_TOGGLED_SECTIONS = [
+  {
+    id: "evolution",
+    tab: "Points Evolution",
+    toggles: [
+      { name: "evolution-who", views: [["drivers", "Drivers"], ["teams", "Teams"]] },
+      { name: "evolution-mode", views: [["place", "Place"], ["points", "Points"]] },
+    ],
+  },
 ];
 // .gw-slot's opacity transition (0.35s) plus the camera-pan/zoom-reset
 // animation goTo() triggers both need to fully settle before a screenshot.
@@ -65,6 +77,16 @@ async function focusTab(page, label) {
   if ((await tab.count()) === 0) throw new Error(`No "${label}" tab in the top strip`);
   await tab.click();
   await page.waitForTimeout(FOCUS_SETTLE_MS);
+}
+
+// Put a named card toggle on the view with this label, and let the views
+// finish crossfading.
+async function setToggle(page, name, label) {
+  const button = page.locator(`.ui-card-toggle[data-toggle="${name}"] button`, { hasText: new RegExp(`^${label}$`) });
+  if ((await button.getAttribute("aria-checked")) !== "true") {
+    await button.click();
+    await page.waitForTimeout(300);
+  }
 }
 
 // Screenshot the element and save it as lossless WebP; return its natural
@@ -130,6 +152,24 @@ async function captureSeason(browser, season) {
           }
           sizes[`${id}-${view}`] = await capture(el, path.join(dir, `${id}-${view}.webp`));
           console.log(`${season}/${accent}-${theme}/${id}-${view}.webp`);
+        }
+      }
+
+      for (const { id, tab, toggles } of MULTI_TOGGLED_SECTIONS) {
+        await focusTab(page, tab);
+        const [first, second] = toggles;
+        for (const [a, aLabel] of first.views) {
+          await setToggle(page, first.name, aLabel);
+          for (const [b, bLabel] of second.views) {
+            await setToggle(page, second.name, bLabel);
+            const el = await page.$(`.gw-snap-target[data-section="${id}"]`);
+            if (!el) {
+              console.warn(`skip ${season}/${accent}-${theme}/${id}-${a}-${b}: not found on page`);
+              continue;
+            }
+            sizes[`${id}-${a}-${b}`] = await capture(el, path.join(dir, `${id}-${a}-${b}.webp`));
+            console.log(`${season}/${accent}-${theme}/${id}-${a}-${b}.webp`);
+          }
         }
       }
 

@@ -1,16 +1,22 @@
-"use client";
-
 import type { PointsGrid } from "@/lib/points-grid";
-import PointsEvolutionChart from "./PointsEvolutionChart";
+import PointsEvolutionChart, { type EvolutionMode } from "./PointsEvolutionChart";
 
-export default function DriverPointsEvolutionChart({ grid }: { grid: PointsGrid }) {
+export default function DriverPointsEvolutionChart({
+  grid,
+  mode,
+  plotHeight,
+}: {
+  grid: PointsGrid;
+  mode: EvolutionMode;
+  plotHeight?: number;
+}) {
   const series = grid.rows.map((row) => ({
     id: row.driverId,
-    label: `${row.name} (${row.constructorName})`,
     code: row.code,
     color: row.color,
-    pointsByRound: row.pointsByRound.map((cell) => cell?.points ?? null),
+    group: row.constructorId,
+    pointsByRound: row.pointsByRound.map((cell) => (cell ? cell.points : null)),
   }));
 
-  return <PointsEvolutionChart columns={grid.columns} series={series} />;
+  return <PointsEvolutionChart columns={grid.columns} series={series} mode={mode} plotHeight={plotHeight} />;
 }
