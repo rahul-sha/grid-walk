@@ -19,5 +19,5 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
   const manifest = readSnapshotManifest(year);
   // Keyed on the year so a season change remounts the table and re-measures
   // every sheet for that season's images.
-  return <DeskView key={year} year={year} sizes={manifest?.sizes ?? null} recap={recap} stats={getSiteStats()} initialVariant={variant} />;
+  return <DeskView key={year} year={year} sizes={manifest?.sizes ?? null} snapshotVersion={manifest?.capturedAt ?? null} recap={recap} stats={getSiteStats()} initialVariant={variant} />;
 }

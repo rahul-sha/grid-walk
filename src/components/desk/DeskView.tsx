@@ -26,6 +26,8 @@ import {
 interface DeskViewProps {
   year: number;
   sizes: Record<string, { w: number; h: number }> | null;
+  // The manifest's capture time, added to each picture address.
+  snapshotVersion?: string | null;
   recap: RecapData | null;
   stats: SiteStats | null;
   initialVariant: { accent: Accent; theme: Theme | null };
@@ -174,7 +176,7 @@ function clampNum(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
 }
 
-export default function DeskView({ year, sizes, recap, stats, initialVariant }: DeskViewProps) {
+export default function DeskView({ year, sizes, snapshotVersion = null, recap, stats, initialVariant }: DeskViewProps) {
   // Remounted by the page (keyed on the year) whenever the season changes,
   // so these are fixed for the component's lifetime.
   const groups = GROUPS;
@@ -765,9 +767,9 @@ export default function DeskView({ year, sizes, recap, stats, initialVariant }: 
         </div>
       );
     }
-    const light = snapshotPath(year, variant.accent, "light", name);
-    const dark = snapshotPath(year, variant.accent, "dark", name);
-    const chosen = variant.theme ? snapshotPath(year, variant.accent, variant.theme, name) : light;
+    const light = snapshotPath(year, variant.accent, "light", name, snapshotVersion);
+    const dark = snapshotPath(year, variant.accent, "dark", name, snapshotVersion);
+    const chosen = variant.theme ? snapshotPath(year, variant.accent, variant.theme, name, snapshotVersion) : light;
     if (failedSnapshots.has(chosen)) {
       return (
         <div className="gw-snap-missing" style={{ width: size.w, height: size.h }}>
