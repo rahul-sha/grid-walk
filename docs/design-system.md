@@ -1,12 +1,12 @@
 # Grid Walk design system
 
-Fourth edition, 2026-11-03. The living copy of the design-system doc; update it with every change that touches an island, pill, card, token, or rule. The original Claude Doc (with the anatomy diagram of the carousel) is at https://claude.ai/artifact/7GVBYKg68jq7hGS6Yxh6TB.
+Fifth edition, 2026-11-24. The living copy of the design-system doc; update it with every change that touches an island, pill, card, token, or rule. The original Claude Doc (with the anatomy diagram of the carousel) is at https://claude.ai/artifact/7GVBYKg68jq7hGS6Yxh6TB.
 
 ## Why this exists
 
 Grid Walk grew over a hundred-odd rounds, so the same idea, such as a rounded pill, ended up with several names and several copies of its CSS. This doc fixes one name for each part, so a request like "make the island taller" or "give the jump tabs more room" means one exact thing, and the code uses the same names.
 
-This is the fourth edition. It describes the site after PR #112, when the **desk** became the home page: every card of the season laid out in labelled rows on one pannable, zoomable table, with jump tabs and a gliding accent pill in the top bar, an overview island in the corner, and a start-up animation. The previous home page, the **carousel** (a horizontal strip of cards), is kept unlinked at `/carousel`, where the weekly picture capture still photographs the cards. Shared parts (islands, pills, cards, tokens) are the same on both.
+This is the fifth edition. The home page has two **views**, chosen with the **view switch**: the **carousel** (the default: a horizontal strip of cards, one in focus) and the **desk** or table (every card of the season in labelled rows on one pannable, zoomable table, with an overview island on phones and a start-up animation). Both views share one top bar (logo island, then jump tabs with the tab marker, the Latest race pill, season, and About) and one zoom bar (theme, palette, view switch, zoom), and show the cards in the same order. The carousel also lives at `/carousel`, where the weekly picture capture photographs the cards.
 
 ## Glossary
 
@@ -18,6 +18,8 @@ The site uses three shapes. An **island** floats on its own, a **pill** is a sma
 | --- | --- | --- | --- |
 | Island | A floating, rounded container, 48px tall, translucent on desktop and solid on phones | Shape | Logo island, top bar island, overview |
 | Pill | A fully rounded control, 36px tall, that sits inside an island | Shape | Jump tabs, About, season picker, Fit all |
+| View switch | A two-icon card toggle in the zoom bar, after theme and palette: carousel on the left, table on the right. The choice is kept in the `f1-view` cookie; new visitors get the carousel | Control | Zoom bar, both views |
+| Latest race pill | A pill showing the flag and "Rd 21 · Las Vegas" (just "Rd 21" on phones), with a dot when a newer result is in; opens the Latest Race card | Pill | Top bar island on desktop, zoom bar on phones, both views |
 | Icon pill | A round pill, 36 × 36px, holding only an icon | Shape | Theme and palette buttons, zoom − and + |
 | Card | A rounded tonal panel holding one graphic, with its title and subtitle at the top | Shape | Every card, on the desk and the carousel |
 | Logo island | The island holding the Grid Walk mark and name. On the desk it glides back to the opening view | Island | Top left |
@@ -34,12 +36,12 @@ The site uses three shapes. An **island** floats on its own, a **pill** is a sma
 | Latest Race card | The one live card (not a picture): the race picker flag strip, the results, and session times in your own time zone | Card | Opens from the Latest race pill: under the top bar on desktop, above the zoom bar on phones (always the current season) |
 | About card | The live "About this site" card: opening line, live numbers, how-to chips, the featured design-inspiration credit, the stack with logos, palette sources, and the disclaimer. Laid out at 1298 x 1000 like the baked pictures, so it scales to the same width and text size | Card | Last row of the desk |
 
-### The desk (home page)
+### The desk (table view)
 
 | Name | What it is | Kind | Where you see it |
 | --- | --- | --- | --- |
 | Table | The rounded surface (radius 28px, `--surface-1` at 55%) that every row sits on. Dragging anywhere on it pans; wheel or pinch zooms | Layout | Home page |
-| Row | One group of cards, left-aligned, in a fixed order: Latest race, Championship, Race by race, About | Layout | Table |
+| Row | One group of cards, left-aligned, in a fixed order: Championship, Race by race, About | Layout | Table |
 | Row label | The small upper-case name above a row | Text | Table |
 | Sheet | A card as it sits on the table, scaled down to 430px tall; its width follows the card's own shape | Card | Table |
 | Camera | The view of the table: zoom from 25% to 250%, plus position | Behaviour | Home page |
@@ -54,14 +56,11 @@ The site uses three shapes. An **island** floats on its own, a **pill** is a sma
 | Start-up | On load, the camera sits on the whole table while the sheets and row labels rise in one after another, then it glides in to the opening view | Motion | Home page, once per load |
 | Glide | The eased camera move used by jump tabs, About, the logo, and Fit all | Motion | Home page |
 
-### The carousel (kept at `/carousel`)
+### The carousel (default view, also at `/carousel`)
 
 | Name | What it is | Kind | Where you see it |
 | --- | --- | --- | --- |
-| Nav bar | The desktop island at the top: the tab strip, a divider, then the controls | Island | Desktop only |
-| Jump bar | The phone island at the bottom: the tab strip, a divider, then Fit | Island | Phones only |
-| Zoom island | The small corner island with −, zoom level, + and Fit, styled as flat tabs | Island | Desktop only, bottom right |
-| Tab strip | The scrolling row of tabs inside the nav bar or jump bar. The open card's tab rests at its left | Part | Nav bar, jump bar |
+| Top bar, zoom bar | The desk's own (see above), with Fit in place of Fit all | Island | Both views |
 | Card strip | The horizontal carousel of cards, 900px tall. The centred card is the focus card; its neighbours are dimmed. On first load the cards rise into place one after another | Layout | Carousel |
 | Arrows | Round 44px buttons on the left and right edges that step one card | Control | Desktop |
 | Glow | The two slow-drifting accent blobs behind the carousel (`.gw-pulse-a`, `.gw-pulse-b`) | Layer | Carousel only |
@@ -158,16 +157,13 @@ Each component below lists what it holds, how it reacts, and where its code live
 | Top bar island | Jump tabs, divider, Latest race pill, season, About | None of its own | Translucent island, top right | Solid island; the jump tabs are hidden | `Island` with `.dk-navpill` |
 | Jump tabs | One `Pill` per card except About, and the tab marker | Tap glides to the card; no tab is lit on arrival, then the open tab follows the card nearest the view's middle once the visitor moves | 13px, 12px below 1540px, hidden below 1300px | Hidden | `.dk-tabs`, `.dk-tab`, `.dk-tab-marker` |
 | Overview | A tile per card under its row label, and the viewport | Press or drag moves the view | Hidden (the jump tabs do this job) | Folded to 40% above the zoom bar; tap opens | `.dk-minimap`, `.dk-mm-box`, `.dk-mm-tile`, `.dk-mm-label`, `.dk-mm-viewport` |
-| Zoom bar | Theme, palette, divider, −, zoom level, +, Fit all | Level reads a percentage | Bottom centre | Latest race pill first; − , level and + hidden (pinch zooms) | `IconPill` and `Pill accent` inside `.dk-ctl` |
+| Zoom bar | Theme, palette, view switch, divider, −, zoom level, +, Fit all | Level reads a percentage | Bottom centre | Latest race pill first; − , level and + hidden (pinch zooms) | `IconPill` and `Pill accent` inside `.dk-ctl` |
 
-### Carousel (`/carousel`)
+### Carousel (default view, also `/carousel`)
 
 | Component | Holds | States | Desktop | Phone | Code |
 | --- | --- | --- | --- | --- | --- |
-| Nav bar | Tab strip, divider, controls | None of its own | Translucent island, width clamp(560px, 66vw, 940px), top centre | Splits: the controls sit as a top row, the tabs move to the jump bar | `Island` with `.gw-navpill` |
-| Jump bar | Tab strip, divider, Fit | None of its own | Hidden | Solid island, full width less 0.9rem each side, 12px above the bottom | `Island` with `.gw-jumpbar-island`; on desktop the same island is the zoom island |
-| Zoom island | −, level, +, Fit as flat tabs | Level reads "Fit" or a percentage | Translucent island, bottom right | Only Fit, inside the jump bar | `IconPill` and `Pill accent` inside `.gw-zoomctl` |
-| Tab strip | Tabs | Snaps so the open tab rests at the left; swiping, wheeling, or dragging opens the tab that settles at the left; a fade on the right edge | Wheel steps one tab; mouse drag scrolls | Swipe scrolls | `TabStrip` (`.ui-tab-strip`) |
+| Top bar, zoom bar | As on the desk | The open tab is the card in focus | As on the desk | As on the desk; swiping browses | `.dk-topbar`, `.dk-navpill`, `.dk-tabs`, `.dk-ctl` from `desk.css` |
 | Card on the strip | As a card | Focus: full opacity. Neighbours: 38%. Click toggles fit and natural size. Rises in on first load | 900px tall, fitted between the bars, never enlarged | Same | `.gw-slot` around `.gw-card` |
 | Arrows | Chevron | Hidden at the first or last card | Left and right edges | Hidden | `.gw-arrow` |
 
@@ -182,7 +178,7 @@ The site has one main breakpoint: 640px and below is a phone, and 641px and up i
 - **1300px and below:** the jump tabs and their divider are hidden; the overview and About still reach every card.
 - **640px and below:** solid islands, and the overview sits folded above the zoom bar.
 
-**Breakpoints (carousel):** 641px and up has one translucent nav bar at the top centre with the zoom island bottom right; 640px and below has the controls row at the top and the jump bar at the bottom; 480px and below shows the logo mark only.
+**Breakpoints (carousel):** the same as the desk for the bars; the arrows hide at 640px and below, where swiping browses.
 
 **Consistency rules**
 
@@ -199,7 +195,7 @@ The site has one main breakpoint: 640px and below is a phone, and 641px and up i
 
 1. Islands, the overview, the zoom bar, and controls inside a card own their events. Pressing, dragging, or scrolling on them never pans or zooms the table.
 2. On the desk, the rows are fixed: cards cannot be dragged or reordered. Dragging anywhere else pans.
-3. On the desk, the jump tabs stay put and the tab marker moves; the open tab follows what is in the middle of the view. On the carousel, the open card's tab rests at the left of its tab strip.
+3. On the desk, the jump tabs stay put and the tab marker moves; the open tab follows what is in the middle of the view. On the carousel, the same tabs and marker follow the card in focus.
 4. Every press gets visible feedback, at the least a colour change, and an animation for buttons that change the whole view.
 5. Visitors see pictures of the graphics, never a live render, except the Latest Race and About cards. Anything that changes a graphic must also re-run the capture script, or the change will not show.
 6. One-off animations (the start-up, the carousel's rise-in) play once per load, and any user input cuts them short.
@@ -212,16 +208,16 @@ The site has one main breakpoint: 640px and below is a phone, and 641px and up i
 | Tokens | `src/app/globals.css` (top) | `--island-h`, `--pill-h`, `--card-h`, `--radius-island`, `--radius-pill`, `--radius-card`, `--radius-table-card`, `--radius-menu`, `--radius-menu-option`, `--island-fill`, `--shadow-island`, `--shadow-card`, `--shadow-menu`, and the colour tokens per theme and palette |
 | Shapes | `src/styles/ui.css` | `.ui-island`, `.ui-pill` (`.active`, `--accent`), `.ui-icon-pill`, `.ui-logo`, `.ui-divider`, `.ui-tab-strip`, `.ui-card`, `.ui-card-header`, `.ui-card-head`, `.ui-card-toggle`, `.ui-card-views`, `.ui-card-view`, `.ui-subsection`, `.ui-menu-anchor`, `.ui-menu`, `.ui-menu-option`, `.ui-version-badge` |
 | Components | `src/components/ui/` | `Island`, `Pill` (accepts a `ref`), `IconPill`, `Divider`, `TabStrip`, `Logo`, `CardHeader`, `CardToggle`, `Menu`, `MenuAnchor`, `MenuOption`, `ThemeIcon`, `PaletteIcon`, `VersionBadge` (all exported from `index.ts`) |
-| Controls | `src/components/` | `ThemeToggle.tsx`, `AccentToggle.tsx`, `SeasonSelector.tsx`, built from the components above; `RecapCard.tsx` and `AboutCard.tsx` are the two live cards (the About card's numbers from `src/lib/site-stats.ts`, its logos from `src/components/about/stackLogos.ts`) |
-| Desk (home page) | `src/app/page.tsx`, `src/components/desk/` | `page.tsx` reads the season, the picture cookies, and the manifest on the server; `DeskView.tsx` holds the rows, the camera, the start-up, the jump tabs, and the overview; `desk.css` adds only position and layout |
-| Carousel | `src/app/carousel/`, `src/components/gridwalk/` | `GridWalk.tsx` composes the carousel; `gridwalk.css` adds position and layout, and the card-fitting classes the desk reuses; `liveGrid.ts` is the canvas behind both |
+| Controls | `src/components/` | `ThemeToggle.tsx`, `AccentToggle.tsx`, `ViewToggle.tsx` (the view switch), `SeasonSelector.tsx`, built from the components above; `RecapCard.tsx` and `AboutCard.tsx` are the two live cards (the About card's numbers from `src/lib/site-stats.ts`, its logos from `src/components/about/stackLogos.ts`) |
+| Desk (table view) | `src/app/page.tsx`, `src/components/desk/` | `page.tsx` reads the view cookie and shows the carousel or the desk; for the desk it reads the season, the picture cookies, and the manifest on the server; `LatestRaceMenu.tsx` is the Latest race pill and panel both views use; `DeskView.tsx` holds the rows, the camera, the start-up, the jump tabs, and the overview; `desk.css` adds only position and layout |
+| Carousel | `src/app/carousel/`, `src/components/gridwalk/` | `CarouselView.tsx` loads the carousel on the server for both `/` and `/carousel`; `GridWalk.tsx` composes it; `gridwalk.css` adds position and layout, and the card-fitting classes the desk reuses; `liveGrid.ts` is the canvas behind both |
 | Pictures | `src/lib/variant-constants.ts`, `src/lib/card-snapshots.ts`, `scripts/capture-card-snapshots.mjs`, `public/card-snapshots/<season>/<palette>-<theme>/` | The theme and palette keys and cookies, the server-side picture choice, and the capture script with its weekly workflow |
 
 Rules of thumb:
 
 1. A new control goes inside an island as a `Pill` or `IconPill`; a new floating container is an `Island`. Neither needs new CSS for its look.
 2. A card with two flavours of one graphic gets a `CardToggle` and two pictures, or a `CardHeader subsection` under the first graphic, never a second card.
-3. A new card goes in both `GROUPS` in `DeskView.tsx` (the desk's rows) and the carousel's sections in `GridWalk.tsx` (which the capture script photographs), with the same title, `navLabel`, and `bakedTitle`.
+3. A new card goes in both `GROUPS` in `DeskView.tsx` (the desk's rows) and the carousel's sections in `GridWalk.tsx` (which the capture script photographs), with the same title, `navLabel`, `bakedTitle`, and position, so both views keep one card order.
 4. A size, radius, or shadow is a token. If a new one is needed, add it to the token block rather than writing a literal.
 5. `desk.css`, `gridwalk.css`, and `globals.css` rules say where something sits; `ui.css` rules say what it looks like. A `dk-*` or `gw-*` rule that sets a fill, radius, or shadow is a smell.
 6. Anything that changes a graphic also re-runs the capture script, or visitors will not see it.
@@ -241,4 +237,6 @@ These are places where the desk does not yet follow the rules above. They are li
 
 **Since then:** the About page became the live About card (#107), the Latest Race card (#102, #103) and the Positions Gained card (#114) were added, and the desk replaced the carousel as the home page (#112), with the carousel kept at `/carousel` and a revert point on the branch `milestone/pre-desk-home`.
 
-**Fourth edition (this one):** adds the desk's parts (table, rows, sheets, top bar island, jump tabs and tab marker, overview, zoom bar, start-up, glides), the baked-title rule, the per-frame rendering rule, and the known gaps above.
+**Fifth edition (this one):** the carousel is the default view again, restyled with the desk's top bar and zoom bar, the view switch added to both, the Latest Race card moved out of the strip into the Latest race pill, and one card order for both views.
+
+**Fourth edition:** adds the desk's parts (table, rows, sheets, top bar island, jump tabs and tab marker, overview, zoom bar, start-up, glides), the baked-title rule, the per-frame rendering rule, and the known gaps above.

@@ -61,3 +61,12 @@ export function snapshotPath(season: number, accent: Accent, theme: Theme, name:
   const query = version ? `?v=${version.replace(/\D/g, "")}` : "";
   return `/card-snapshots/${season}/${accent}-${theme}/${name}.webp${query}`;
 }
+
+// Which presentation the home page uses: the carousel (default) or the
+// table. Kept in a cookie so the server renders the chosen one.
+export const VIEW_COOKIE = "f1-view";
+export const SITE_VIEWS = ["carousel", "table"] as const;
+export type SiteView = (typeof SITE_VIEWS)[number];
+export function normaliseView(value: unknown): SiteView {
+  return value === "table" ? "table" : "carousel";
+}

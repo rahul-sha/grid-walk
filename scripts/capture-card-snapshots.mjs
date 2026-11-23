@@ -42,8 +42,8 @@ const THEMES = ["light", "dark"];
 // are found by their label (GridWalk's `navLabel ?? title`) rather than by
 // position, so adding, removing or reordering cards — or the Latest Race
 // tab only existing for the current season — can't silently point a
-// capture at the wrong card. "recap" (Latest Race) and "about" are never
-// snapshots: plain text and links, nothing to bake.
+// capture at the wrong card. "about" is never a snapshot (Latest Race is not a
+// card in the strip; it opens from the top bar): plain text and links.
 const PLAIN_SECTIONS = [
   { id: "positions", tab: "Positions" },
   { id: "gained", tab: "Positions Gained" },
@@ -73,8 +73,8 @@ const FOCUS_SETTLE_MS = 900;
 
 async function focusTab(page, label) {
   const exact = new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
-  const tab = page.locator(".gw-toptabs-track .ui-pill", { hasText: exact }).first();
-  if ((await tab.count()) === 0) throw new Error(`No "${label}" tab in the top strip`);
+  const tab = page.locator(".dk-tabs .dk-tab", { hasText: exact }).first();
+  if ((await tab.count()) === 0) throw new Error(`No "${label}" tab in the top bar`);
   await tab.click();
   await page.waitForTimeout(FOCUS_SETTLE_MS);
 }

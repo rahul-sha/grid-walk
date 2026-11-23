@@ -336,3 +336,14 @@
 @media (prefers-reduced-motion: reduce) {
   .ui-version-badge::after { transition: none; }
 }
+
+/* The site-view switch in the bottom island: the card toggle's track and
+   thumb, with icons, at pill height. */
+.ui-view-toggle {
+  height: var(--pill-h);
+}
+.ui-view-toggle button {
+  display: grid;
+  place-items: center;
+  padding: 0 10px;
+}

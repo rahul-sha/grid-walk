@@ -128,7 +128,7 @@ export default function LatestRaceMenu({ data, placement }: { data: RecapData; p
         onClick={toggle}
       >
         {race.flagIso ? <span className={`fi fi-${race.flagIso} dk-lr-flag`} aria-hidden="true" /> : null}
-        <span>{placement === "top" ? shortName : `Rd ${race.round}`}</span>
+        <span>{placement === "top" ? `Rd ${race.round} · ${shortName}` : `Rd ${race.round}`}</span>
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="dk-lr-chevron">
           <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

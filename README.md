@@ -2,8 +2,9 @@
 
 Rahul's personal Formula 1 stats site: every card of a season (results,
 points evolution, podiums, positions, positions gained, and finish and
-qualifying frequency) laid out in labelled rows on one pannable, zoomable
-table, plus a Latest Race drop-down. Live at
+qualifying frequency) in two views you can switch between: a carousel of
+cards (the default) and one pannable, zoomable table, plus a Latest Race
+drop-down. Live at
 [thegridwalk.vercel.app](https://thegridwalk.vercel.app).
 
 ## Tech stack
@@ -44,8 +45,9 @@ table, plus a Latest Race drop-down. Live at
 
 ## What it does
 
-- **One table for a season.** The cards sit in labelled rows: **Championship** (Results, Points Evolution, Podiums), **Race by race** (Positions, Positions Gained, Finish and Qualifying Frequency), and **About**. Drag to pan, scroll or pinch to zoom; the jump tabs (desktop) or the overview (phones) take you straight to a card.
-- **Latest Race.** A pill in the top bar opens a recap of any race of the current season: podium, pole, fastest lap, full classification, qualifying order, and session times in your own time zone.
+- **Two views, one switch.** The site opens on the **carousel**: one card at a time in a horizontal strip; drag, swipe, or use the arrows and ← → keys to browse, and scroll or pinch to zoom. The two-icon switch in the bottom bar, beside theme and palette, turns the whole site into the **table** instead, and the site remembers the choice (a cookie, `f1-view`). Both views share the same top bar, bottom bar, and card order.
+- **The table.** The cards sit in labelled rows: **Championship** (Results, Points Evolution, Podiums), **Race by race** (Positions, Positions Gained, Finish and Qualifying Frequency), and **About**. Drag to pan, scroll or pinch to zoom; the jump tabs (desktop) or the overview (phones) take you straight to a card.
+- **Latest Race.** A pill in the top bar ("Rd 21 · Las Vegas"; just "Rd 21" in the bottom bar on phones) opens a recap of any race of the current season: podium, pole, fastest lap, full classification, qualifying order, and session times in your own time zone.
 - **Card switches.** Results, Podiums, and Frequency switch between Drivers and Teams, or Finish and Qualifying. Points Evolution has two switches: Drivers or Teams, and Place (championship place after each race) or Points (running total).
 - **Seasons from 2020.** Pick a season from the calendar pill in the top bar; the site opens on the current year.
 - **Four palettes, light and dark.** Monokai, Coffee, Ember, and Dracula, remembered between visits.
@@ -56,7 +58,7 @@ table, plus a Latest Race drop-down. Live at
 - **Data.** Race data comes from the [Jolpica F1 API](https://api.jolpi.ca/ergast/f1) and is saved as one JSON file per season in `data/seasons/`. The site reads those files; the live API is only a fallback for a season with no file. Every request to Jolpica names the app (`GridWalk/<version>`), as its [guide](https://github.com/jolpica/jolpica-f1/blob/main/docs/README.md) requires.
 - **Cards are pictures.** Every card except Latest Race and About is a saved WebP picture, one per season, palette, and theme, in `public/card-snapshots/`. Heavy live charts made panning choppy. Each season's `manifest.json` holds the picture sizes and the capture time, which is added to every picture address (`?v=...`) so browsers fetch a new set instead of showing a stored one.
 - **Weekly jobs.** `snapshot-season.yml` refreshes the current season twice each Monday (2:17 pm and 10:43 pm Singapore time; GitHub may start scheduled jobs late). When it brings new data, `capture-card-snapshots.yml` starts by itself and re-makes that season's pictures by photographing the cards at `/carousel`. Both can be run by hand; the picture job takes a year, or `all`.
-- **Old carousel.** The previous home page is kept, unlinked, at `/carousel`, because the picture job needs it.
+- **`/carousel`.** The carousel also lives at its own address, whichever view a visitor picked, because the picture job photographs the cards there.
 - **Design.** Everything is built from three parts (island, pill, card) with colours from theme variables; see [docs/design-system.md](docs/design-system.md). There is no blur anywhere, because it cost the GPU on every frame.
 
 ## Run it locally
@@ -98,8 +100,8 @@ The site is hosted on Vercel (project `grid-walk`). Merging a pull request into 
 
 | Where | What |
 | --- | --- |
-| `src/components/desk/` | The home page table (the "desk") |
-| `src/components/gridwalk/` | The old carousel, kept at `/carousel` |
+| `src/components/desk/` | The table view (the "desk"), and the Latest Race drop-down both views use |
+| `src/components/gridwalk/` | The carousel view (the default), also at `/carousel` |
 | `src/components/ui/`, `src/styles/ui.css` | Shared parts: island, pill, card |
 | `src/app/globals.css` | Theme colours and design tokens |
 | `src/lib/` | Data loading, Latest Race recap, season helpers |
