@@ -89,6 +89,30 @@ type SectionDef = {
   bakedTitle?: boolean;
 };
 
+// Points Evolution has two switches: whose lines (Drivers or Teams) and
+// what height means (championship Place, or Points).
+const EVO_VIEWS = [
+  { who: "drivers", mode: "place", name: "evolution-drivers-place" },
+  { who: "drivers", mode: "points", name: "evolution-drivers-points" },
+  { who: "teams", mode: "place", name: "evolution-teams-place" },
+  { who: "teams", mode: "points", name: "evolution-teams-points" },
+] as const;
+
+function evolutionText(who: "drivers" | "teams", mode: "place" | "points") {
+  const drivers = who === "drivers";
+  return {
+    title: drivers ? "Driver Points Evolution" : "Constructor Points Evolution",
+    subtitle:
+      mode === "place"
+        ? drivers
+          ? "Championship place after each race. A dashed line marks a team's second driver."
+          : "Championship place after each race."
+        : drivers
+          ? "Running points total after each race. A dashed line marks a team's second driver."
+          : "Running points total after each race.",
+  };
+}
+
 type View = { k: number; tx: number; ty: number };
 type SlotGeom = { s: number; c: number };
 
@@ -123,6 +147,8 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap, s
   const [hintGone, setHintGone] = useState(false);
   const [freqView, setFreqView] = useState<"finish" | "quali">("finish");
   const [resultsView, setResultsView] = useState<"drivers" | "teams">("drivers");
+  const [evoWho, setEvoWho] = useState<"drivers" | "teams">("drivers");
+  const [evoMode, setEvoMode] = useState<"place" | "points">("place");
 
   // Pre-rendered card snapshots: a card's own content (tables/charts/bars)
   // is the single biggest cost to the GPU on every drag frame, far more
@@ -308,19 +334,51 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap, s
     },
     {
       id: "evolution",
-      title: "Driver Points Evolution",
-      subtitle: "Cumulative points scored by each driver across the season.",
+      ...evolutionText(evoWho, evoMode),
       navLabel: "Points Evolution",
-      bakedTitle: true,
-      snapshots: [{ name: "evolution", active: true }],
-      render: ({ pointsGrid, constructorGrid }) => (
-        <>
-          <CardHeader title="Driver Points Evolution" subtitle="Cumulative points scored by each driver across the season." />
-          <DriverPointsEvolutionChart grid={pointsGrid} />
-          <CardHeader subsection title="Constructor Points Evolution" subtitle="Cumulative points scored by each team across the season." />
-          <ConstructorPointsEvolutionChart grid={constructorGrid} />
-        </>
+      headerActions: () => (
+        <div className="ui-card-toggles">
+          <CardToggle
+            name="evolution-who"
+            options={[
+              { value: "drivers", label: "Drivers" },
+              { value: "teams", label: "Teams" },
+            ]}
+            value={evoWho}
+            onChange={setEvoWho}
+          />
+          <CardToggle
+            name="evolution-mode"
+            options={[
+              { value: "place", label: "Place" },
+              { value: "points", label: "Points" },
+            ]}
+            value={evoMode}
+            onChange={setEvoMode}
+          />
+        </div>
       ),
+      snapshots: EVO_VIEWS.map((v) => ({ name: v.name, active: v.who === evoWho && v.mode === evoMode })),
+      render: ({ pointsGrid, constructorGrid }) => {
+        // Both views fill the same height, so the card keeps one size.
+        const plotHeight = pointsGrid.rows.length * 30;
+        return (
+          <div className="ui-card-views">
+            {EVO_VIEWS.map((v) => {
+              const active = v.who === evoWho && v.mode === evoMode;
+              return (
+                <div key={v.name} className={"ui-card-view" + (active ? " active" : "")} aria-hidden={!active}>
+                  {v.who === "drivers" ? (
+                    <DriverPointsEvolutionChart grid={pointsGrid} mode={v.mode} plotHeight={plotHeight} />
+                  ) : (
+                    <ConstructorPointsEvolutionChart grid={constructorGrid} mode={v.mode} plotHeight={plotHeight} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      },
     },
     {
       id: "positions",
@@ -587,7 +645,7 @@ export default function GridWalk({ season, live, sizes, initialVariant, recap, s
     stripRef.current?.classList.remove("pending");
     stripRef.current?.classList.add("entered");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [season, freqView, resultsView, forceLive, sizes, failedSnapshots]);
+  }, [season, freqView, resultsView, evoWho, evoMode, forceLive, sizes, failedSnapshots]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
